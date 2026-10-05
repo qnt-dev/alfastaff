@@ -1,0 +1,4 @@
+/* Authentic company wordmark within the existing orange layout. */
+.nav__word img, .logo__word img { width: 8rem; height: auto; }
+.nav__word img, .logo--light .logo__word img { filter: invert(1); }
+.nav:not(.is-dark):not(.is-open) .nav__word img { filter: none; }

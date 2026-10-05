@@ -1,0 +1,43 @@
+/* Branding-only layer. Original composition, geometry and interactions are retained.
+   Supplied PDF: #C41718, Montserrat, Benzin. Benzin file unavailable: Montserrat is the explicit temporary heading fallback. */
+@font-face {
+  font-family: 'Montserrat'; font-style: normal; font-weight: 100 900;
+  font-display: swap; src: url('../assets/fonts/Montserrat-Variable.woff2') format('woff2');
+}
+html[data-fonts="company"] {
+  --f-display: 'Montserrat', 'Segoe UI', sans-serif;
+  --f-text: 'Montserrat', 'Segoe UI', sans-serif;
+  --f-mono: 'Montserrat', 'Segoe UI', sans-serif;
+}
+/* Exact wordmark within the existing logo slot. */
+.nav__word img, .logo__word img { width: 8rem; height: auto; }
+.nav__word img, .logo--light .logo__word img { filter: invert(1); }
+.nav:not(.is-dark):not(.is-open) .nav__word img { filter: none; }
+/* White-on-red wording required by the company palette. */
+.nav__tag, .msg--me, .chat__quick button:hover,
+.chat__field textarea, .chat__note { color: #fff; }
+.chat__field textarea::placeholder { color: rgba(255,255,255,.85); }
+.chat__field textarea, .chat__field textarea:focus { border-bottom-color: rgba(255,255,255,.75); }
+/* Match the hero sphere to the softer red surface lighting; particle rendering is unchanged. */
+.sphere--light .sphere-background {
+  background-image: linear-gradient(0deg, #c41718 0%, #4b0909 26%, #1c1c1c 58%);
+  box-shadow: 0 0 2.875rem .375rem rgba(255,255,255,.04),
+              0 0 9.375rem 2.125rem rgba(196,23,24,.10);
+}
+.sphere--light .sphere-highlight {
+  background-image: radial-gradient(circle at 35% 35%, #000, #0f0f0f 0%, #666);
+  box-shadow: inset 0 .25rem 3.375rem 2.5rem rgba(255,255,255,.10);
+}
+/* Softer surface lighting on the objects sphere; the particle layer stays unchanged. */
+.sphere--dark .sphere-background {
+  box-shadow: 0 0 3.75rem 1.125rem rgba(255,255,255,.03),
+              0 1.875rem 7.5rem 1.875rem rgba(196,23,24,.12);
+}
+.sphere--dark .sphere-highlight {
+  background-image: radial-gradient(circle at 35% 35%, #000, #0b0b0b 0%, #666);
+  box-shadow: inset 0 .25rem 3.375rem 1.625rem rgba(255,255,255,.10);
+}
+/* Keep the original single-line title within its original mobile column with the wider brand font. */
+@media (max-width: 520px) {
+  .hero__title { font-size: clamp(1.5rem, calc((100vw - 5.5rem) / 8.6), 4rem); }
+}

@@ -10,7 +10,7 @@
   window.AS = window.AS || {};
   var TAU = Math.PI * 2;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var ACCENT = [255, 90, 31];
+  var ACCENT = [196, 23, 24];
 
   function dpr() { return Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 2); }
   // масштаб сайта (1rem / 16px): размеры точек и подписей растут вместе с вёрсткой
@@ -51,7 +51,7 @@
     x.fillStyle = gr; x.fillRect(0, 0, s, s);
     return c;
   }
-  var SPR_W = sprite(255, 255, 255, false), SPR_A = sprite(ACCENT[0], ACCENT[1], ACCENT[2], true), SPR_AH = sprite(255, 150, 100, false);
+  var SPR_W = sprite(255, 255, 255, false), SPR_A = sprite(ACCENT[0], ACCENT[1], ACCENT[2], true), SPR_AH = sprite(ACCENT[0], ACCENT[1], ACCENT[2], false);
 
   function onVisible(el, cb) {
     if (!('IntersectionObserver' in window)) { cb(true); return; }
@@ -91,7 +91,7 @@
     var lx = align === 'center' ? x - tw / 2 : align === 'right' ? x - tw : x;
     ctx.fillText(text, Math.max(m, Math.min(cw - m - tw, lx)), y);
   }
-  var C_W = 'rgba(255,255,255,.72)', C_DIM = 'rgba(255,255,255,.42)', C_A = '#ff8b5f';
+  var C_W = 'rgba(255,255,255,.72)', C_DIM = 'rgba(255,255,255,.42)', C_A = '#C41718';
 
   /* Аутстаффинг: ваш склад со стеллажами, внутри работают люди; от каждого — линия к узлу «Альфа-Стафф» */
   SHAPES.outstaff = function (i, n, t, b, o, st) {
@@ -397,7 +397,8 @@
   function maskShape(drawFn, isReady) {
     var pts = null, w0 = 0, h0 = 0;
     return function (i, n, t, b, o) {
-      // Wait for the exact company SVG before sampling its particle mask.
+      // Do not cache an empty mask while the company SVG is loading.
+      // The animation loop also runs with reduced motion, so it samples on load.
       if (isReady && !isReady()) { off(o, b.cx, b.cy); return; }
       if (!pts || w0 !== b.w || h0 !== b.h) {
         w0 = b.w; h0 = b.h; pts = [];
@@ -407,7 +408,8 @@
         var all = [];
         for (var yy = 0; yy < S; yy += 3) for (var xx = 0; xx < S; xx += 3) {
           var a = d[(yy * S + xx) * 4 + 3], red = d[(yy * S + xx) * 4];
-          if (a > 128) all.push([xx / S - 0.5, yy / S - 0.5, red > 200 && d[(yy * S + xx) * 4 + 1] < 150 ? 1 : 0]);
+          var green = d[(yy * S + xx) * 4 + 1], blue = d[(yy * S + xx) * 4 + 2];
+          if (a > 128) all.push([xx / S - 0.5, yy / S - 0.5, red > green * 1.5 && red > blue * 1.5 ? 1 : 0]);
         }
         var budget = Math.floor(n * 0.82), stepK = Math.max(1, all.length / budget);
         for (var q = 0; q < all.length && pts.length < budget; q += stepK) pts.push(all[Math.floor(q)]);
@@ -426,11 +428,11 @@
   SHAPES.question = maskShape(function (x, S) {
     x.fillStyle = '#fff'; x.font = '700 ' + (S * 0.95) + 'px ' + F_DISPLAY;
     x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('?', S / 2, S * 0.52);
-    x.fillStyle = 'rgb(255,90,31)'; x.beginPath(); x.arc(S / 2, S * 0.82, S * 0.075, 0, TAU); x.fill();
+    x.fillStyle = 'rgb(196,23,24)'; x.beginPath(); x.arc(S / 2, S * 0.82, S * 0.075, 0, TAU); x.fill();
   });
   var brandMark = new Image(), brandMarkReady = false;
   brandMark.onload = function () { brandMarkReady = true; };
-  brandMark.src = new URL('assets/brand-orange/mark.svg', document.baseURI).href;
+  brandMark.src = new URL('assets/brandbook/mark.svg', document.baseURI).href;
   SHAPES.mark = maskShape(function (x, S) {
     var k = Math.min(S / brandMark.naturalWidth, S / brandMark.naturalHeight);
     var w = brandMark.naturalWidth * k, h = brandMark.naturalHeight * k;
@@ -672,9 +674,9 @@
       }
       if (!pos) return;
       placed.push([pos[0], pos[1], bw, ph]);
-      ctx.fillStyle = accent ? 'rgba(255,90,31,.92)' : 'rgba(14,14,14,.88)'; ctx.strokeStyle = accent ? 'rgba(255,140,90,.6)' : 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
+      ctx.fillStyle = accent ? 'rgba(196,23,24,.92)' : 'rgba(14,14,14,.88)'; ctx.strokeStyle = accent ? 'rgba(196,23,24,.6)' : 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.roundRect(pos[0], pos[1], bw, ph, 6 * KS); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = accent ? '#111' : strong ? '#fff' : 'rgba(255,255,255,.62)';
+      ctx.fillStyle = accent || strong ? '#fff' : 'rgba(255,255,255,.62)';
       ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
       ctx.fillText(text, pos[0] + px, pos[1] + ph / 2 + 0.5);
       ctx.textBaseline = 'alphabetic';
@@ -727,7 +729,7 @@
         ['Татарстан', 'Самарская обл.', 'Москва и МО'].forEach(function (key, n) {
           var r = REG.filter(function (x) { return x.key === key; })[0]; if (!r) return;
           var b = proj(r.hub[0], r.hub[1]);
-          ctx.strokeStyle = 'rgba(255,90,31,.32)'; ctx.lineWidth = 1; ctx.setLineDash([3 * KS, 4 * KS]);
+          ctx.strokeStyle = 'rgba(196,23,24,.32)'; ctx.lineWidth = 1; ctx.setLineDash([3 * KS, 4 * KS]);
           ctx.beginPath();
           for (var u = 0; u <= 1.001; u += 0.025) { var c = arc(uq, b, u); if (u === 0) ctx.moveTo(c[0], c[1]); else ctx.lineTo(c[0], c[1]); }
           ctx.stroke(); ctx.setLineDash([]);
@@ -758,7 +760,7 @@
         var g = (on ? 30 : 10 + 8 * big) * KS;
         ctx.drawImage(SPR_A, q[0] - g / 2, q[1] - g / 2, g, g);
         ctx.globalAlpha = 0.5 + 0.5 * big;
-        ctx.fillStyle = on ? '#fff' : '#ff8b5f';
+        ctx.fillStyle = on ? '#fff' : '#C41718';
         ctx.beginPath(); ctx.arc(q[0], q[1], (on ? 3.6 : 1.6 + big) * KS, 0, TAU); ctx.fill();
         ctx.globalAlpha = 1;
         if (on && zin > 0.5) labelObj = [o, q];
@@ -769,9 +771,9 @@
         var q = proj(o.geo[0], o.geo[1]);
         if (o.kind === 'hq') {
           var pr = (9 + (t * 14) % 16) * KS;
-          ctx.strokeStyle = 'rgba(255,90,31,' + (1 - (pr / KS - 9) / 16).toFixed(2) + ')'; ctx.lineWidth = 1.4 * KS;
+          ctx.strokeStyle = 'rgba(196,23,24,' + (1 - (pr / KS - 9) / 16).toFixed(2) + ')'; ctx.lineWidth = 1.4 * KS;
           ctx.beginPath(); ctx.arc(q[0], q[1], pr, 0, TAU); ctx.stroke();
-          ctx.fillStyle = '#ff5a1f'; ctx.beginPath(); ctx.arc(q[0], q[1], 4.5 * KS, 0, TAU); ctx.fill();
+          ctx.fillStyle = '#C41718'; ctx.beginPath(); ctx.arc(q[0], q[1], 4.5 * KS, 0, TAU); ctx.fill();
         } else {
           ctx.strokeStyle = o.kind === 'dispatch' ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.3 * KS;
           if (o.kind === 'dispatch') ctx.setLineDash([2.5 * KS, 2.5 * KS]);
@@ -879,12 +881,12 @@
       var t = reduce ? 0 : Math.max(0, (now - t0) / 1000);
       var cx = w / 2, cy = h;
       ctx.clearRect(0, 0, w, h);
-      // шар: тёмный, к краю чуть теплее; край светится изнутри
+      // шар: нейтральный тёмный; край светится фирменным красным
       var base = ctx.createRadialGradient(cx, cy - R * 0.25, R * 0.1, cx, cy, R);
-      base.addColorStop(0, '#0c0402'); base.addColorStop(0.8, '#120502'); base.addColorStop(1, '#1f0802');
+      base.addColorStop(0, '#0c0c0c'); base.addColorStop(0.8, '#121212'); base.addColorStop(1, '#1f1f1f');
       ctx.fillStyle = base; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, TAU); ctx.closePath(); ctx.fill();
       var rim = ctx.createRadialGradient(cx, cy, R * 0.86, cx, cy, R);
-      rim.addColorStop(0, 'rgba(255,90,31,0)'); rim.addColorStop(0.7, 'rgba(255,90,31,.06)'); rim.addColorStop(1, 'rgba(255,110,50,.38)');
+      rim.addColorStop(0, 'rgba(196,23,24,0)'); rim.addColorStop(0.7, 'rgba(196,23,24,.06)'); rim.addColorStop(1, 'rgba(196,23,24,.38)');
       ctx.fillStyle = rim; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, TAU); ctx.closePath(); ctx.fill();
       if (!P) return;
       // поворот: долгота в центре уходит на запад — поверхность едет слева направо, как у настоящей Земли
@@ -904,7 +906,7 @@
       for (var q = 0; q < BUCKETS; q++) {
         var pts = paths[q]; if (!pts.length) continue;
         var f = (q + 0.5) / BUCKETS, rr = dot * (0.55 + 0.45 * f);
-        ctx.fillStyle = 'rgba(255,' + Math.round(92 + 30 * f) + ',' + Math.round(30 + 22 * f) + ',' + (0.22 + 0.78 * Math.sqrt(f)).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(196,23,24,' + (0.22 + 0.78 * Math.sqrt(f)).toFixed(3) + ')';
         ctx.beginPath();
         for (var j = 0; j < pts.length; j += 2) { ctx.moveTo(pts[j] + rr, pts[j + 1]); ctx.arc(pts[j], pts[j + 1], rr, 0, TAU); }
         ctx.fill();
