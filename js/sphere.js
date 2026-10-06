@@ -462,9 +462,22 @@
     return pool[Math.floor(Math.random() * pool.length)];
   };
 
+  // пауза автопоказа (кнопка в панели «География объектов»): карточка текущего объекта остаётся, сфера стоит;
+  // автопоказ не возобновляется ни от мыши, ни от стрелок — только повторным нажатием
+  Sphere.prototype.setPaused = function (on, index) {
+    var P = this.prompt;
+    this.paused = !!on;
+    if (this.mode !== 'hero') return;
+    if (!on) { this.queueAutoplay(1500); return; }
+    if (P.mode !== 'autoplay') return;
+    clearTimeout(P.timer);
+    if (P.visible) { P.mode = 'focus'; if (this.card) this.card.classList.remove('is-auto'); }
+    else if (index != null && index >= 0) this.focus(index);   // между карточками — показываем объект, что на карте
+  };
+
   Sphere.prototype.queueAutoplay = function (delay) {
     var self = this, P = this.prompt;
-    if (this.mode !== 'hero' || this.state.inside || this.controls.dragging) return;
+    if (this.mode !== 'hero' || this.paused || this.state.inside || this.controls.dragging) return;
     clearTimeout(P.timer);
     P.mode = 'autoplay';
     P.timer = setTimeout(function () {

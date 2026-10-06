@@ -487,6 +487,24 @@ svg { shape-rendering: geometricPrecision; }
 .hero-index__list li.is-on button span { color: var(--accent); opacity: 1; }
 .hero-index__list li.is-on button::before { transform: scale(1); }
 
+/* ---------- география объектов справа от сферы (js/geo-panel.js) ---------- */
+.hero-geo { width: 18.75rem; color: #fff; }
+.hero-geo__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; color: var(--w-2); }
+.hero-geo__head > span:first-child { display: inline-flex; align-items: center; gap: 0.5rem; }
+.hero-geo__head i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.5rem var(--accent); }
+.hero-geo__idx { color: #fff; min-width: 3.25rem; text-align: center; }
+.hero-geo__canvas { display: block; width: 100%; }
+.hero-geo__nav { display: inline-flex; align-items: center; gap: 0.25rem; }
+.hero-geo__nav button { width: 1.5rem; height: 1.5rem; border-radius: 0.4375rem; display: grid; place-items: center; background: rgba(255, 255, 255, .07); transition: background-color .2s; }
+.hero-geo__nav button:hover { background: var(--accent); }
+.hero-geo__nav svg { width: 0.75rem; height: 0.75rem; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.hero-geo__pause { margin-right: 0.375rem; }
+.hero-geo__pause .i-play { display: none; fill: #fff; stroke-width: 1.2; }
+.hero-geo__pause.is-paused { background: var(--accent); }
+.hero-geo__pause.is-paused .i-pause { display: none; }
+.hero-geo__pause.is-paused .i-play { display: inline; }
+
+
 /* боковая вставка с соцсетями: тёмная рама «заходит» в лист */
 .hero__social { position: absolute; z-index: 3; left: -4px; top: var(--social-top, 50%); transform: translateY(var(--social-shift, -50%)); width: 36px; padding: 25.5px 0 25.5px 5px; display: flex; flex-direction: column; align-items: flex-start; gap: 15px; background: var(--frame); border-radius: 0 20px 20px 0; }
 .hero__social::before, .hero__social::after { content: ''; position: absolute; left: 3px; width: 14px; height: 14px; pointer-events: none; }

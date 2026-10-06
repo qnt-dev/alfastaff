@@ -229,7 +229,7 @@ def build(path):
         o['pay'] = ' '.join(x for x in [lead] + extra if x)
         if 'ВВШ' in o['jobKeys']:
             o['note'] = 'Водителю штабелёра — удостоверение тракториста-машиниста с отметкой «погрузчик».'
-        for k in ('rateLines', 'note', 'shift', 'pay', 'shiftFull', 'rateCard', 'transport', 'housing', 'meals', 'mealsFull'):
+        for k in ('rateLines', 'note', 'shift', 'pay', 'shiftFull', 'rateCard', 'transport', 'housing', 'meals', 'mealsFull', 'route'):
             if k in c: o[k] = c[k]
         objs.append(o)
     # офисы — из листа «Адреса офисов»; координаты — из ссылки на карту

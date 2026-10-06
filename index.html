@@ -12,7 +12,7 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brand-orange/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261010g">
-  <link rel="stylesheet" href="css/style.css?v=20261010g">
+  <link rel="stylesheet" href="css/style.css?v=20261011d">
   <link rel="stylesheet" href="css/identity.css?v=20261005-style-switch-v1">
   <link rel="stylesheet" href="css/style-switch.css?v=20261005-style-switch-v1">
 </head>
@@ -197,9 +197,19 @@
             </div>
           </div>
 
-          <div class="hero-index" data-hero-index hidden>
-            <p class="hero-index__head"><span class="mono mono--dim">Потяните сферу <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 0 1 9.6-3.7M13.5 8a5.5 5.5 0 0 1-9.6 3.7M12.3 1.8v2.7H9.6M3.7 14.2v-2.7h2.7" /></svg></span></p>
-            <ol class="hero-index__list" data-hero-index-list></ol>
+          <!-- География объектов: мини-карта и увеличенный регион объекта, который показывает сфера (js/geo-panel.js) -->
+          <div class="hero-index hero-geo" data-hero-index data-hero-geo hidden aria-label="География объектов">
+            <div class="hero-geo__head mono">
+              <span><i aria-hidden="true"></i>География объектов</span>
+              <span class="hero-geo__nav">
+                <button type="button" class="hero-geo__pause" data-geo-pause aria-pressed="false" aria-label="Остановить показ объектов" title="Пауза"><svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-pause" d="M5.75 4v8M10.25 4v8" /><path class="i-play" d="M5.5 3.6v8.8L12.5 8z" /></svg></button>
+                <button type="button" data-geo-prev aria-label="Предыдущий объект"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5" /></svg></button>
+                <span class="hero-geo__idx" data-geo-idx>01 / 23</span>
+                <button type="button" data-geo-next aria-label="Следующий объект"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5" /></svg></button>
+              </span>
+            </div>
+            <!-- название и адрес объекта — на карточке сферы; здесь только карта (подпись объекта — плашка на карте) -->
+            <canvas class="hero-geo__canvas" role="img" aria-label="Карта: регионы, офисы и трассы к объектам"></canvas>
           </div>
 
           <a class="qr-card" href="https://t.me/alfastaff" target="_blank" rel="noopener">
@@ -1000,11 +1010,13 @@
 
   <script src="assets/vendor/lenis.min.js"></script>
   <script src="assets/vendor/three.min.js"></script>
-  <script src="js/objects.js?v=20261010g"></script>
-  <script src="js/data.js?v=20261010g"></script>
-  <script src="js/sphere.js?v=20261010g"></script>
+  <script src="js/objects.js?v=20261011a"></script>
+  <script src="js/data.js?v=20261011b"></script>
+  <script src="js/sphere.js?v=20261011a"></script>
   <script src="js/morph.js?v=20261005-style-switch-v1"></script>
-  <script src="js/main.js?v=20261010g"></script>
+  <script src="js/roads.js?v=20261011b"></script>
+  <script src="js/geo-panel.js?v=20261011l"></script>
+  <script src="js/main.js?v=20261011b"></script>
   <script src="js/style-switch.js?v=20261005-style-switch-v1"></script>
 </body>
 </html>

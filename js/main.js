@@ -426,7 +426,29 @@
   // сферы
   var heroSphereApi = null, heroClip = null;
   var heroIndex = $('[data-hero-index]'), heroIndexList = $('[data-hero-index-list]'), heroIndexResume = 0;
+  // справа от сферы — карта «География объектов» (js/geo-panel.js); если её нет на странице — список объектов
+  var heroGeo = null, heroGeoEl = $('[data-hero-geo]');
+  var heroPaused = false, heroPauseBtn = $('[data-geo-pause]');
+  function heroPick(i) {
+    if (!heroSphereApi) return;
+    heroSphereApi.focus(i);
+    markHeroIndex(i);
+    clearTimeout(heroIndexResume);
+    if (!heroPaused) heroIndexResume = setTimeout(function () { heroSphereApi.queueAutoplay(0); }, 7000);
+  }
+  if (heroGeoEl && AS.HeroGeo) heroGeo = AS.HeroGeo(heroGeoEl, { onPick: heroPick });
+  // пауза: сфера перестаёт перебирать объекты — можно спокойно рассмотреть карту
+  if (heroPauseBtn) heroPauseBtn.addEventListener('click', function () {
+    heroPaused = !heroPaused;
+    clearTimeout(heroIndexResume);
+    heroPauseBtn.classList.toggle('is-paused', heroPaused);
+    heroPauseBtn.setAttribute('aria-pressed', String(heroPaused));
+    heroPauseBtn.setAttribute('aria-label', heroPaused ? 'Продолжить показ объектов' : 'Остановить показ объектов');
+    heroPauseBtn.title = heroPaused ? 'Продолжить' : 'Пауза';
+    if (heroSphereApi) heroSphereApi.setPaused(heroPaused, heroGeo ? heroGeo.current() : null);
+  });
   function markHeroIndex(i) {
+    if (heroGeo) heroGeo.show(i);
     if (!heroIndexList) return;
     $$('li', heroIndexList).forEach(function (li, k) { li.classList.toggle('is-on', k === i); });
   }
@@ -435,15 +457,7 @@
       return '<li><button type="button"><span>' + String(i + 1).padStart(2, '0') + '</span>' + o.short + '<em>' + o.tag + '</em></button></li>';
     }).join('');
     // клик по строке поворачивает сферу к складу, потом автопоказ продолжается
-    $$('button', heroIndexList).forEach(function (b, i) {
-      b.addEventListener('click', function () {
-        if (!heroSphereApi) return;
-        heroSphereApi.focus(i);
-        markHeroIndex(i);
-        clearTimeout(heroIndexResume);
-        heroIndexResume = setTimeout(function () { heroSphereApi.queueAutoplay(0); }, 7000);
-      });
-    });
+    $$('button', heroIndexList).forEach(function (b, i) { b.addEventListener('click', function () { heroPick(i); }); });
   }
   if (AS.Sphere) {
     var heroSphere = $('[data-sphere="hero"]');
