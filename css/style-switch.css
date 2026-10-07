@@ -31,9 +31,15 @@
 .style-switch a[data-style-option="company"] span { background: #c41718; }
 .style-switch a[aria-current="page"] { background: #fff; color: #171717; }
 .style-switch a:not([aria-current]):hover { background: #383838; }
+/* временная ссылка на предложение — отделена от переключателя чертой */
+.style-switch a.style-switch__offer { position: relative; margin-left: 7px; }
+.style-switch a.style-switch__offer::before { content: ''; position: absolute; left: -5px; top: 7px; bottom: 7px; width: 1px; background: rgba(255,255,255,.22); }
+.style-switch a.style-switch__offer span { width: 6px; height: 6px; background: transparent; box-shadow: inset 0 0 0 1.5px #fff; }
 .style-switch a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .style-switch a[aria-current="page"]:focus-visible { outline-color: #ffae80; }
 @media (max-width: 760px) {
-  .style-switch { top: 4.5rem; right: 1rem; left: auto; transform: none; }
+  .style-switch { top: 4.5rem; right: 1rem; left: auto; transform: none; gap: 2px; font-size: 11px; }
+  /* три кнопки в одну строку: компактнее поля и точки */
+  .style-switch a { gap: 5px; padding: 0 7px; min-height: 32px; }
 }
 @media print { .style-switch { display: none; } }

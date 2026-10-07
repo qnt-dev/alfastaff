@@ -2,7 +2,7 @@
   'use strict';
   var control = document.querySelector('.style-switch');
   if (!control) return;
-  var links = control.querySelectorAll('a');
+  var links = control.querySelectorAll('a[data-style-option]');   // ссылка «Стоимость разработки» — без якорей разделов
   var sections = document.querySelectorAll('main > section[id], footer[id]');
 
   // Both variants share section IDs. Retain the section being compared, even

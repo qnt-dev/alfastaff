@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Скрытая страница: не индексируется, ссылок на неё с сайта нет -->
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>Стоимость работ — «Альфа-Стафф»</title>
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%276%27 fill=%27%23c41718%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/offer2.css?v=20261016b">
+</head>
+<body>
+  <header class="top">
+    <a class="top__back" href="index.html" data-back>← К сайту</a>
+    <span class="top__r">Октябрь 2026</span>
+  </header>
+
+  <!-- ============ ПЕРВЫЙ ЭКРАН: два варианта ============ -->
+  <section class="hero" data-hero>
+    <canvas class="hero__cv" data-cv aria-hidden="true"></canvas>
+    <div class="hero__stage" data-stage aria-hidden="true"></div>
+    <div class="hero__foot">
+      <div class="hero__head">
+        <h1 class="hero__title">Стоимость работ для «Альфа-Стафф»</h1>
+        <p class="hero__lead">Два варианта оплаты. Суммы — за первые три месяца, ниже — что входит в каждый.</p>
+      </div>
+      <div class="hero__opts">
+        <a class="opt" href="#compare" data-word="0">
+          <span class="opt__k">Смета</span>
+          <span class="opt__v">390 000 ₽</span>
+          <span class="opt__n">разово, за весь объём работ</span>
+        </a>
+        <a class="opt" href="#compare" data-word="1">
+          <span class="opt__k">Ставка</span>
+          <span class="opt__v">225 000 ₽</span>
+          <span class="opt__n">за 3 месяца · 75 000 ₽ в месяц</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ СРАВНЕНИЕ ЗА ТРИ МЕСЯЦА ============ -->
+  <section class="sec" id="compare">
+    <div class="wrap">
+      <p class="sec__num"><span>01</span>Сравнение</p>
+      <h2 class="sec__title">Что входит и сколько стоит за первые три месяца</h2>
+      <p class="sec__lead">Отметьте работы, которые нужны. Смета пересчитается; ставка остаётся фиксированной.</p>
+
+      <div class="cmp" data-cmp>
+        <div class="cmp__head">
+          <span></span>
+          <span class="cmp__col">Смета<small>каждый проект оплачивается отдельно, по факту</small></span>
+          <span class="cmp__col cmp__col--b">Ставка<small>75 000 ₽ в месяц</small></span>
+        </div>
+
+        <label class="row">
+          <span class="row__name"><input type="checkbox" checked data-item="site1" data-price="100000"><i class="box"></i><span>Текущий сайт «Альфа-Стафф»<small>доработка по замечаниям, запуск, домен, передача доступов</small></span></span>
+          <span class="row__a" data-l="Смета">100 000 ₽</span>
+          <span class="row__b" data-l="Ставка"><b>включён</b> без отдельной оплаты</span>
+        </label>
+        <label class="row">
+          <span class="row__name"><input type="checkbox" checked data-item="site2" data-price="100000"><i class="box"></i><span>Сайт № 2<small>будущий проект компании; оценка предварительная, состав работ согласуем до начала</small></span></span>
+          <span class="row__a" data-l="Смета">100 000 ₽</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки</span>
+        </label>
+        <label class="row">
+          <span class="row__name"><input type="checkbox" checked data-item="site3" data-price="100000"><i class="box"></i><span>Сайт № 3<small>будущий проект компании; оценка предварительная, состав работ согласуем до начала</small></span></span>
+          <span class="row__a" data-l="Смета">100 000 ₽</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки</span>
+        </label>
+        <label class="row">
+          <span class="row__name"><input type="checkbox" checked data-item="tg" data-price="60000"><i class="box"></i><span>Бот для кандидатов в Telegram<small>вакансии, ответы на вопросы, сбор заявок, передача рекрутеру</small></span></span>
+          <span class="row__a" data-l="Смета">60 000 ₽</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки</span>
+        </label>
+        <label class="row" data-row-max>
+          <span class="row__name"><input type="checkbox" checked data-item="max" data-price="30000"><i class="box"></i><span>Тот же бот в MAX<small data-max-note>второй канал к готовому боту — только вместе с ботом в Telegram</small></span></span>
+          <span class="row__a" data-l="Смета">30 000 ₽</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки</span>
+        </label>
+        <div class="row row--static">
+          <span class="row__name"><i class="dash"></i><span>Автоматизация рутины и ИИ-инструменты<small>например: выбрать одну повторяющуюся задачу рекрутера, подобрать инструмент, сравнить время до и после</small></span></span>
+          <span class="row__a" data-l="Смета">оценка отдельно по каждой задаче</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки, по плану</span>
+        </div>
+        <label class="row row--sup">
+          <span class="row__name"><input type="checkbox" data-sup data-price="10000"><i class="box"></i><span>Сопровождение сайтов<small>правки текстов и вакансий, проверка работы — до 5 часов в месяц</small></span></span>
+          <span class="row__a" data-l="Смета">10 000 ₽/мес</span>
+          <span class="row__b" data-l="Ставка"><b>входит</b></span>
+        </label>
+        <label class="row row--sup">
+          <span class="row__name"><input type="checkbox" data-sup data-price="10000"><i class="box"></i><span>Сопровождение ботов<small>обновление сценариев, проверка заявок — до 5 часов в месяц</small></span></span>
+          <span class="row__a" data-l="Смета">10 000 ₽/мес</span>
+          <span class="row__b" data-l="Ставка"><b>входит</b></span>
+        </label>
+        <div class="row row--static">
+          <span class="row__name"><i class="dash"></i><span>Прочие доработки</span></span>
+          <span class="row__a" data-l="Смета">2 500 ₽/час</span>
+          <span class="row__b" data-l="Ставка">в рамках ставки</span>
+        </div>
+
+        <!-- итоги -->
+        <div class="cmp__sum">
+          <span class="cmp__sum-k">Итого</span>
+          <span class="cmp__sum-a" data-l="Смета">
+            <b data-dev>390 000 ₽</b><small>разработка выбранных проектов, разово</small>
+            <span class="cmp__sup" data-sup-line hidden>+ <b data-sup-v>10 000 ₽</b> в месяц<small>сопровождение после запуска</small></span>
+          </span>
+          <span class="cmp__sum-b" data-l="Ставка">
+            <b>225 000 ₽</b><small>за 3 месяца по 75 000 ₽ · сопровождение входит</small>
+            <span class="cmp__plan">Работы — по согласованному месячному плану; новые задачи меняют приоритеты и сроки.</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- разница -->
+      <div class="diff" data-diff>
+        <div class="diff__bars" aria-hidden="true">
+          <div class="bar"><span class="bar__k">Смета</span><span class="bar__line"><i data-bar-a></i></span><span class="bar__v" data-bar-a-v>390 000 ₽</span></div>
+          <div class="bar bar--b"><span class="bar__k">Ставка</span><span class="bar__line"><i data-bar-b></i></span><span class="bar__v">225 000 ₽</span></div>
+        </div>
+        <p class="diff__text" data-diff-text>За три месяца ставка обходится на 165 000 ₽ меньше.</p>
+        <p class="diff__sup" data-diff-sup hidden></p>
+        <p class="diff__note">Разница действительна, если весь отмеченный объём выполняется за три месяца по плану, который утверждаем в начале. Цены предварительные и согласуются.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ УСЛОВИЯ ============ -->
+  <section class="sec" id="terms">
+    <div class="wrap">
+      <p class="sec__num"><span>02</span>Условия</p>
+      <h2 class="sec__title">Как устроена оплата</h2>
+      <div class="terms">
+        <div class="terms__col">
+          <p class="terms__h">Смета</p>
+          <ul>
+            <li>Каждый проект оценивается и оплачивается отдельно: 50% предоплата, 50% после приёмки</li>
+            <li>Сопровождение подключается по желанию после запуска</li>
+            <li>30 дней после приёмки ошибки исправляю бесплатно</li>
+            <li>После трёх месяцев — только сопровождение и разовые доработки</li>
+          </ul>
+        </div>
+        <div class="terms__col terms__col--b">
+          <p class="terms__h">Ставка</p>
+          <ul>
+            <li>75 000 ₽ в месяц, предоплатой; первые три месяца — пробный период</li>
+            <li>В начале месяца согласуем задачи и сроки, в конце показываю работающий результат и отчёт</li>
+            <li>Текущий сайт, сопровождение и новые задачи — в рамках ставки, по плану</li>
+            <li>Через три месяца решаете: продолжаем, переходим на сопровождение или завершаем</li>
+          </ul>
+        </div>
+      </div>
+      <p class="both"><b>В обоих вариантах</b> цены включают мой налог (самозанятый, выдаю чек). Подписки, домены и серверы оплачиваются компанией отдельно, каждая покупка согласуется заранее.</p>
+      <p class="both"><b>Передача результатов.</b> По смете — код и доступы к проекту передаю после его полной оплаты. По ставке — результаты месяца передаю сразу по готовности: месяц оплачен заранее.</p>
+
+      <details class="market">
+        <summary>Для сравнения — публичные цены студий</summary>
+        <div class="market__rows">
+          <p><span>Сайт</span><span><a href="https://design-lab.ru/services/landings/" target="_blank" rel="noopener">Design Lab</a> — от 150 000 ₽ · <a href="https://serenity.agency/landing" target="_blank" rel="noopener">Serenity</a> — от 220 000 ₽</span><b>у меня — 100 000 ₽</b></p>
+          <p><span>Бот</span><span><a href="https://skybots.ru/ceny" target="_blank" rel="noopener">SkyBots</a> — 50 000–90 000 ₽</span><b>у меня — 60 000 + 30 000 ₽</b></p>
+          <p><span>Поддержка</span><span><a href="https://lite-support.ru/" target="_blank" rel="noopener">LITE SUPPORT</a> — 10 000 ₽/мес за 5 часов</span><b>у меня — так же</b></p>
+          <p><span>Доработки</span><span><a href="https://redrocket.website/services/development/website-enhancements/" target="_blank" rel="noopener">«Красная Ракета»</a> — от 2 500 ₽/час</span><b>у меня — 2 500 ₽/час</b></p>
+          <small>Цены «от» с сайтов компаний на 07.10.2026; состав работ у студий может отличаться.</small>
+        </div>
+      </details>
+
+      <div class="end">
+        <button type="button" class="print" data-print>Версия для печати</button>
+        <span>Предложение от 7 октября 2026 года</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- итог всегда под рукой, пока на экране таблица -->
+  <div class="dockbar" data-dockbar aria-hidden="true">
+    <span><small>Смета</small><b data-dock-a>390 000 ₽</b><em data-dock-sup></em></span>
+    <span class="dockbar__b"><small>Ставка · 3 месяца</small><b>225 000 ₽</b></span>
+  </div>
+
+  <script src="js/offer2.js?v=20261016b"></script>
+</body>
+</html>
