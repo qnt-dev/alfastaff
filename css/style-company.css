@@ -238,12 +238,9 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .nav__line::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: .3; }
 .nav__line::after { content: ''; position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: 100% 50%; transition: transform .45s var(--ease); }
 .nav.is-menu .nav__line::after { transform: none; }
-/* «удар сердца»: всплеск-зубец с хвостом едет по черте от слова к точкам (только во время импульса); двигается
-   дорожка во всю ширину черты — translateX в процентах её ширины, без пересчёта раскладки */
-.nav__track { position: absolute; inset: 0; pointer-events: none; }
-.nav__beat { position: absolute; right: 0; top: 50%; height: var(--n); margin-top: calc(-0.5 * var(--n)); display: flex; align-items: center; opacity: 0; filter: drop-shadow(0 0 calc(0.1875 * var(--n)) var(--accent)); }
-.nav__beat svg { flex: none; width: calc(1.375 * var(--n)); height: var(--n); fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
-.nav__beat i { flex: none; width: calc(1.5 * var(--n)); height: 1.5px; margin-left: -1px; background: linear-gradient(90deg, var(--accent), transparent); }
+/* «удар сердца» — как развёртка кардиомонитора: луч идёт от слова к точкам и рисует линию, посередине черты
+   вычерчивает комплекс ЭКГ; нарисованное за лучом гаснет. Рисует main.js (navBeat) на холсте поверх черты */
+.nav__trace { position: absolute; left: 0; top: 50%; width: 100%; height: calc(1.25 * var(--n)); margin-top: calc(-0.625 * var(--n)); pointer-events: none; }
 .nav__label { flex: none; font-family: var(--f-mono); font-size: calc(0.6875 * var(--n)); font-weight: 700; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
 .nav__label > span { display: block; color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(90deg, var(--nav-fg) 0 40%, var(--accent) 47% 53%, var(--nav-fg) 60% 100%); background-size: 300% 100%; background-position: 0 0; }
 .nav__dots { display: grid; grid-template-columns: repeat(3, 3px); gap: 3px; transition: transform .5s var(--ease); }
@@ -252,15 +249,11 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .nav.is-menu .nav__dots i:nth-child(2n) { transform: scale(0); opacity: 0; }
 .nav__mark { width: round(calc(1.25 * var(--n)), 2px); height: round(calc(1.25 * var(--n)), 2px); flex: none; transition: transform .8s var(--ease); }
 .nav__trigger:hover .nav__mark { transform: rotate(-12deg); }
-/* импульс: 0–0,5 с знак, 0,2–0,55 с слово, 0,45–1,25 с всплеск по черте, 1,15–1,65 с точки */
+/* импульс: 0–0,5 с знак, 0,2–0,55 с слово, 0,45–1,15 с луч по черте (холст, main.js), 1,15–1,65 с точки */
 .nav.is-pulse .nav__mark { animation: nav-mark-pulse .5s ease-out; }
 @keyframes nav-mark-pulse { 40% { transform: scale(1.14); filter: blur(.6px) drop-shadow(0 0 calc(0.375 * var(--n)) var(--accent)); } }
 .nav.is-pulse .nav__label > span { animation: nav-label-sweep .35s linear .2s; }
 @keyframes nav-label-sweep { from { background-position: 20% 0; } to { background-position: 80% 0; } }
-.nav.is-pulse .nav__track { animation: nav-track .8s cubic-bezier(.45, .05, .35, 1) .45s; }
-@keyframes nav-track { from { transform: translateX(0); } to { transform: translateX(calc(-100% + 2.875 * var(--n))); } }
-.nav.is-pulse .nav__beat { animation: nav-beat .8s linear .45s; }
-@keyframes nav-beat { 0% { opacity: 0; } 14%, 80% { opacity: 1; } 100% { opacity: 0; } }
 .nav.is-pulse .nav__dots i { animation: nav-dots-flash .5s ease-out 1.15s; }
 @keyframes nav-dots-flash { 25% { background: var(--accent); box-shadow: 0 0 calc(0.25 * var(--n)) var(--accent); } }
 @media (prefers-reduced-motion: reduce) { .nav.is-pulse * { animation: none !important; } }
@@ -539,6 +532,8 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .hero-geo__head i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.5rem var(--accent); }
 .hero-geo__idx { color: #fff; min-width: 3.25rem; text-align: center; }
 .hero-geo__canvas { display: block; width: 100%; }
+.hero-geo.is-narrow .hero-geo__head { flex-wrap: wrap; row-gap: 0.5rem; }
+.hero-geo.is-narrow .hero-geo__nav { margin-left: auto; }
 .hero-geo__nav { display: inline-flex; align-items: center; gap: 0.25rem; }
 .hero-geo__nav button { width: 1.5rem; height: 1.5rem; border-radius: 0.4375rem; display: grid; place-items: center; background: rgba(255, 255, 255, .07); transition: background-color .2s; }
 .hero-geo__nav button:hover { background: var(--accent); }

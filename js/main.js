@@ -113,6 +113,54 @@
     if (!navPulseOn || navState || document.hidden || nav.classList.contains('is-tucked')) return;
     nav.classList.remove('is-pulse'); void nav.offsetWidth; nav.classList.add('is-pulse');
     clearTimeout(navPulseT); navPulseT = setTimeout(function () { nav.classList.remove('is-pulse'); }, 1700);
+    clearTimeout(navBeatT); navBeatT = setTimeout(navBeat, 450);   // луч стартует, когда свет прошёл по слову
+  }
+  // «удар сердца» по черте — как на кардиомониторе: форма не ездит, её рисует луч. Светящийся кончик идёт от слова
+  // к точкам (плавный разгон и торможение), посередине черты вычерчивает комплекс ЭКГ; нарисованное за лучом гаснет
+  // («люминофор»). Луч доходит до точек к 1,15 с — тогда же точки вспыхивают (CSS)
+  var navTrace = $('.nav__trace', nav), navBeatT = 0, navBeatRAF = 0;
+  function navWave(u) {   // u — положение вдоль комплекса (справа налево по времени): зубцы P, Q, R, S, T
+    var g = function (c, w, a) { var d = (u - c) / w; return a * Math.exp(-d * d); };
+    return g(-1.9, 0.38, 0.16) + g(-0.62, 0.11, -0.14) + g(-0.36, 0.12, 1) + g(-0.1, 0.11, -0.42) + g(1.05, 0.5, 0.26);
+  }
+  function navBeat() {
+    if (!navTrace || navState) return;
+    var W = navTrace.clientWidth, H = navTrace.clientHeight; if (!W || !H) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1), ctx = navTrace.getContext('2d');
+    navTrace.width = Math.round(W * dpr); navTrace.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var acc = getComputedStyle(nav).getPropertyValue('--accent').trim() || '#ff5a1f';
+    var mid = H / 2, amp = H * 0.44, cx = W * 0.5, unit = H * 0.72;   // комплекс — посередине черты, его ширина не зависит от длины черты
+    var TRAVEL = 700, TAU = 170, END = TRAVEL + 5 * TAU, t0 = performance.now();
+    var ease = function (p) { return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; };
+    var unease = function (e) { return e < .5 ? Math.sqrt(e / 2) : 1 - Math.sqrt(2 * (1 - e)) / 2; };   // когда луч был в этой точке
+    var y = function (x) { return mid - amp * navWave((cx - x) / unit); };
+    cancelAnimationFrame(navBeatRAF);
+    (function frame() {
+      var t = performance.now() - t0;   // время — из одного источника с t0
+      ctx.clearRect(0, 0, W, H);
+      if (t >= END || navState) return;
+      var p = Math.min(1, t / TRAVEL), head = W * (1 - ease(p));
+      // след: отрезки от точки, где луч был раньше всего (справа), до кончика; яркость гаснет с «возрастом»
+      for (var pass = 0; pass < 2; pass++) {
+        ctx.lineWidth = pass ? 1.5 : 4; ctx.lineCap = 'round'; ctx.strokeStyle = acc;
+        for (var x = W; x > head; x -= 1) {
+          var x2 = Math.max(head, x - 1), age = t - unease(1 - x / W) * TRAVEL, a = Math.exp(-age / TAU);
+          if (a < .02) continue;
+          ctx.globalAlpha = pass ? a : a * 0.18;
+          ctx.beginPath(); ctx.moveTo(x, y(x)); ctx.lineTo(x2, y(x2)); ctx.stroke();
+        }
+      }
+      // кончик луча: белое ядро и оранжевое свечение; появляется и гаснет на краях черты
+      if (p < 1) {
+        var hy = y(head), env = Math.min(1, p / 0.08, (1 - p) / 0.12), r = H * 0.55;
+        var gr = ctx.createRadialGradient(head, hy, 0, head, hy, r);
+        gr.addColorStop(0, acc); gr.addColorStop(1, 'transparent');
+        ctx.globalAlpha = 0.55 * env; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(head, hy, r, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = env; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(head, hy, 1.3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      navBeatRAF = requestAnimationFrame(frame);
+    })();
   }
   if (navPulseOn) {
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
@@ -563,15 +611,23 @@
     var needLeft = S.left + blockW + 2 * G0;               // левый край выреза не ближе этой линии
     var mode = null, R, K, cx, sheetRight, listW = 0, listLeft = 0, listGrow = 0;
 
-    // 1) со списком: сфера в вырезе, список по центру между сферой и правым краем
+    // 1) с картой: сфера в вырезе, карта по центру между сферой и правым краем.
+    //    Если в полный размер не помещается (ноутбуки, Windows с масштабом 125–150%) — пробуем компактнее:
+    //    поля у текста меньше, карта уже, сфера меньше. Берём первый вариант, который помещается
     if (heroIndex) { heroIndex.hidden = false; heroIndex.style.visibility = 'hidden'; listW = heroIndex.offsetWidth; heroIndex.hidden = true; heroIndex.style.visibility = ''; }
+    var listW0 = listW;
     if (listW) {
       K = 0.32;
-      var padMin = 44 * k, padTarget = listW * 0.22;   // поля списка: минимум и комфорт
-      var Rmax = S.height * 0.28, Rmin = 220 * k;
-      // самая крупная сфера, при которой помещаются вырез, сфера и список с минимальными полями
-      R = Math.min(Rmax, (right - needLeft - GAP - listW - 2 * padMin) / 2);
-      if (R >= Rmin) {
+      var Rmax = S.height * 0.28;
+      //          доля ширины карты, поля у текста, поля у карты, наименьший радиус сферы
+      var FITS = [[1, G0, 44, 220], [0.86, 48 * k, 36, 185], [0.74, 44 * k, 28, 165], [0.66, 40 * k, 24, 150]];
+      for (var fi = 0; fi < FITS.length && !mode; fi++) {
+        var fw = listW0 * FITS[fi][0], fg = FITS[fi][1], padMin = FITS[fi][2] * k, fnl = S.left + blockW + 2 * fg;
+        // самая крупная сфера, при которой помещаются вырез, сфера и карта с минимальными полями
+        R = Math.min(Rmax, (right - fnl - GAP - fw - 2 * padMin) / 2);
+        if (R < FITS[fi][3] * k) continue;
+        listW = fw; G0 = fg; needLeft = fnl;
+        var padTarget = listW * 0.22;                                // поля карты: комфорт
         var sMin = needLeft + (1 - K) * R + GAP;                    // вырез не задевает текст
         var sTarget = right - (1 + K) * R - (listW + 2 * padTarget); // список с комфортными полями
         sheetRight = Math.max(sMin, sTarget);
@@ -618,10 +674,14 @@
       heroIndex.hidden = mode !== 'list';
       if (mode === 'list') {
         heroIndex.style.left = Math.round(listLeft - G.left) + 'px'; heroIndex.style.right = 'auto';
-        heroIndex.style.width = listGrow ? Math.round(listW) + 'px' : '';
+        heroIndex.style.width = Math.abs(listW - listW0) > 0.5 ? Math.round(listW) + 'px' : '';
+        heroIndex.classList.toggle('is-narrow', listW < 300 * k);   // узкая карта — кнопки в шапке переносятся под заголовок
         if (heroGeo) heroGeo.resize();   // высоту панели меряем по её текущей ширине (не ждём ResizeObserver)
-        // середина списка (вместе с заголовком) — ровно на уровне центра сферы
-        heroIndex.style.top = Math.round(cy - G.top - heroIndex.offsetHeight / 2) + 'px';
+        // середина карты (вместе с шапкой) — ровно на уровне центра сферы; на низких экранах карта приподнимается,
+        // чтобы низом не уходить под кнопку чата в правом нижнем углу (считаем для страницы без прокрутки)
+        var ph = heroIndex.offsetHeight, pTop = cy - ph / 2, pLim = window.innerHeight - 90 * k - ph - window.scrollY;
+        if (pTop > pLim) pTop = Math.max(pLim, S.top + 24 * k);
+        heroIndex.style.top = Math.round(pTop - G.top) + 'px';
       }
     }
     heroClip = { x0: cx - R - G.left, x1: mode === 'list' ? listLeft - G.left - 18 * k : G.width };
