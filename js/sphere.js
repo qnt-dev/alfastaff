@@ -331,7 +331,7 @@
     var rateEl = q('[data-f="rate"]');
     if (o.rateLines) rateEl.innerHTML = o.rateLines.map(function (l) { return '<span class="sc-rate-line">' + l.replace(/^([МЖ]) /, '<i>$1</i> ') + '</span>'; }).join('');
     else rateEl.textContent = nbsp(o.rateCard || (o.rate + ' ₽'));
-    q('[data-f="shift"]').textContent = o.shift;
+    q('[data-f="shift"]').textContent = o.shift.replace(/(\d) (?=\S+$)/, '$1 '); // «8 или 15 ч»: число не отрывается от «ч»
     q('[data-f="count"]').textContent = String(o.jobs.length);
     q('[data-f="meals"]').textContent = o.meals.join(', ');
     q('[data-f="jobs"]').textContent = o.jobs.join(' · ');

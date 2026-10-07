@@ -69,7 +69,7 @@
       LIG = rgbOf(css.getPropertyValue('--accent-3'), ACC.map(function (c) { return Math.round(c + (255 - c) * .45); }));
       // ширину берём из CSS: панель может быть скрыта (раскладка первого экрана измеряет её до показа)
       W = Math.max(200, Math.round(parseFloat(getComputedStyle(root).width) || cv.getBoundingClientRect().width || 300));
-      Hm = Math.round(W * 0.46); GAP = Math.round(W * 0.13); FH = Math.round(W * 0.9); H = Hm + GAP + FH;
+      Hm = Math.round(W * 0.46); GAP = Math.round(W * 0.19); FH = Math.round(W * 0.9); H = Hm + GAP + FH;
       var d = Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 2);
       cv.style.height = H + 'px';
       cv.width = Math.round(W * d); cv.height = Math.round(H * d);

@@ -33,6 +33,9 @@
   --r-card: 1.375rem;
   --r-tile: 1rem;
   --gut: 10px; /* рамка как у референса QuantumFlux — 10px на любом экране */
+  --nav-w: calc(var(--ui) * 236); /* плашка меню (слева вверху) */
+  --nav-h: calc(var(--ui) * 40);
+  --dock: 12px; /* наверху страницы плашка сидит во врезке листа: отступ от края экрана = поле врезки */
   --page: 88.75rem; /* ширина контента тёмных секций: 1420px при 1rem = 16px, дальше растёт пропорционально */
 
   --f-display: 'Wix Madefor Display', 'Segoe UI', system-ui, sans-serif;
@@ -147,7 +150,6 @@ html[data-fonts="playfair"] {
   --f-text: 'Golos Text', 'Segoe UI', system-ui, sans-serif;
   --f-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
-html[data-fonts="playfair"] .nav__word { letter-spacing: -0.022em; }
 html[data-fonts="playfair"] .chat__who b { letter-spacing: -0.012em; }
 html[data-fonts="playfair"] .logo__word { letter-spacing: -0.024em; }
 html[data-fonts="playfair"] .doc__brand { letter-spacing: -0.02em; }
@@ -194,55 +196,75 @@ html[data-fonts="playfair"] .footer__title { letter-spacing: -0.026em; }
 svg { shape-rendering: geometricPrecision; }
 /* Сглаженные края. На экранах с плотностью 1 браузер сглаживает край круга в 1 пиксель,
    и маленькие круги выглядят «лесенкой». Мягкое перо шириной ~1.5px делает край ровным. */
-.logo__mark, .sign__mark, .doc__mark, .split__badge-mark, .nav__mark, .nav__chat-face, .chat__ava { filter: blur(.6px); }
+.logo__mark, .sign__mark, .doc__mark, .split__badge-mark, .nav__mark, .chat__ava { filter: blur(.6px); }
 .btn--black { box-shadow: 0 0 1.6px .5px rgba(23, 23, 23, .65); }
 .kicker__ico b { box-shadow: 0 0 1px var(--accent); }
 
 /* ---------- плашка: меню и чат (как у Xirex) ----------
    [сетка] [знак + Альфа-Стафф] [чат] — в левом верхнем углу листа, при прокрутке остаётся на месте.
    Меню и чат раскрываются вниз ровно на ширину плашки — как её продолжение. */
-.nav { --n: calc(var(--ui) * 16); position: fixed; z-index: 90; top: calc(var(--gut) + var(--ui) * 16); left: calc(var(--gut) + var(--ui) * 16); width: calc(var(--ui) * 236); }
+.nav { --n: calc(var(--ui) * 16); position: fixed; z-index: 90; top: calc(var(--gut) + var(--ui) * 16); left: calc(var(--gut) + var(--ui) * 16); width: var(--nav-w); }
 .nav { transition: transform .5s var(--ease), opacity .4s; }
 .nav.is-tucked { transform: translateY(calc(-100% - calc(2 * var(--n)))); opacity: 0; pointer-events: none; }
 .nav__box { position: relative; overflow: hidden; color: #fff; background: #171717; border-radius: calc(var(--ui) * 10); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06); transition: background-color .3s, box-shadow .3s; }
 /* на белом листе — светлая, тоном чуть темнее фона (как у Xirex на тёмном); раскрытая и на тёмных секциях — тёмная */
-.nav:not(.is-dark):not(.is-open) .nav__box { background: #efefec; box-shadow: inset 0 0 0 1px rgba(15, 15, 15, .06); }
-.nav:not(.is-dark):not(.is-open) .nav__logo { color: var(--ink); }
-.nav:not(.is-dark):not(.is-open) .nav__dots i { background: var(--ink); }
-.nav:not(.is-dark):not(.is-open) .nav__chat-ico { stroke: var(--ink); }
-.nav:not(.is-dark):not(.is-open) .nav__btn:hover { background: rgba(15, 15, 15, .07); }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) .nav__box { background: #efefec; box-shadow: inset 0 0 0 1px rgba(15, 15, 15, .06); }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) { --nav-fg: var(--ink); }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) .nav__dots i { background: var(--ink); }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) .nav__trigger:hover .nav__ico { background: rgba(15, 15, 15, .07); }
 .nav__ink { display: none; }
-.nav:not(.is-dark):not(.is-open) .nav__ink { display: block; }
-.nav:not(.is-dark):not(.is-open) .nav__inv { display: none; }
+/* наверху страницы плашка — часть тёмной рамки: стоит во врезке листа (.hero__cap) и уезжает вместе с ней (сдвиг --dock-y из main.js) */
+.nav.is-docked { top: var(--dock); left: var(--dock); transform: translateY(calc(var(--dock-y, 0) * -1px)); transition: none; }
+html .nav.is-docked .nav__box { background: var(--frame); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; } /* html — сильнее тона .is-dark ниже */
+/* меню из врезки раскрывается продолжением рамки: панель вплотную к рамке слева и к краю врезки справа, белый угол под ней скруглён */
+html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(var(--gut) - var(--dock)); border-radius: 0 0 20px 0; }
+.nav.is-docked.is-open::after { content: ''; position: absolute; left: calc(var(--gut) - var(--dock)); top: calc(100% - 1px); width: 14px; height: 14px; background: radial-gradient(circle at 100% 100%, transparent 12.65px, var(--frame) 13.85px); pointer-events: none; }
+/* врезка ушла за край — плашка въезжает сверху на обычное место */
+@keyframes nav-float-in { from { transform: translateY(calc(-100% - 2 * var(--n))); opacity: 0; } }
+.nav.is-float-in { animation: nav-float-in .55s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) { .nav.is-float-in { animation: none; } }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) .nav__ink { display: block; }
+.nav:not(.is-dark):not(.is-open):not(.is-docked) .nav__inv { display: none; }
 .nav__box { transition: background-color .4s; }
 .nav.is-dark .nav__box { background: rgba(46, 46, 46, .88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
-.nav__bar { display: grid; grid-template-columns: calc(1.75 * var(--n)) minmax(0, 1fr) calc(1.75 * var(--n)); align-items: center; height: calc(2.5 * var(--n)); padding: 0 calc(0.375 * var(--n)); }
-.nav__btn { position: relative; width: calc(1.75 * var(--n)); height: calc(1.75 * var(--n)); border-radius: calc(0.4375 * var(--n)); background: transparent; display: grid; place-items: center; transition: background-color .25s; }
-.nav__btn:hover, .nav.is-menu .nav__grid, .nav.is-chat .nav__chat { background: rgba(255, 255, 255, .12); }
+.nav__bar { display: flex; align-items: center; height: calc(2.5 * var(--n)); padding: 0 calc(0.375 * var(--n)); }
+/* плашка — одна кнопка «Меню»: ⋮⋮ ——— МЕНЮ ●. Изредка от знака к точкам пробегает оранжевый импульс (класс .is-pulse из main.js):
+   знак вспыхивает → свет проходит по слову → искра бежит по черте → точки загораются. В открытом меню черта залита, точки повёрнуты. */
+.nav { --nav-fg: #fff; }
+.nav__trigger { position: relative; flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: calc(0.5 * var(--n)); padding-right: calc(0.25 * var(--n)); color: var(--nav-fg); }
+.nav__ico { flex: none; width: calc(1.75 * var(--n)); height: calc(1.75 * var(--n)); border-radius: calc(0.4375 * var(--n)); display: grid; place-items: center; transition: background-color .25s; }
+.nav__trigger:hover .nav__ico, .nav.is-menu .nav__ico { background: rgba(255, 255, 255, .12); }
+.nav__line { position: relative; flex: 1; min-width: calc(1.5 * var(--n)); height: 1px; }
+.nav__line::before { content: ''; position: absolute; inset: 0; background: currentColor; opacity: .3; }
+.nav__line::after { content: ''; position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: 100% 50%; transition: transform .45s var(--ease); }
+.nav.is-menu .nav__line::after { transform: none; }
+/* «удар сердца»: всплеск-зубец с хвостом едет по черте от слова к точкам (только во время импульса); двигается
+   дорожка во всю ширину черты — translateX в процентах её ширины, без пересчёта раскладки */
+.nav__track { position: absolute; inset: 0; pointer-events: none; }
+.nav__beat { position: absolute; right: 0; top: 50%; height: var(--n); margin-top: calc(-0.5 * var(--n)); display: flex; align-items: center; opacity: 0; filter: drop-shadow(0 0 calc(0.1875 * var(--n)) var(--accent)); }
+.nav__beat svg { flex: none; width: calc(1.375 * var(--n)); height: var(--n); fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.nav__beat i { flex: none; width: calc(1.5 * var(--n)); height: 1.5px; margin-left: -1px; background: linear-gradient(90deg, var(--accent), transparent); }
+.nav__label { flex: none; font-family: var(--f-mono); font-size: calc(0.6875 * var(--n)); font-weight: 700; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.nav__label > span { display: block; color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(90deg, var(--nav-fg) 0 40%, var(--accent) 47% 53%, var(--nav-fg) 60% 100%); background-size: 300% 100%; background-position: 0 0; }
 .nav__dots { display: grid; grid-template-columns: repeat(3, 3px); gap: 3px; transition: transform .5s var(--ease); }
 .nav__dots i { width: 3px; height: 3px; border-radius: 50%; background: #fff; transition: transform .35s var(--ease), opacity .25s; }
 .nav.is-menu .nav__dots { transform: rotate(90deg); }
 .nav.is-menu .nav__dots i:nth-child(2n) { transform: scale(0); opacity: 0; }
-.nav__logo { justify-self: center; display: inline-flex; align-items: center; gap: calc(0.5 * var(--n)); color: #fff; }
 .nav__mark { width: round(calc(1.25 * var(--n)), 2px); height: round(calc(1.25 * var(--n)), 2px); flex: none; transition: transform .8s var(--ease); }
-.nav__logo:hover .nav__mark { transform: rotate(-12deg); }
-.nav__word { font-family: var(--f-display); font-weight: 800; font-size: calc(0.875 * var(--n)); letter-spacing: -0.055em; white-space: nowrap; }
-/* кнопка чата: облачко → при наведении наш знак (у Xirex — фото сотрудника) → в открытом чате крестик */
-.nav__chat svg { position: absolute; left: 50%; top: 50%; transition: opacity .2s, transform .35s var(--ease); }
-.nav__chat-ico { width: calc(1 * var(--n)); height: calc(1 * var(--n)); margin: calc(-0.5 * var(--n)) 0 0 calc(-0.5 * var(--n)); }
-.nav__chat-ico { fill: none; stroke: #fff; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.nav__chat-face { width: calc(1.375 * var(--n)); height: calc(1.375 * var(--n)); margin: calc(-0.6875 * var(--n)) 0 0 calc(-0.6875 * var(--n)); opacity: 0; transform: scale(.6) rotate(-30deg); }
-.nav__chat-x { width: calc(0.875 * var(--n)); height: calc(0.875 * var(--n)); margin: calc(-0.4375 * var(--n)) 0 0 calc(-0.4375 * var(--n)); fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; opacity: 0; transform: rotate(-90deg); }
-.nav.is-tag .nav__chat { background: transparent; }
-.nav.is-tag .nav__chat-ico { opacity: 0; transform: scale(.6); }
-.nav.is-tag .nav__chat-face { opacity: 1; transform: none; }
-.nav.is-chat .nav__chat-ico, .nav.is-chat .nav__chat-face { opacity: 0; transform: scale(.6); }
-.nav.is-chat .nav__chat-x { opacity: 1; transform: none; }
+.nav__trigger:hover .nav__mark { transform: rotate(-12deg); }
+/* импульс: 0–0,5 с знак, 0,2–0,55 с слово, 0,45–1,25 с всплеск по черте, 1,15–1,65 с точки */
+.nav.is-pulse .nav__mark { animation: nav-mark-pulse .5s ease-out; }
+@keyframes nav-mark-pulse { 40% { transform: scale(1.14); filter: blur(.6px) drop-shadow(0 0 calc(0.375 * var(--n)) var(--accent)); } }
+.nav.is-pulse .nav__label > span { animation: nav-label-sweep .35s linear .2s; }
+@keyframes nav-label-sweep { from { background-position: 20% 0; } to { background-position: 80% 0; } }
+.nav.is-pulse .nav__track { animation: nav-track .8s cubic-bezier(.45, .05, .35, 1) .45s; }
+@keyframes nav-track { from { transform: translateX(0); } to { transform: translateX(calc(-100% + 2.875 * var(--n))); } }
+.nav.is-pulse .nav__beat { animation: nav-beat .8s linear .45s; }
+@keyframes nav-beat { 0% { opacity: 0; } 14%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.nav.is-pulse .nav__dots i { animation: nav-dots-flash .5s ease-out 1.15s; }
+@keyframes nav-dots-flash { 25% { background: var(--accent); box-shadow: 0 0 calc(0.25 * var(--n)) var(--accent); } }
+@media (prefers-reduced-motion: reduce) { .nav.is-pulse * { animation: none !important; } }
 /* оранжевая плашка «Ответим за 30 минут» выезжает вправо, с перемычкой от кнопки */
-.nav__tag { position: absolute; z-index: 2; left: calc(100% + calc(0.3125 * var(--n))); top: calc(1.25 * var(--n)); height: calc(1.625 * var(--n)); margin-top: calc(-0.8125 * var(--n)); padding: 0 calc(0.625 * var(--n)); line-height: 1; display: flex; align-items: center; background: var(--accent); color: var(--ink); font-family: var(--f-mono); font-size: calc(0.75 * var(--n)); font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap; border-radius: calc(0.375 * var(--n)); pointer-events: none; clip-path: inset(0 calc(100% + calc(1 * var(--n))) 0 calc(-1 * var(--n))); transition: clip-path .3s var(--ease); }
-.nav__tag::before { content: ''; position: absolute; right: 100%; top: 50%; width: calc(0.8125 * var(--n)); height: round(calc(0.125 * var(--n)), 1px); transform: translateY(-50%); background: var(--accent); }
-.nav.is-tag .nav__tag { clip-path: inset(0 0 0 calc(-1 * var(--n))); }
-@media (hover: none) { .nav__tag { display: none; } }
 
 .nav__drop { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease); }
 .nav.is-open .nav__drop { grid-template-rows: 1fr; }
@@ -322,20 +344,36 @@ svg { shape-rendering: geometricPrecision; }
 .chat__form.is-empty textarea { border-bottom-color: var(--ink); animation: shake .4s; }
 @keyframes shake { 25% { transform: translateX(calc(-0.25 * var(--n))); } 75% { transform: translateX(calc(0.25 * var(--n))); } }
 
-.dock { position: fixed; z-index: 50; right: 1.625rem; bottom: 1.375rem; display: flex; gap: 0.5rem; align-items: center; opacity: 0; transform: translateY(1rem); pointer-events: none; transition: opacity .5s var(--ease), transform .5s var(--ease); }
+.dock { position: fixed; z-index: 50; right: calc(1.625rem + 3.25rem + 0.5rem); bottom: calc(1.375rem + 0.1875rem); display: flex; gap: 0.5rem; align-items: center; opacity: 0; transform: translateY(1rem); pointer-events: none; transition: opacity .5s var(--ease), transform .5s var(--ease); }
 .dock.is-on { opacity: 1; transform: none; pointer-events: auto; }
 .dock.is-on.is-tucked { opacity: 0; transform: translateY(1rem); pointer-events: none; }
 .dock__cta { height: 2.875rem; padding: 0 1.125rem; display: inline-flex; align-items: center; gap: 0.75rem; background: var(--frame); color: #fff; border-radius: 0.75rem; font-family: var(--f-mono); font-size: 0.7188rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.04em; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 0 1.2px .4px rgba(23, 23, 23, .7), 0 0.75rem 1.875rem rgba(0, 0, 0, .3); }
 .dock__cta svg { width: 0.8125rem; height: 0.8125rem; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .dock__top { width: 2.875rem; height: 2.875rem; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 0 1.2px .4px rgba(255, 255, 255, .7), 0 0.75rem 1.875rem rgba(0, 0, 0, .3); }
+/* ---------- чат с отделом подбора: кнопка в правом нижнем углу, окно раскрывается вверх (как у большинства сайтов) ---------- */
+.chatw { --n: calc(var(--ui) * 16); position: fixed; z-index: 95; right: 1.625rem; bottom: 1.375rem; }
+.chatw__btn { position: relative; width: 3.25rem; height: 3.25rem; border-radius: 50%; display: grid; place-items: center; background: var(--accent); box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 0.75rem 1.875rem rgba(0, 0, 0, .3); transition: transform .35s var(--ease); }
+.chatw__btn:hover { transform: scale(1.06); }
+.chatw__btn svg { position: absolute; left: 50%; top: 50%; fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s, transform .35s var(--ease); }
+.chatw__ico { width: 1.375rem; height: 1.375rem; margin: -0.6875rem 0 0 -0.6875rem; stroke-width: 1.3; }
+.chatw__x { width: 1.125rem; height: 1.125rem; margin: -0.5625rem 0 0 -0.5625rem; stroke-width: 1.6; opacity: 0; transform: rotate(-90deg); }
+.chatw.is-open .chatw__ico { opacity: 0; transform: scale(.6); }
+.chatw.is-open .chatw__x { opacity: 1; transform: none; }
+/* подсказка «Ответим за 30 минут» выезжает из кнопки влево */
+.chatw__tag { position: absolute; right: calc(100% + 0.5rem); top: 50%; height: 2rem; margin-top: -1rem; padding: 0 0.75rem; display: flex; align-items: center; background: var(--accent); color: var(--ink); border-radius: 0.5rem; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none; clip-path: inset(0 0 0 100% round 0.5rem); transition: clip-path .35s var(--ease); }
+.chatw:not(.is-open) .chatw__btn:hover + .chatw__tag { clip-path: inset(0 0 0 0 round 0.5rem); }
+@media (hover: none) { .chatw__tag { display: none; } }
+.chatw__panel { position: absolute; right: 0; bottom: calc(100% + 0.75rem); width: calc(22 * var(--n)); max-height: calc(100svh - 7rem); background: #171717; color: #fff; border-radius: calc(0.875 * var(--n)); overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 1.5rem 3.5rem rgba(0, 0, 0, .45); transform-origin: 100% 100%; }
+.chatw__panel .chat__head { padding-top: calc(0.875 * var(--n)); box-shadow: none; }
+.chatw__panel:not([hidden]) { animation: chatwIn .45s var(--ease) both; }
+@keyframes chatwIn { from { opacity: 0; transform: translateY(0.75rem) scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .chatw__panel:not([hidden]) { animation: none; } }
 .dock__top svg { width: 0.9375rem; height: 0.9375rem; fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 /* =====================================================================
    01 · ПЕРВЫЙ ЭКРАН
    ===================================================================== */
 .hero {
-  --notch: 3.75rem;
-  --tab: 54%;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 59fr) minmax(0, 41fr);
@@ -347,14 +385,17 @@ svg { shape-rendering: geometricPrecision; }
 }
 .hero__sheet {
   position: relative;
-  height: calc(100% - var(--notch));
+  height: 100%;
   background: var(--sheet);
   color: var(--ink);
-  border-radius: var(--r-sheet) var(--r-sheet) var(--r-sheet) 0;
+  border-radius: var(--r-sheet);
   z-index: 1;
 }
-.hero__tab { position: absolute; left: 0; top: 100%; width: var(--tab); height: var(--notch); background: var(--sheet); border-radius: 0 0 var(--r-sheet) var(--r-sheet); }
-.hero__tab::after { content: ''; position: absolute; left: calc(100% - 1px); top: 0; width: calc(var(--r-sheet) + 1px); height: var(--r-sheet); background: radial-gradient(circle at 100% 100%, transparent calc(var(--r-sheet) - 1.25px), var(--sheet) calc(var(--r-sheet) + .25px)); }
+/* врезка под плашку меню в верхнем левом углу: тёмная рамка «входит» в лист, как врезка соцсетей слева */
+.hero__cap { position: absolute; left: 0; top: 0; z-index: 4; width: calc(var(--nav-w) + 2 * var(--dock) - var(--gut)); height: calc(var(--nav-h) + 2 * var(--dock) - var(--gut)); background: var(--frame); border-radius: 0 0 20px 0; pointer-events: none; }
+.hero__cap::before, .hero__cap::after { content: ''; position: absolute; width: 14px; height: 14px; background: radial-gradient(circle at 100% 100%, transparent 12.65px, var(--frame) 13.85px); }
+.hero__cap::before { left: calc(100% - 1px); top: 0; }
+.hero__cap::after { left: 0; top: calc(100% - 1px); }
 
 .logo { position: absolute; top: 1.625rem; left: 1.875rem; top: round(1.625rem, 1px); left: round(1.875rem, 1px); display: flex; align-items: center; gap: 0.75rem; z-index: 3; color: var(--ink); }
 .logo__mark { width: 2.5rem; height: 2.5rem; width: round(2.5rem, 2px); height: round(2.5rem, 2px); flex: none; transition: transform .8s var(--ease); }
@@ -432,18 +473,22 @@ svg { shape-rendering: geometricPrecision; }
 .ticker__set span::after { content: ''; width: calc(var(--ui) * 5); height: calc(var(--ui) * 5); border-radius: 50%; background: rgba(15, 15, 15, .2); }
 @keyframes marquee { to { transform: translateX(-50%); } }
 
-.hero__notch { position: absolute; left: calc(var(--tab) + var(--r-sheet) + 0.375rem); right: 0; top: 100%; height: var(--notch); display: flex; align-items: center; gap: 1.375rem; z-index: 2; color: #fff; }
+/* «кармашек» с людьми — врезка тёмной рамки в правый нижний угол листа, зеркально врезке меню слева вверху */
+.hero__notch { position: absolute; right: 0; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 1.375rem; padding: var(--dock) calc(var(--dock) - var(--gut)) calc(var(--dock) - var(--gut)) var(--dock); background: var(--frame); border-radius: 20px 0 0 0; color: #fff; }
+.hero__notch::before, .hero__notch::after { content: ''; position: absolute; width: 14px; height: 14px; background: radial-gradient(circle at 0 0, transparent 12.65px, var(--frame) 13.85px); pointer-events: none; }
+.hero__notch::before { right: 0; bottom: calc(100% - 1px); }
+.hero__notch::after { right: calc(100% - 1px); bottom: 0; }
 /* люди, которые возвращаются: линейные портреты (Notionists, CC0) в светлых плитках внахлёст — как у Syntiq */
 .notch-people { display: inline-flex; padding-right: 1rem; }
 .notch-people__face { position: relative; width: 2.5rem; height: 2.5rem; margin-right: -1rem; flex: none; overflow: hidden; border-radius: 0.625rem; background: #f4f4f2; border: round(0.125rem, 1px) solid #d2d2ce; transition: margin .5s var(--ease), transform .5s var(--ease); }
 .notch-people__face img { display: block; width: 100%; height: 100%; }
 .notch-people:hover .notch-people__face { margin-right: -0.625rem; }
 .notch-people:hover .notch-people__face:nth-child(odd) { transform: translateY(-0.125rem); }
-.notch-meter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; max-width: 14.375rem; }
+.notch-meter { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: 0.375rem 0.625rem; }
 .notch-meter__bars { display: inline-flex; gap: 0.25rem; }
 .notch-meter__bars i { width: 0.5rem; height: 0.9375rem; border-radius: 0.25rem; background: var(--accent); }
 .notch-meter__bars i.half { background: linear-gradient(90deg, var(--accent) 50%, rgba(255, 255, 255, .18) 50%); }
-.notch-meter__note { flex-basis: 100%; }
+.notch-meter__note { grid-column: 1 / -1; }
 
 .hero__side { display: flex; flex-direction: column; min-width: 0; }
 
@@ -488,7 +533,7 @@ svg { shape-rendering: geometricPrecision; }
 .hero-index__list li.is-on button::before { transform: scale(1); }
 
 /* ---------- география объектов справа от сферы (js/geo-panel.js) ---------- */
-.hero-geo { width: 18.75rem; color: #fff; }
+.hero-geo { width: 20.625rem; color: #fff; }
 .hero-geo__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; color: var(--w-2); }
 .hero-geo__head > span:first-child { display: inline-flex; align-items: center; gap: 0.5rem; }
 .hero-geo__head i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.5rem var(--accent); }
@@ -602,11 +647,11 @@ svg { shape-rendering: geometricPrecision; }
 .sc-loc { font-size: 0.7188em; font-weight: 600; line-height: 1.3; color: var(--sc-orange); letter-spacing: -0.01em; }
 .sc-region { flex-shrink: 0; font-size: 0.625em; font-weight: 600; line-height: 1; padding: 0.1875em 0.375em; border-radius: 0.25em; background: var(--sc-peach); color: #a51213; white-space: nowrap; letter-spacing: 0; }
 .sc-stats, .sc-line { text-transform: uppercase; }
-.sc-stats { display: grid; grid-template-columns: 84fr 70fr 54fr 70fr; gap: 0.75em; margin-top: 0.625em; }
-.sc-label { font-family: var(--f-mono); font-size: 0.6562em; line-height: 1.2; color: #6b7c76; margin-bottom: 0.3125em; white-space: nowrap; letter-spacing: 0; }
+.sc-stats { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; gap: 0.75em 0.5em; margin-top: 0.625em; } /* колонки по содержимому; если тесно — длинные значения переносятся («Ланч-/бокс»), ставка не рвётся */
+.sc-label { font-family: var(--f-mono); font-size: 0.6562em; line-height: 1.2; color: #6b7c76; margin-bottom: 0.3125em; letter-spacing: 0; }
 .sc-rate-line { display: block; }
 .sc-rate-line i { font-style: normal; color: #6b7c76; margin-right: .2em; }
-.sc-value { font-family: var(--f-mono); font-size: 0.8438em; font-weight: 600; line-height: 1.2; color: var(--ink); white-space: nowrap; letter-spacing: -0.02em; }
+.sc-value { font-family: var(--f-mono); font-size: 0.8438em; font-weight: 600; line-height: 1.2; color: var(--ink); letter-spacing: -0.02em; }
 .sc-line { display: flex; align-items: flex-start; gap: 0.375em; margin-top: 0.625em; font-size: 0.6875em; line-height: 1.35; color: #3f514b; letter-spacing: 0; }
 .sc-line + .sc-line { margin-top: 0.375em; }
 .sc-line b { color: var(--ink); font-weight: 600; }
@@ -1254,7 +1299,7 @@ svg { shape-rendering: geometricPrecision; }
   :root { --r-sheet: 1.5rem; }
   .hero { grid-template-columns: minmax(0, 1fr); height: auto; max-height: none; min-height: 0; }
   .hero__sheet { height: auto; min-height: min(calc(100svh - 10rem), 51.25rem); border-radius: var(--r-sheet); padding-bottom: 1.875rem; display: flex; flex-direction: column; }
-  .hero__tab, .hero__notch, .hero__social, .hero-index { display: none; }
+  .hero__notch, .hero__social, .hero-index, .hero__cap { display: none; }
   .hero__content { position: relative; inset: auto; flex: 1; padding: 7.5rem 1.375rem 1.875rem; }
   .hero__title { font-size: clamp(2.25rem, 10.4vw, 4rem); }
   .hero__titles { --title-lh: 1.24; }
@@ -1306,7 +1351,9 @@ svg { shape-rendering: geometricPrecision; }
   .contact { grid-template-columns: 1fr; }
   .contact__left { padding-left: 0.75rem; }
   .form__row { grid-template-columns: 1fr; }
-  .dock { right: 0.875rem; bottom: 0.875rem; }
+  .dock { right: calc(0.875rem + 3.25rem + 0.5rem); bottom: calc(0.875rem + 0.1875rem); }
+  .chatw { right: 0.875rem; bottom: 0.875rem; }
+  .chatw__panel { position: fixed; left: var(--gut); right: var(--gut); bottom: calc(0.875rem + 3.25rem + 0.75rem); width: auto; max-height: calc(100svh - 6rem); }
 }
 
 @media (max-width: 520px) {

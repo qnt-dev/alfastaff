@@ -12,8 +12,8 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brandbook/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
-  <link rel="stylesheet" href="css/style-company.css?v=20261011d">
-  <link rel="stylesheet" href="css/company.css?v=20261005soft-spheres-v2">
+  <link rel="stylesheet" href="css/style-company.css?v=20261013c">
+  <link rel="stylesheet" href="css/company.css?v=20261013a">
   <link rel="stylesheet" href="css/style-switch.css?v=20261005-style-switch-v1">
 </head>
 <body>
@@ -30,17 +30,12 @@
   <header class="nav" data-nav>
     <div class="nav__box">
       <div class="nav__bar">
-        <button class="nav__btn nav__grid" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-menu">
-          <span class="nav__dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-        </button>
-        <a class="nav__logo" href="#top" aria-label="Альфа-Стафф — на главную">
+        <!-- вся плашка — кнопка «Меню»: ⋮⋮ ——— МЕНЮ ● (импульс от знака к точкам — main.js) -->
+        <button class="nav__trigger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-menu">
+          <span class="nav__ico" aria-hidden="true"><span class="nav__dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+          <span class="nav__line" aria-hidden="true"><span class="nav__track"><span class="nav__beat"><svg viewBox="0 0 22 16"><path d="M0 8H5l1.6 1.6 2.4-8.6 2.6 12 1.8-5H22" /></svg><i></i></span></span></span>
+          <span class="nav__label" aria-hidden="true"><span>Меню</span></span>
           <svg class="nav__mark nav__inv" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg><svg class="nav__mark nav__ink" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark" /></svg>
-          <span class="nav__word"><img src="assets/brandbook/wordmark.svg" alt="Альфа-Стафф" width="128" height="11"></span>
-        </a>
-        <button class="nav__btn nav__chat" type="button" aria-label="Чат с отделом подбора — ответим за 30 минут" aria-expanded="false" aria-controls="nav-chat">
-          <svg class="nav__chat-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 2.75h9.2c.83 0 1.5.67 1.5 1.5v5.6c0 .83-.67 1.5-1.5 1.5H8.6l-3.1 2.4v-2.4H3.4c-.83 0-1.5-.67-1.5-1.5v-5.6c0-.83.67-1.5 1.5-1.5z" /><path d="M5.3 6.15h5.4M5.3 8.45h3.4" /></svg>
-          <svg class="nav__chat-face nav__inv" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg><svg class="nav__chat-face nav__ink" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark" /></svg>
-          <svg class="nav__chat-x" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" /></svg>
         </button>
       </div>
 
@@ -74,25 +69,32 @@
               <a href="tel:+79683211020">+7 968 321-10-20 · бизнес</a>
             </div>
           </nav>
-
-          <div class="chat" id="nav-chat" role="dialog" aria-label="Чат с отделом подбора" hidden>
-            <div class="chat__head">
-              <svg class="chat__ava" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
-              <span class="chat__who"><b>Отдел подбора</b><span class="mono"><i></i>На связи · ответим за 30 минут</span></span>
-            </div>
-            <div class="chat__log" data-chat-log data-lenis-prevent aria-live="polite"></div>
-            <div class="chat__quick" data-chat-quick></div>
-            <form class="chat__form" data-chat-form novalidate>
-              <label class="chat__field"><span class="visually-hidden">Сообщение</span><textarea name="msg" rows="2" placeholder="Ваше сообщение…" maxlength="1000"></textarea></label>
-              <button class="chat__send" type="submit" aria-label="Отправить в Telegram"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
-              <p class="chat__note mono">Откроется Telegram @alfastaff — текст уже вписан</p>
-            </form>
-          </div>
         </div>
       </div>
     </div>
-    <span class="nav__tag" aria-hidden="true"><span>Ответим за 30 минут</span></span>
   </header>
+
+  <!-- чат с отделом подбора: кнопка в правом нижнем углу, окно раскрывается вверх -->
+  <div class="chatw" data-chatw>
+    <div class="chat chatw__panel" id="nav-chat" role="dialog" aria-label="Чат с отделом подбора" hidden>
+      <div class="chat__head">
+        <svg class="chat__ava" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
+        <span class="chat__who"><b>Отдел подбора</b><span class="mono"><i></i>На связи · ответим за 30 минут</span></span>
+      </div>
+      <div class="chat__log" data-chat-log data-lenis-prevent aria-live="polite"></div>
+      <div class="chat__quick" data-chat-quick></div>
+      <form class="chat__form" data-chat-form novalidate>
+        <label class="chat__field"><span class="visually-hidden">Сообщение</span><textarea name="msg" rows="2" placeholder="Ваше сообщение…" maxlength="1000"></textarea></label>
+        <button class="chat__send" type="submit" aria-label="Отправить в Telegram"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
+        <p class="chat__note mono">Откроется Telegram @alfastaff — текст уже вписан</p>
+      </form>
+    </div>
+    <button class="chatw__btn" type="button" aria-label="Чат с отделом подбора — ответим за 30 минут" aria-expanded="false" aria-controls="nav-chat">
+      <svg class="chatw__ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 2.75h9.2c.83 0 1.5.67 1.5 1.5v5.6c0 .83-.67 1.5-1.5 1.5H8.6l-3.1 2.4v-2.4H3.4c-.83 0-1.5-.67-1.5-1.5v-5.6c0-.83.67-1.5 1.5-1.5z" /></svg>
+      <svg class="chatw__x" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" /></svg>
+    </button>
+    <span class="chatw__tag" aria-hidden="true">Ответим за 30 минут</span>
+  </div>
 
   <div class="dock" aria-hidden="true">
     <a class="dock__cta" href="#contact" tabindex="-1"><span class="scramble" data-text="Оставить заявку">Оставить заявку</span><svg viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>
@@ -103,6 +105,7 @@
     <!-- ============ 01 · ПЕРВЫЙ ЭКРАН ============ -->
     <section class="hero" id="top" aria-label="Альфа-Стафф">
       <div class="hero__sheet">
+        <div class="hero__cap" aria-hidden="true"></div>
         <nav class="hero__social" aria-label="Мы на связи">
           <a href="https://t.me/alfastaff" target="_blank" rel="noopener" aria-label="Telegram" title="Telegram — @alfastaff"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" /><path d="M7.2 11.7l9-3.6c.4-.2.8.1.7.6l-1.5 7.1c-.1.5-.5.6-.9.4l-2.4-1.8-1.2 1.1c-.1.1-.3.2-.5.2l.2-2.4 4.4-4-5.5 3.4-2.3-.7c-.5-.2-.5-.5 0-.7z" /></svg></a>
           <a href="https://max.ru/" target="_blank" rel="noopener" aria-label="Max" title="Max"><svg class="ico-max" viewBox="-12 -12 124 124"><path d="M50.76 0c27.53 0 49.12 22.34 49.12 49.89S77.61 99.23 51.02 99.23c-9.43 0-14.01-1.33-21.37-6.54-.5-.36-1.2-.26-1.63.19-5.66 6.04-20.17 10.28-20.83 2.03C7.19 80.53 0 71.18 0 49.61 0 21.3 23.22 0 50.76 0m.77 24.55c-13.07-.68-23.26 8.39-25.51 22.58-1.86 11.75 1.44 26.07 4.26 26.8 1.2.3 4.08-1.9 6.18-3.88.4-.37.99-.44 1.45-.15 3.27 2 6.97 3.5 11.05 3.71 13.42.7 25.3-9.8 26-23.21.71-13.42-10.01-25.14-23.43-25.85" /></svg></a>
@@ -154,7 +157,6 @@
           </div>
         </div>
 
-        <div class="hero__tab" aria-hidden="true"></div>
         <div class="hero__notch">
           <div class="notch-people" role="img" aria-label="Люди, которые работают с нами">
             <span class="notch-people__face"><img src="assets/img/people/1.svg" alt="" width="40" height="40" decoding="async"></span><span class="notch-people__face"><img src="assets/img/people/2.svg" alt="" width="40" height="40" decoding="async"></span><span class="notch-people__face"><img src="assets/img/people/3.svg" alt="" width="40" height="40" decoding="async"></span><span class="notch-people__face"><img src="assets/img/people/4.svg" alt="" width="40" height="40" decoding="async"></span>
@@ -1012,11 +1014,11 @@
   <script src="assets/vendor/three.min.js"></script>
   <script src="js/objects.js?v=20261011a"></script>
   <script src="js/data.js?v=20261011b"></script>
-  <script src="js/sphere-company.js?v=20261011a"></script>
+  <script src="js/sphere-company.js?v=20261012a"></script>
   <script src="js/morph-company.js?v=20261005branding-only"></script>
   <script src="js/roads.js?v=20261011b"></script>
-  <script src="js/geo-panel.js?v=20261011l"></script>
-  <script src="js/main.js?v=20261011b"></script>
+  <script src="js/geo-panel.js?v=20261012a"></script>
+  <script src="js/main.js?v=20261013a"></script>
   <script src="js/style-switch.js?v=20261005-style-switch-v1"></script>
 </body>
 </html>

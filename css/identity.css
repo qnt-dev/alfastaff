@@ -1,4 +1,17 @@
 /* Authentic company wordmark within the existing orange layout. */
-.nav__word img, .logo__word img { width: 8rem; height: auto; }
-.nav__word img, .logo--light .logo__word img { filter: invert(1); }
-.nav:not(.is-dark):not(.is-open) .nav__word img { filter: none; }
+.logo__word img { width: 8rem; height: auto; }
+.logo--light .logo__word img { filter: invert(1); }
+/* Шрифты как в «Брендбуке»: Montserrat для заголовков, текста и подписей. */
+@font-face {
+  font-family: 'Montserrat'; font-style: normal; font-weight: 100 900;
+  font-display: swap; src: url('../assets/fonts/Montserrat-Variable.woff2') format('woff2');
+}
+html[data-fonts="company"] {
+  --f-display: 'Montserrat', 'Segoe UI', sans-serif;
+  --f-text: 'Montserrat', 'Segoe UI', sans-serif;
+  --f-mono: 'Montserrat', 'Segoe UI', sans-serif;
+}
+/* Заголовок в одну строку на телефоне — с более широким шрифтом (как в «Брендбуке»). */
+@media (max-width: 520px) {
+  .hero__title { font-size: clamp(1.5rem, calc((100vw - 5.5rem) / 8.6), 4rem); }
+}

@@ -68,8 +68,10 @@
      Мышь: наведение на сетку раскрывает меню, уход с плашки — закрывает.
      Касание и клавиатура: нажатие на сетку открывает и закрывает.
      Наведение на кнопку чата — оранжевая плашка «Ответим за 30 минут», нажатие — чат. */
-  var nav = $('[data-nav]'), navGrid = $('.nav__grid', nav), navChatBtn = $('.nav__chat', nav);
-  var navMenu = $('#nav-menu'), navChat = $('#nav-chat'), dock = $('.dock');
+  var nav = $('[data-nav]'), navGrid = $('.nav__trigger', nav);   // вся плашка — кнопка «Меню»
+  var navMenu = $('#nav-menu'), dock = $('.dock');
+  // чат — отдельный виджет в правом нижнем углу (кнопка + окно над ней)
+  var chatw = $('[data-chatw]'), chatBtn = $('.chatw__btn', chatw), navChat = $('#nav-chat');
   // мышь или касание — по последнему нажатию (медиазапрос hover на гибридных экранах ненадёжен)
   var lastPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches ? 'mouse' : 'touch';
   document.addEventListener('pointerdown', function (e) { lastPointer = e.pointerType || 'mouse'; }, true);
@@ -79,26 +81,45 @@
     if (navState === state) { navByHover = navByHover && byHover; return; }
     navState = state; navByHover = !!byHover;
     navMenu.hidden = state !== 'menu';
-    navChat.hidden = state !== 'chat';
     nav.classList.toggle('is-open', !!state);
     nav.classList.toggle('is-menu', state === 'menu');
-    nav.classList.toggle('is-chat', state === 'chat');
     navGrid.setAttribute('aria-expanded', state === 'menu' ? 'true' : 'false');
-    navChatBtn.setAttribute('aria-expanded', state === 'chat' ? 'true' : 'false');
-    navChatBtn.setAttribute('aria-label', state === 'chat' ? 'Закрыть чат' : 'Чат с отделом подбора — ответим за 30 минут');
-    if (state === 'chat') nav.classList.remove('is-tag');
     if (state === 'menu') {
       // пункты были скрыты — ширины букв для мелькания меряем заново
       requestAnimationFrame(function () { $$('[data-glitch]', navMenu).forEach(glitchRemeasure); });
     } else $$('.nav__has-sub', nav).forEach(function (li) { li.classList.remove('is-sub'); });
-    if (state === 'chat') chatOpen();
   }
   function navClose() { navSet(''); }
+  function chatSet(open) {
+    if (open === chatw.classList.contains('is-open')) return;
+    chatw.classList.toggle('is-open', open);
+    navChat.hidden = !open;
+    chatBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    chatBtn.setAttribute('aria-label', open ? 'Закрыть чат' : 'Чат с отделом подбора — ответим за 30 минут');
+    if (open) chatOpen();
+  }
+  chatBtn.addEventListener('click', function () { chatSet(!chatw.classList.contains('is-open')); });
+  // плашка широкая — раскрываем по наведению не сразу, а если мышь задержалась (не от случайного пролёта к углу)
+  var navIntentT = 0;
   navGrid.addEventListener('pointerenter', function (e) {
-    if (e.pointerType !== 'mouse' || navState === 'chat') return;
-    navHoverT = performance.now();
-    navSet('menu', true);
+    if (e.pointerType !== 'mouse') return;
+    clearTimeout(navIntentT);
+    navIntentT = setTimeout(function () { navHoverT = performance.now(); navSet('menu', true); }, 140);
   });
+  navGrid.addEventListener('pointerleave', function () { clearTimeout(navIntentT); });
+  // импульс от знака к точкам: дважды после загрузки, потом изредка (раз в 11 с), только когда меню закрыто и страница на виду
+  var navPulseT = 0, navPulseOn = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function navPulse() {
+    if (!navPulseOn || navState || document.hidden || nav.classList.contains('is-tucked')) return;
+    nav.classList.remove('is-pulse'); void nav.offsetWidth; nav.classList.add('is-pulse');
+    clearTimeout(navPulseT); navPulseT = setTimeout(function () { nav.classList.remove('is-pulse'); }, 1700);
+  }
+  if (navPulseOn) {
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
+      setTimeout(navPulse, 1200); setTimeout(navPulse, 3200);
+      setInterval(navPulse, 11000);
+    });
+  }
   navGrid.addEventListener('click', function () {
     // мышью меню уже открылось наведением — щелчок сразу после этого его не закрывает
     if (navState === 'menu' && navByHover && performance.now() - navHoverT < 600) { navByHover = false; return; }
@@ -106,14 +127,14 @@
   });
   nav.addEventListener('pointerleave', function (e) {
     if (e.pointerType !== 'mouse') return;
-    nav.classList.remove('is-tag');
     if (navState === 'menu' && navByHover) navLeaveT = setTimeout(function () { if (navByHover) navClose(); }, 260);
   });
   nav.addEventListener('pointerenter', function () { clearTimeout(navLeaveT); });
-  navChatBtn.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse' && navState !== 'chat') nav.classList.add('is-tag'); });
-  navChatBtn.addEventListener('pointerleave', function () { nav.classList.remove('is-tag'); });
-  navChatBtn.addEventListener('click', function () { navSet(navState === 'chat' ? '' : 'chat'); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && navState) { var was = navState; navClose(); (was === 'chat' ? navChatBtn : navGrid).focus(); } });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (chatw.classList.contains('is-open')) { chatSet(false); chatBtn.focus(); }
+    else if (navState) { navClose(); navGrid.focus(); }
+  });
   document.addEventListener('pointerdown', function (e) { if (navState && !nav.contains(e.target)) navClose(); });
   // подменю «Бизнесу»: мышью — по наведению; касанием — первое нажатие раскрывает, второе ведёт к разделу
   $$('.nav__has-sub', nav).forEach(function (li) {
@@ -234,9 +255,27 @@
       : 'Открыли Telegram @alfastaff — сообщение уже вписано, останется нажать «Отправить». Ответим в течение 30 минут.']);
   });
 
+  // наверху страницы плашка сидит во врезке листа и прокручивается вместе с ней; когда врезка ушла за край —
+  // плашка въезжает сверху на обычное место (на телефоне врезки нет — плашка всегда на месте)
+  var heroCap = $('.hero__cap'), navDocked = false;
+  function navDock() {
+    var y = window.scrollY, limit = heroCap && heroCap.offsetParent ? heroCap.getBoundingClientRect().bottom + y : 0;
+    var on = y < limit;
+    if (on) nav.style.setProperty('--dock-y', y.toFixed(1));
+    if (on === navDocked) return;
+    navDocked = on;
+    nav.classList.toggle('is-docked', on);
+    nav.classList.remove('is-float-in');
+    if (!on) { void nav.offsetWidth; nav.classList.add('is-float-in'); }
+  }
+  // тон плашки (светлая на белом, тёмная на тёмном) — по месту, куда она въехала: во время въезда она ещё за краем экрана
+  nav.addEventListener('animationend', function (e) { if (e.animationName === 'nav-float-in') { nav.classList.remove('is-float-in'); navTone(); } });
+  window.addEventListener('resize', navDock);
+
   var lastY = window.scrollY;
   function onScroll() {
     var y = window.scrollY;
+    navDock();
     // на телефоне док не мешает читать: прячется при прокрутке вниз, возвращается при прокрутке вверх
     if (isMobile() && Math.abs(y - lastY) > 6) {
       dock.classList.toggle('is-tucked', y > lastY);
@@ -499,7 +538,7 @@
       if (content) content.style.paddingLeft = content.style.paddingRight = '';
       hero.style.gridTemplateColumns = ''; sheet.style.background = '';
       sph.style.width = sph.style.left = sph.style.top = '';
-      if (heroIndex) { heroIndex.hidden = true; heroIndex.style.left = heroIndex.style.right = heroIndex.style.top = ''; }
+      if (heroIndex) { heroIndex.hidden = true; heroIndex.style.left = heroIndex.style.right = heroIndex.style.top = heroIndex.style.width = ''; }
       heroClip = null;
     }
     function done() { if (heroSphereApi) heroSphereApi.updateClip(); }
@@ -520,22 +559,31 @@
     var textLeft = S.left + parseFloat(getComputedStyle(content).paddingLeft);
     var tl = $('.hero__title .hero__line').getBoundingClientRect(), ruleEl = $('.hero__rule');
     var blockLeft = Math.min(textLeft, tl.left - (ruleEl.offsetWidth - tl.width) / 2);
-    var blockW = textRight - blockLeft, G0 = (window.innerWidth < 1400 ? 64 : 96) * k; // G0 — минимальный воздух слева и справа от блока
+    var blockW = textRight - blockLeft, G0 = (window.innerWidth < 1400 ? 56 : 64) * k; // G0 — минимальный воздух слева и справа от блока
     var needLeft = S.left + blockW + 2 * G0;               // левый край выреза не ближе этой линии
-    var mode = null, R, K, cx, sheetRight, listW = 0, listLeft = 0;
+    var mode = null, R, K, cx, sheetRight, listW = 0, listLeft = 0, listGrow = 0;
 
     // 1) со списком: сфера в вырезе, список по центру между сферой и правым краем
     if (heroIndex) { heroIndex.hidden = false; heroIndex.style.visibility = 'hidden'; listW = heroIndex.offsetWidth; heroIndex.hidden = true; heroIndex.style.visibility = ''; }
     if (listW) {
       K = 0.32;
       var padMin = 44 * k, padTarget = listW * 0.22;   // поля списка: минимум и комфорт
-      var Rmax = S.height * 0.3, Rmin = 220 * k;
+      var Rmax = S.height * 0.28, Rmin = 220 * k;
       // самая крупная сфера, при которой помещаются вырез, сфера и список с минимальными полями
       R = Math.min(Rmax, (right - needLeft - GAP - listW - 2 * padMin) / 2);
       if (R >= Rmin) {
         var sMin = needLeft + (1 - K) * R + GAP;                    // вырез не задевает текст
         var sTarget = right - (1 + K) * R - (listW + 2 * padTarget); // список с комфортными полями
         sheetRight = Math.max(sMin, sTarget);
+        // лист не шире, чем нужно тексту с комфортными полями (2·G0 с каждой стороны). На широких экранах лишнее —
+        // тёмной части: сфера левее, карта крупнее (до 1,3 раза и в пределах высоты листа), остальное — воздух вокруг карты
+        var sCap = sMin + 2 * G0;
+        if (sheetRight > sCap) {
+          var hMax = (S.height * 0.86 - 40 * k) / 1.55;           // высота панели ≈ 1,55 ширины + шапка
+          listGrow = Math.max(0, Math.min(listW * 0.3, (sheetRight - sCap) * 0.4, hMax - listW));
+          listW += listGrow;
+          sheetRight = sCap;
+        }
         cx = sheetRight + K * R;
         var D = right - (cx + R);                                   // тёмное поле справа от сферы
         listLeft = cx + R + (D - listW) / 2;
@@ -545,7 +593,7 @@
 
     // 2) без списка: лист расширяется, справа остаётся узкая полоса
     if (!mode) {
-      K = 0.45; R = S.height * 0.3;
+      K = 0.45; R = S.height * 0.28;
       for (;;) {
         sheetRight = Math.max(needLeft + (1 - K) * R + GAP, right - 220 * k - (1 + K) * R);
         if (right - (sheetRight + (1 + K) * R) >= 110 * k) { mode = 'wide'; break; }
@@ -570,6 +618,8 @@
       heroIndex.hidden = mode !== 'list';
       if (mode === 'list') {
         heroIndex.style.left = Math.round(listLeft - G.left) + 'px'; heroIndex.style.right = 'auto';
+        heroIndex.style.width = listGrow ? Math.round(listW) + 'px' : '';
+        if (heroGeo) heroGeo.resize();   // высоту панели меряем по её текущей ширине (не ждём ResizeObserver)
         // середина списка (вместе с заголовком) — ровно на уровне центра сферы
         heroIndex.style.top = Math.round(cy - G.top - heroIndex.offsetHeight / 2) + 'px';
       }

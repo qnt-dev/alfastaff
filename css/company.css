@@ -10,11 +10,10 @@ html[data-fonts="company"] {
   --f-mono: 'Montserrat', 'Segoe UI', sans-serif;
 }
 /* Exact wordmark within the existing logo slot. */
-.nav__word img, .logo__word img { width: 8rem; height: auto; }
-.nav__word img, .logo--light .logo__word img { filter: invert(1); }
-.nav:not(.is-dark):not(.is-open) .nav__word img { filter: none; }
+.logo__word img { width: 8rem; height: auto; }
+.logo--light .logo__word img { filter: invert(1); }
 /* White-on-red wording required by the company palette. */
-.nav__tag, .msg--me, .chat__quick button:hover,
+.chatw__tag, .msg--me, .chat__quick button:hover,
 .chat__field textarea, .chat__note { color: #fff; }
 .chat__field textarea::placeholder { color: rgba(255,255,255,.85); }
 .chat__field textarea, .chat__field textarea:focus { border-bottom-color: rgba(255,255,255,.75); }
