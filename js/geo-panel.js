@@ -87,7 +87,7 @@
       }
     }
     function show(i) {
-      if (i == null || !O[i]) return;
+      if (i == null || !O[i] || (i === cur && target)) return;   // тот же объект ещё раз (сфера подтверждает показ) — без перезапуска квартала
       cur = i;
       var o = O[i];
       q('idx').textContent = String(i + 1).padStart(2, '0') + ' / ' + String(O.length).padStart(2, '0');
@@ -192,8 +192,11 @@
       var P2 = function (g) { var d = km(ctr, g); return [lcx + d[0] * s2, lcy - d[1] * s2]; };
       var edgeR = ragEdge(reg), vis = function (p) { var u = (p[0] - lcx) / (fw / 2), v = (p[1] - lcy) / (fh / 2); return sq4(u, v) / edgeR(Math.atan2(v, u)); };
 
+      // плоская карта — только у объектов без 3D-квартала; когда она не видна, не рисуем её вовсе
+      // (раньше рисовалась прозрачной на каждом кадре — тысячи лишних команд для видеокарты)
+      if (fade * flatA > 0.004) {
       ctx.save();
-      ctx.globalAlpha = fade * flatA;   // плоская карта — только у объектов без 3D-квартала
+      ctx.globalAlpha = fade * flatA;
       ctx.beginPath(); ctx.rect(fx, fy, fw, fh); ctx.clip();
       var st2 = 9 * K;
       for (var y2 = fy; y2 < fy + fh; y2 += st2) for (var x2 = fx; x2 < fx + fw; x2 += st2) { ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(x2, y2, 1.3 * K, 1.3 * K); }
@@ -275,6 +278,7 @@
         if (best) pill(r, best[0], best[1], r === route ? 'shield-on' : 'shield', placed, bounds, 8.5);
       });
       ctx.restore();
+      }
       ctx.globalAlpha = 1;
       // подписи над 3D-кварталом — те же «пилюли», что на плоской карте: склад цветом дизайна, жильё — «заселение»
       var cp = ce > .02 && clay && clayOnI >= 0 ? clay.points() : null;
@@ -328,8 +332,9 @@
     if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { vis = es[0].isIntersecting; }).observe(root);
     (function loop(now) {
       requestAnimationFrame(loop);
+      if (!vis || document.hidden || root.hidden || !target) { last = now; return; }
+      if (now - last < 1000 / 60 - 2) return;   // не чаще 60 кадров (мониторы 120–240 Гц)
       var dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
-      if (!vis || document.hidden || root.hidden || !target) return;
       // смена региона: кадр гаснет (0,18 с), карта переставляется на новый регион и проявляется с лёгким приближением (0,4 с);
       var away = shown !== cur;
       if (reduce) { view = copy(target); shown = cur; fade = 1; }

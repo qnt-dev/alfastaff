@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Прототип: карта объекта в «глиняном» 3D</title>
+  <style>
+    @font-face { font-family: 'Montserrat'; font-weight: 100 900; font-display: swap; src: url('assets/fonts/Montserrat-Variable.woff2') format('woff2'); }
+    :root { --accent: #ff5a1f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #0d0d0d; color: #fff; font-family: 'Montserrat', system-ui, sans-serif; display: grid; place-items: center; }
+    .stage { display: flex; flex-wrap: wrap; gap: 56px; justify-content: center; padding: 48px 24px; }
+    .stage > figure { margin: 0; display: grid; gap: 14px; justify-items: center; }
+    .stage figcaption { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+    .acc { display: flex; gap: 8px; justify-content: center; padding-bottom: 8px; }
+    .acc button { font: 600 12px Montserrat; color: #fff; background: #1f1f1f; border: 0; border-radius: 99px; padding: 8px 14px; cursor: pointer; }
+    .acc button.on { background: var(--accent); }
+
+    /* «устройство»: тон в тон с фоном, мягкая тень — как в референсе */
+    .dev { width: 340px; border-radius: 34px; padding: 14px 14px 0; display: grid; }
+    .dev canvas { display: block; width: 100%; height: 360px; border-radius: 22px; }
+    .dev--dark { background: #161616; box-shadow: 0 30px 60px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.04) inset, 0 -1px 0 rgba(0,0,0,.6) inset; }
+    .dev--light { background: #ece7de; color: #141414; box-shadow: 0 30px 60px rgba(0,0,0,.45), 0 2px 0 rgba(255,255,255,.7) inset; }
+    .info { padding: 18px 10px 20px; font-size: 13px; }
+    .info__route { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; font-weight: 700; font-size: 12.5px; }
+    .info__route i { flex: 1; height: 1px; background: currentColor; opacity: .5; position: relative; }
+    .info__route i::after { content: ''; position: absolute; right: 0; top: -3px; border: 3.5px solid transparent; border-left: 6px solid currentColor; border-right: 0; }
+    .info__route b { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; white-space: nowrap; }
+    .o { width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; }
+    .pin { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+    .row { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid currentColor; border-top-color: rgba(127,127,127,.35); }
+    .row span:first-child { opacity: .62; }
+    .row span:last-child { font-weight: 700; }
+    .note { max-width: 760px; margin: 0 auto 40px; padding: 0 24px; font-size: 12px; line-height: 1.6; color: rgba(255,255,255,.45); text-align: center; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="acc"><button class="on" data-acc="#ff5a1f">Оранжевый</button><button data-acc="#c41718">Брендбук</button></div>
+    <div class="stage">
+      <figure>
+        <div class="dev dev--dark">
+          <canvas data-map="dark"></canvas>
+          <div class="info" data-info></div>
+        </div>
+        <figcaption>Графитовая глина — под тёмный дизайн</figcaption>
+      </figure>
+      <figure>
+        <div class="dev dev--light">
+          <canvas data-map="light"></canvas>
+          <div class="info" data-info></div>
+        </div>
+        <figcaption>Светлая глина — как в референсе</figcaption>
+      </figure>
+    </div>
+    <p class="note">Прототип. Здания, дороги и зелень — OpenStreetMap (© участники OpenStreetMap, ODbL), пеший маршрут — OSRM. Точка склада и жилья найдены по адресам каталога — проверить.</p>
+  </div>
+  <script src="assets/vendor/three.min.js"></script>
+  <script src="proto-clay.js?v=1"></script>
+</body>
+</html>

@@ -12,7 +12,7 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brandbook/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
-  <link rel="stylesheet" href="css/style-company.css?v=20261020c">
+  <link rel="stylesheet" href="css/style-company.css?v=20261025c">
   <link rel="stylesheet" href="css/company.css?v=20261013a">
 </head>
 <body>
@@ -154,7 +154,7 @@
         <div class="hero__notch">
           <button type="button" class="notch-calc" data-calc-open aria-haspopup="dialog">
             <span class="notch-calc__ico" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="1.5" width="10" height="13" rx="2" /><path d="M5.6 4.6h4.8M5.8 8h.01M8 8h.01M10.2 8h.01M5.8 10.6h.01M8 10.6h.01M10.2 10.6h.01" /></svg></span>
-            <span class="notch-calc__txt"><span class="mono">Калькулятор вахты</span><span class="mono mono--dim">≈ <span data-calc-teaser>141 000</span> ₽ за 30 смен</span></span>
+            <span class="notch-calc__txt"><span class="mono">Калькулятор вахты</span><span class="mono mono--dim">Для работников и работодателей</span></span>
             <span class="notch-calc__go" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></span>
           </button>
         </div>
@@ -929,69 +929,71 @@
     </section>
   </main>
 
-  <!-- ============ КАЛЬКУЛЯТОР — окно (js/calc-modal.js); открывается кнопкой в кармашке первого экрана ============ -->
+  <!-- ============ КАЛЬКУЛЯТОР — окно (js/calc-modal.js); открывается кнопкой в кармашке первого экрана.
+       Условия — одной фразой: подчёркнутые слова — выбор, по нажатию рядом выезжает плашка с вариантами ============ -->
   <div class="cm" data-cm hidden>
     <div class="cm__backdrop" data-cm-close></div>
     <div class="cm__panel" role="dialog" aria-modal="true" aria-labelledby="cm-title" data-lenis-prevent>
       <div class="cm__head">
-        <div>
-          <span class="mono mono--dim">(АС® — Калькулятор)</span>
-          <h2 class="cm__title" id="cm-title">Посчитать вахту</h2>
+        <div class="cm__head-t">
+          <span class="mono mono--dim">(АС®&nbsp;— Калькулятор)</span>
+          <h2 class="cm__title" id="cm-title">Калькулятор вахты</h2>
+        </div>
+        <div class="cm__tabs" role="tablist" aria-label="Кто считает">
+          <button type="button" role="tab" aria-selected="true" data-cm-tab="job">Ищу работу</button>
+          <button type="button" role="tab" aria-selected="false" data-cm-tab="biz">Нужен персонал</button>
+          <span class="cm__tab-thumb" aria-hidden="true"></span>
         </div>
         <button type="button" class="cm__close" data-cm-close aria-label="Закрыть калькулятор"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg></button>
       </div>
-      <div class="cm__tabs" role="tablist" aria-label="Кто считает">
-        <button type="button" role="tab" aria-selected="true" data-cm-tab="job">Ищу работу</button>
-        <button type="button" role="tab" aria-selected="false" data-cm-tab="biz">Нужен персонал</button>
-        <span class="cm__tab-thumb" aria-hidden="true"></span>
-      </div>
 
       <div class="cm__body" data-cm-pane="job">
-        <div class="cm__fields">
-          <fieldset class="cm__group"><legend class="mono">Регион</legend><div class="pick" data-pick="single" data-cm-region></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Профессия</legend><div class="pick" data-pick="single" data-cm-job></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Вахта, смен</legend><div class="cm-seg" role="radiogroup" aria-label="Длительность вахты" data-cm-shifts><button type="button" role="radio" aria-checked="false" data-v="15">15</button><button type="button" role="radio" aria-checked="false" data-v="20">20</button><button type="button" role="radio" aria-checked="false" data-v="30" data-on>30</button><button type="button" role="radio" aria-checked="false" data-v="45">45</button><button type="button" role="radio" aria-checked="false" data-v="60">60</button><span class="cm-seg__thumb" aria-hidden="true"></span></div></fieldset>
+        <div class="cm__ask">
+          <p class="cm-ph"><span class="cm-ph__s">Я <span class="cm-tk" role="button" tabindex="0" data-cm-k="sex"></span>, мне <span class="cm-tk" role="button" tabindex="0" data-cm-k="age"></span>.</span> <span class="cm-ph__s">Ищу <span class="cm-tk" role="button" tabindex="0" data-cm-k="prof"></span> <span class="cm-tk" role="button" tabindex="0" data-cm-k="region"></span>.</span> <span class="cm-ph__s">Вахта&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="shifts"></span> по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sched"></span>.</span></p>
+          <div class="cm-more" data-cm-more>
+            <button type="button" class="cm-more__btn mono" aria-expanded="false" aria-controls="cm-more-job"><i aria-hidden="true"></i>Уточнить: дорога, еда, зарплата дома, выработка</button>
+            <div class="cm-more__body" id="cm-more-job" inert><div>
+              <p class="cm-ph cm-ph--sm">Дорога туда и обратно&nbsp;— <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="road" value="6 000" autocomplete="off" aria-label="Дорога туда и обратно, рублей" data-cm-money><em>₽</em></span>, на еду в день&nbsp;— <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="food" value="600" autocomplete="off" aria-label="Расходы на еду в день, рублей" data-cm-money><em>₽</em></span>. Дома получаю <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="home" value="" placeholder="сколько?" autocomplete="off" aria-label="Зарплата дома в месяц, рублей" data-cm-money><em>₽</em></span> в месяц. На сдельных объектах делаю <span class="cm-tk" role="button" tabindex="0" data-cm-k="pace"></span>.</p>
+            </div></div>
+          </div>
         </div>
-        <div class="cm__result">
-          <span class="mono mono--dim">За вахту <span data-cm-shifts-lbl>30</span> смен — в среднем</span>
-          <span class="cm__sum"><span class="cm__approx">≈</span><span data-cm-sum>0</span><small>₽</small></span>
-          <span class="mono cm__range" data-cm-range></span>
-          <ul class="cm__facts">
-            <li data-cm-rate></li>
-            <li data-cm-count></li>
-            <li data-cm-adv></li>
-            <li data-cm-road>Компенсация дороги <b>до 10 000 ₽</b> — от 30 смен</li>
-            <li>Жильё бесплатно, обучение на месте, официальное оформление</li>
-          </ul>
-          <a class="btn btn--outline btn--block" href="#contact" data-tab="job" data-cm-apply><span>Выбрать эту вахту</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>
+        <div class="cm-plan" data-cm-plan></div>
+        <div class="cm__result" data-cm-res>
+          <div data-cm-best></div>
         </div>
       </div>
 
       <form class="cm__body" data-cm-pane="biz" hidden novalidate>
-        <div class="cm__fields">
-          <fieldset class="cm__group"><legend class="mono">Кто нужен</legend><div class="pick" data-pick="multi" data-cm-bjobs></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Сколько людей</legend><div class="cm-range"><input type="range" min="5" max="200" step="5" value="20" aria-label="Сколько людей нужно" data-cm-heads><output class="mono" data-cm-heads-out>20</output></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Смена, часов</legend><div class="cm-seg" role="radiogroup" aria-label="Длина смены" data-cm-hours><button type="button" role="radio" aria-checked="false" data-v="8">8</button><button type="button" role="radio" aria-checked="false" data-v="10">10</button><button type="button" role="radio" aria-checked="false" data-v="11">11</button><button type="button" role="radio" aria-checked="false" data-v="12" data-on>12</button><span class="cm-seg__thumb" aria-hidden="true"></span></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">График</legend><div class="pick" data-pick="single"><label><input type="radio" name="cm-sched" value="5/2"><span>5/2</span></label><label><input type="radio" name="cm-sched" value="6/1" checked><span>6/1</span></label><label><input type="radio" name="cm-sched" value="2/2"><span>2/2</span></label><label><input type="radio" name="cm-sched" value="7/0"><span>7/0</span></label></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Где объект</legend><div class="pick" data-pick="single"><label><input type="radio" name="cm-where" value="Москва" checked><span>Москва</span></label><label><input type="radio" name="cm-where" value="Московская область"><span>Московская область</span></label><label><input type="radio" name="cm-where" value="Другой регион"><span>Другой регион</span></label></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Проживание для сотрудников</legend><div class="pick" data-pick="single"><label><input type="radio" name="cm-stay" value="Нужно" checked><span>Нужно</span></label><label><input type="radio" name="cm-stay" value="Не нужно"><span>Не нужно</span></label></div></fieldset>
-          <fieldset class="cm__group"><legend class="mono">Дополнительно</legend><div class="pick" data-pick="multi"><label><input type="checkbox" name="cm-extra" value="Медкнижка"><span>Медкнижка</span></label><label><input type="checkbox" name="cm-extra" value="Спецодежда"><span>Спецодежда</span></label><label><input type="checkbox" name="cm-extra" value="Срочно, за 1–3 дня"><span>Срочно, за 1–3 дня</span></label></div></fieldset>
+        <div class="cm__ask">
+          <p class="cm-ph"><span class="cm-ph__s">Нужны <span class="cm-tk" role="button" tabindex="0" data-cm-k="bjob"></span>&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="posts"></span> на смену.</span> <span class="cm-ph__s">Склад работает <span class="cm-tk" role="button" tabindex="0" data-cm-k="daily"></span>, <span class="cm-tk" role="button" tabindex="0" data-cm-k="opdays"></span> в неделю.</span> <span class="cm-ph__s">Сотрудник выходит по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="bsched"></span>.</span> <span class="cm-ph__s">Объект&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="where"></span>.</span></p>
+          <div class="cm-more" data-cm-more>
+            <button type="button" class="cm-more__btn mono" aria-expanded="false" aria-controls="cm-more-biz"><i aria-hidden="true"></i>Уточнить: оплата смены, найм, текучка, жильё</button>
+            <div class="cm-more__body" id="cm-more-biz" inert><div>
+              <p class="cm-ph cm-ph--sm">Платим <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="wage" value="" autocomplete="off" aria-label="Оплата за смену, рублей" data-cm-money data-cm-wage><em>₽</em></span> за смену. Найм одного человека стоит <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="hire" value="20 000" autocomplete="off" aria-label="Стоимость найма одного человека, рублей" data-cm-money><em>₽</em></span>, за год уходит <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="turn" value="40" autocomplete="off" maxlength="3" aria-label="Текучка в год, процентов" data-cm-int><em>%</em></span> людей. Жильё сотрудникам <span class="cm-tk" role="button" tabindex="0" data-cm-k="stay"></span><span data-cm-bed hidden> — <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="bed" value="12 000" autocomplete="off" aria-label="Жильё на человека в месяц, рублей" data-cm-money><em>₽</em></span> на человека в месяц</span>.</p>
+            </div></div>
+          </div>
         </div>
-        <div class="cm__result">
-          <span class="mono mono--dim">Ваш запрос</span>
-          <p class="cm__brief" data-cm-brief></p>
-          <input type="hidden" name="brief">
-          <p class="cm__note">Цену за час и за месяц посчитает менеджер под ваш объект и пришлёт предложение в течение рабочего дня.</p>
-          <label class="field"><span class="mono">Имя<sup>*</sup></span><input type="text" name="name" autocomplete="name" placeholder="Иванов Иван Иванович" required></label>
-          <label class="field"><span class="mono">Компания</span><input type="text" name="company" autocomplete="organization" placeholder="ООО «Склад»"></label>
-          <label class="field"><span class="mono">Телефон<sup>*</sup></span><input type="tel" name="phone" autocomplete="tel" placeholder="+7 (___) ___-__-__" required></label>
-          <button class="btn btn--outline btn--block" type="submit"><span>Получить расчёт</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
-          <p class="form__legal mono mono--dim"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" /><path d="M8 7v4M8 4.8v.2" /></svg>Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных.</p>
-          <div class="cm__done" hidden>
-            <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
-            <p class="cm__done-title">Запрос принят</p>
-            <p class="mono mono--dim">Менеджер пришлёт расчёт в течение рабочего дня. Если срочно — +7 968 321-10-20</p>
-            <button type="button" class="btn btn--glass" data-cm-again><span>Новый расчёт</span></button>
+        <div class="cm-plan" data-cm-bplan></div>
+        <div class="cm__result" data-cm-bres>
+          <div data-cm-bout></div>
+          <button type="button" class="btn btn--outline btn--block" data-cm-ask-open><span>Узнать цену через «Альфа-Стафф»</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
+          <div class="cm-ask" data-cm-ask hidden inert>
+            <button type="button" class="cm-ask__back mono" data-cm-ask-close><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5" /></svg>К расчёту</button>
+            <p class="cm-ask__t">Цена через «Альфа-Стафф»</p>
+            <p class="cm__note">Найм, замены, оформление, жильё и выплаты — на нас. Цену за час под ваш объект пришлём в течение рабочего дня.</p>
+            <p class="cm-ask__brief mono" data-cm-brief></p>
+            <input type="hidden" name="brief">
+            <label class="field"><span class="mono">Имя<sup>*</sup></span><input type="text" name="name" autocomplete="name" placeholder="Иванов Иван Иванович" required></label>
+            <label class="field"><span class="mono">Компания</span><input type="text" name="company" autocomplete="organization" placeholder="ООО «Склад»"></label>
+            <label class="field"><span class="mono">Телефон<sup>*</sup></span><input type="tel" name="phone" autocomplete="tel" placeholder="+7 (___) ___-__-__" required></label>
+            <button class="btn btn--outline btn--block" type="submit"><span>Получить расчёт</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
+            <p class="form__legal mono mono--dim"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" /><path d="M8 7v4M8 4.8v.2" /></svg>Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных.</p>
+            <div class="cm__done" hidden>
+              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
+              <p class="cm__done-title">Запрос принят</p>
+              <p class="mono mono--dim">Менеджер пришлёт расчёт в течение рабочего дня.</p>
+              <button type="button" class="btn btn--glass" data-cm-again><span>Новый расчёт</span></button>
+            </div>
           </div>
         </div>
       </form>
@@ -1000,6 +1002,8 @@
         <button type="button" class="cm__bar-go" data-cm-bar-go><span class="mono" data-cm-bar-btn>Подробнее</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" /></svg></button>
       </div>
     </div>
+    <div class="cm-scrim" data-cm-scrim hidden></div>
+    <div class="cm-pop" data-cm-pop role="dialog" aria-modal="false" data-lenis-prevent hidden><div class="cm-pop__in"></div></div>
   </div>
 
   <!-- ============ ПОДВАЛ ============ -->
@@ -1079,12 +1083,12 @@
   <script src="assets/vendor/three.min.js"></script>
   <script src="js/objects.js?v=20261011a"></script>
   <script src="js/data.js?v=20261011b"></script>
-  <script src="js/sphere-company.js?v=20261022a"></script>
-  <script src="js/morph-company.js?v=20261005branding-only"></script>
+  <script src="js/sphere-company.js?v=20261023a"></script>
+  <script src="js/morph-company.js?v=20261023a"></script>
   <script src="js/roads.js?v=20261011b"></script>
-  <script src="js/clay-map.js?v=20261022e"></script>
-  <script src="js/geo-panel.js?v=20261022c"></script>
+  <script src="js/clay-map.js?v=20261015-worker1"></script>
+  <script src="js/geo-panel.js?v=20261023b"></script>
   <script src="js/main.js?v=20261022a"></script>
-  <script src="js/calc-modal.js?v=20261020e"></script>
+  <script src="js/calc-modal.js?v=20261025c"></script>
 </body>
 </html>

@@ -53,6 +53,9 @@
   }
   var SPR_W = sprite(255, 255, 255, false), SPR_A = sprite(ACCENT[0], ACCENT[1], ACCENT[2], true), SPR_AH = sprite(ACCENT[0], ACCENT[1], ACCENT[2], false);
 
+  // ограничитель кадров: на мониторах 120–240 Гц анимации рисуются не чаще fps раз в секунду — иначе общий
+  // графический процесс браузера перегружается и подвисает весь браузер. Возвращает true, если кадр пора рисовать
+  function gate(st, now, fps) { if (now - (st.t || 0) < 1000 / fps - 2) return false; st.t = now; return true; }
   function onVisible(el, cb) {
     if (!('IntersectionObserver' in window)) { cb(true); return; }
     new IntersectionObserver(function (es) { cb(es[0].isIntersecting); }, { rootMargin: '100px' }).observe(el);
@@ -482,7 +485,7 @@
   };
   Morph.prototype.loop = function (now) {
     requestAnimationFrame(this.loop);
-    if (!this.visible || document.hidden) return;
+    if (!this.visible || document.hidden || !gate(this.fg || (this.fg = {}), now, 60)) return;
     var t = reduce ? 2 : Math.max(0, (now - this.t0) / 1000), sinceSwitch = (now - this.switchT) / 1000;
     var ctx = this.ctx, w = this.w, h = this.h, b = this.box, o = this.out, shape = SHAPES[this.shapes[this.idx]];
     ctx.clearRect(0, 0, w, h);
@@ -538,9 +541,10 @@
     var host = canvas.closest('h1, h2') || canvas.parentNode, px = null, band = 0;
     host.addEventListener('pointermove', function (e) { var r = canvas.getBoundingClientRect(); px = (e.clientX - r.left) / r.width; });
     host.addEventListener('pointerleave', function () { px = null; });
+    var fg = {};
     (function loop(now) {
       requestAnimationFrame(loop);
-      if (!vis || document.hidden) return;
+      if (!vis || document.hidden || !gate(fg, now, 30)) return;
       var t = reduce ? 3 : Math.max(0, (now - t0) / 1000);
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = '#0d0d0d'; ctx.fillRect(0, 0, w, h);
@@ -682,9 +686,10 @@
       ctx.textBaseline = 'alphabetic';
     }
 
+    var fg = {};
     (function loop(now) {
       requestAnimationFrame(loop);
-      if (!vis || document.hidden) return;
+      if (!vis || document.hidden || !gate(fg, now, 60)) return;
       var t = reduce ? 3 : Math.max(0, (now - t0) / 1000);
       // плавный перелёт камеры
       var e = reduce ? 1 : 0.075;
@@ -875,9 +880,10 @@
       vis = v;
     });
     var paths = [];
+    var fg = {};
     (function loop(now) {
       requestAnimationFrame(loop);
-      if (!vis || document.hidden) return;
+      if (!vis || document.hidden || !gate(fg, now, 60)) return;
       var t = reduce ? 0 : Math.max(0, (now - t0) / 1000);
       var cx = w / 2, cy = h;
       ctx.clearRect(0, 0, w, h);
@@ -954,9 +960,10 @@
       }
       ctx.fill();
     }
+    var fg = {};
     (function loop(now) {
       requestAnimationFrame(loop);
-      if (!vis || document.hidden) return;
+      if (!vis || document.hidden || !gate(fg, now, 30)) return;
       frame(reduce ? 0 : (now - t0) / 1000);
     })(t0);
   }

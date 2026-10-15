@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="../">
+  <title>Clay ground texture parity</title>
+  <style>
+    :root { --frame: #111; --accent: #c41718; --accent-3: #e94849; color-scheme: dark; }
+    body { margin: 24px; background: #111; color: #eee; font: 14px/1.5 system-ui, sans-serif; }
+    h1 { font-size: 22px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .textures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; max-width: 1200px; }
+    figure { margin: 0; }
+    figure canvas { display: block; width: 100%; height: auto; background: repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 0 / 16px 16px; }
+    figcaption { padding: 8px 0; }
+    .render-host { width: 342px; height: 454px; position: absolute; left: -10000px; }
+    [data-status="pass"] { color: #9fe1a6; }
+    [data-status="fail"] { color: #ff9c9c; }
+  </style>
+</head>
+<body>
+  <h1>Clay ground texture parity</h1>
+  <p>This isolated test deliberately runs the archived slow implementation once. It is not part of the website.</p>
+  <pre id="report" data-status="running">Running…</pre>
+  <div class="textures">
+    <figure><canvas id="legacy-texture"></canvas><figcaption>Archived ground texture</figcaption></figure>
+    <figure><canvas id="prepared-texture"></canvas><figcaption>Prepared texture, reversed back to canvas orientation</figcaption></figure>
+    <figure><canvas id="difference-texture"></canvas><figcaption>Premultiplied RGBA difference × 16</figcaption></figure>
+  </div>
+  <h2>Full WebGL render</h2>
+  <div class="textures">
+    <figure><canvas id="legacy-render"></canvas><figcaption>Archived renderer</figcaption></figure>
+    <figure><canvas id="current-render"></canvas><figcaption>Current renderer with worker preparation</figcaption></figure>
+    <figure><canvas id="render-difference"></canvas><figcaption>Rendered premultiplied RGBA difference × 16</figcaption></figure>
+  </div>
+  <div id="legacy-host" class="render-host" aria-hidden="true"></div>
+  <div id="current-host" class="render-host" aria-hidden="true"></div>
+  <script src="assets/vendor/three.min.js"></script>
+  <script src="tools/fixtures/clay-map-before.js"></script>
+  <script>AS.LegacyClayMap = AS.ClayMap;</script>
+  <script src="js/clay-prepare.js"></script>
+  <script src="js/clay-map.js"></script>
+  <script src="tools/clay-parity.js"></script>
+</body>
+</html>

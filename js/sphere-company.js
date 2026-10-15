@@ -602,6 +602,7 @@
   Sphere.prototype.loop = function (now) {
     requestAnimationFrame(this.loop);
     if (!this.state.visible || document.hidden) { this.last = 0; return; }
+    if (this.last && now - this.last < 1000 / 60 - 2) return;   // не чаще 60 кадров: на мониторах 120–240 Гц не перегружаем видеокарту
     var dt = this.last ? Math.min(64, now - this.last) : 16.7;
     this.last = now;
     var C = this.controls;

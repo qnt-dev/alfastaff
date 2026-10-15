@@ -1,0 +1,246 @@
+{
+  "date": "2026-10-15",
+  "scope": "Local Chromium verification, without CPU or network throttling. Observations on this machine, not a cross-device performance guarantee.",
+  "reproduction": {
+    "performance": "Open /tools/clay-regression.html, then await clayRegression.run(AS.CLAY_IDS)",
+    "lifecycle": "Reload /tools/clay-regression.html, then await clayLifecycle()",
+    "parity": "Open /tools/clay-parity.html; await clayParityPromise for fm-chekhov; await clayParity.run('fm-elektrougli') for the heavy object. The archived baseline intentionally blocks this isolated test page."
+  },
+  "baseline": {
+    "object": "fm-elektrougli",
+    "frame": [
+      280,
+      406
+    ],
+    "maxLongTaskMs": 30752,
+    "pass": false
+  },
+  "performance": {
+    "coldWarm": {
+      "ids": [
+        "fm-elektrougli",
+        "wurth",
+        "fm-elektrougli"
+      ],
+      "maxFrameGapMs": 47,
+      "maxLongTaskMs": 0,
+      "pass": true
+    },
+    "allObjects": {
+      "count": 23,
+      "maxFrameGapMs": 17.7,
+      "maxLongTaskMs": 0,
+      "errors": [],
+      "pass": true
+    },
+    "mainPage": {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "dpr": 1,
+      "observationMs": 28000,
+      "completeTitles": 4,
+      "measuredCharacters": 91,
+      "maxCharacterGapMs": 75.1,
+      "maxFrameGapMs": 64.8,
+      "longTasks": [],
+      "pass": true
+    }
+  },
+  "lifecycle": {
+    "pass": true,
+    "checks": [
+      "warm resource reuse",
+      "bounded cache and bitmap disposal",
+      "late network response discarded",
+      "in-flight worker cancellation",
+      "resize during preparation",
+      "theme cache separation",
+      "network failure fallback and recovery on another object",
+      "unsupported worker fallback"
+    ],
+    "preparedJobs": 11,
+    "maxTrackedBitmaps": 3
+  },
+  "parity": {
+    "control": {
+      "id": "fm-chekhov",
+      "geometryExact": true,
+      "textureExact": true,
+      "fullWebGLFrameExact": true,
+      "pass": true
+    },
+    "heavy": {
+      "pass": true,
+      "id": "fm-elektrougli",
+      "frame": [
+        280,
+        406
+      ],
+      "checks": {
+        "inputDataUnchanged": true,
+        "inputConfigUnchanged": true,
+        "visiblePixelFidelity": true,
+        "alphaFidelity": true,
+        "edgeBounds": true,
+        "alphaCoverage": true,
+        "orientation": true,
+        "geometry": true,
+        "fullRenderFidelity": true,
+        "fullRenderAlpha": true
+      },
+      "metrics": {
+        "rawRgbaMae": 0.007212638854980469,
+        "rawRgbaMax": 128,
+        "premultipliedRgbaMae": 0.006589960350709793,
+        "premultipliedRgbaMax": 34,
+        "alphaMae": 0,
+        "pixelsOver8Fraction": 0.00043082237243652344
+      },
+      "uncorrectedFlipMae": 15.47446713097478,
+      "legacyAlpha": {
+        "alpha8Bounds": [
+          537,
+          0,
+          1595,
+          1714
+        ],
+        "alphaMass": 322921346
+      },
+      "preparedAlpha": {
+        "alpha8Bounds": [
+          537,
+          0,
+          1595,
+          1714
+        ],
+        "alphaMass": 322921346
+      },
+      "geometry": {
+        "buildingGroups": {
+          "pass": true,
+          "before": 2,
+          "after": 2
+        },
+        "block.position": {
+          "pass": true,
+          "lengthBefore": 392472,
+          "lengthAfter": 392472,
+          "maxAbs": 0
+        },
+        "block.normal": {
+          "pass": true,
+          "lengthBefore": 392472,
+          "lengthAfter": 392472,
+          "maxAbs": 0
+        },
+        "wh.position": {
+          "pass": true,
+          "lengthBefore": 396,
+          "lengthAfter": 396,
+          "maxAbs": 0
+        },
+        "wh.normal": {
+          "pass": true,
+          "lengthBefore": 396,
+          "lengthAfter": 396,
+          "maxAbs": 0
+        },
+        "routeCount": {
+          "pass": true,
+          "before": 2,
+          "after": 2
+        },
+        "route0.position": {
+          "pass": true,
+          "lengthBefore": 7839,
+          "lengthAfter": 7839,
+          "maxAbs": 0
+        },
+        "route0.normal": {
+          "pass": true,
+          "lengthBefore": 7839,
+          "lengthAfter": 7839,
+          "maxAbs": 0
+        },
+        "route0.uv": {
+          "pass": true,
+          "lengthBefore": 5226,
+          "lengthAfter": 5226,
+          "maxAbs": 0
+        },
+        "route0.color": {
+          "pass": true,
+          "lengthBefore": 10452,
+          "lengthAfter": 10452,
+          "maxAbs": 0
+        },
+        "route0.index": {
+          "pass": true,
+          "lengthBefore": 14400,
+          "lengthAfter": 14400,
+          "maxAbs": 0
+        },
+        "route1.position": {
+          "pass": true,
+          "lengthBefore": 6633,
+          "lengthAfter": 6633,
+          "maxAbs": 0
+        },
+        "route1.normal": {
+          "pass": true,
+          "lengthBefore": 6633,
+          "lengthAfter": 6633,
+          "maxAbs": 0
+        },
+        "route1.uv": {
+          "pass": true,
+          "lengthBefore": 4422,
+          "lengthAfter": 4422,
+          "maxAbs": 0
+        },
+        "route1.color": {
+          "pass": true,
+          "lengthBefore": 8844,
+          "lengthAfter": 8844,
+          "maxAbs": 0
+        },
+        "route1.index": {
+          "pass": true,
+          "lengthBefore": 12000,
+          "lengthAfter": 12000,
+          "maxAbs": 0
+        },
+        "pinPosition": {
+          "pass": true,
+          "lengthBefore": 3,
+          "lengthAfter": 3,
+          "maxAbs": 0
+        }
+      },
+      "fullRender": {
+        "width": 342,
+        "height": 454,
+        "metrics": {
+          "rawRgbaMae": 0.007999072571296081,
+          "rawRgbaMax": 64,
+          "premultipliedRgbaMae": 0.0070708482790287535,
+          "premultipliedRgbaMax": 6,
+          "alphaMae": 0,
+          "pixelsOver8Fraction": 0
+        }
+      },
+      "legacyBuildAndRasterMs": 30923.800000000745,
+      "prepareMs": 183.40000000037253,
+      "limits": {
+        "visibleMae": 0.5,
+        "alphaMae": 0.5,
+        "fractionOver8": 0.001,
+        "edgePixels": 2,
+        "relativeAlphaMass": 0.005
+      }
+    }
+  },
+  "unchangedSphereSha256": "A7ACAFA26F958539F84F7203D33F9E7D32D823ACE9DFA58225A66A278BD3FBBD"
+}
