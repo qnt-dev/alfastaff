@@ -35,6 +35,7 @@
   var lenis = null;
   if (window.Lenis && !reduce) {
     lenis = new window.Lenis({ duration: 1.15, easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); }, smoothWheel: true });
+    AS.lenis = lenis;   // окна (калькулятор) останавливают прокрутку страницы, пока открыты
     (function raf(time) { lenis.raf(time); requestAnimationFrame(raf); })(performance.now());
   }
   function scrollToEl(target, offset) {
@@ -564,6 +565,8 @@
         setTimeout(function () { if (mapApi) mapApi.select(i, true); }, 500);
       },
     });
+    // панель справа сразу показывает объект, с которого начнёт сфера (а не первый по списку — без перескока после загрузки)
+    if (heroSphereApi && heroGeo && heroSphereApi.peekObject) heroGeo.show(heroSphereApi.peekObject());
   }
 
   /* ---------- первый экран: сфера в круглом вырезе листа ----------

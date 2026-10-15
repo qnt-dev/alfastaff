@@ -9,3 +9,6 @@ __pycache__/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# кэш скачанных данных OSM для tools/build_clay.py
+tools/.clay-cache/

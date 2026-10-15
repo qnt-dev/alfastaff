@@ -1,24 +1,15 @@
 /* Альфа-Стафф · панель «География объектов» справа от сферы (вместо списка объектов).
-   Сверху — мини-карта европейской России: регионы, схема трасс М-7 и М-5, Уфа — пункт отправки.
-   Ниже — увеличенный регион текущего объекта: карта без рамки, растворяется в фоне, по углам — уголки
-   видоискателя. На ней трассы (OpenStreetMap, js/roads.js), объекты региона и офисы; трасса к текущему
-   объекту подсвечена. Объект — тот же, что показывает сфера: панель получает его через show(i).
-   Данные: AS.OBJECTS (geo, region, route), AS.REGIONS, AS.OFFICES, AS.ROADS, AS.ROUTE_NAMES. */
+   Под заголовком — кадр текущего объекта с уголками видоискателя: 3D-квартал (js/clay-map.js), а если данных
+   квартала для объекта нет — плоская карта региона: трассы (OpenStreetMap, js/roads.js), объекты региона и офисы,
+   трасса к объекту подсвечена, край неровный и уходит в фон до рамки. Объект — тот же, что показывает сфера:
+   панель получает его через show(i). Данные: AS.OBJECTS (geo, region, route), AS.OFFICES, AS.ROADS, AS.ROUTE_NAMES. */
 (function () {
   'use strict';
   var AS = window.AS = window.AS || {};
   var TAU = Math.PI * 2, D2R = Math.PI / 180;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // схема федеральных трасс на мини-карте — через города (М-7 и М-5 соединяют все наши регионы)
-  var SCHEME = {
-    'М-7': [[55.75, 37.62], [56.13, 40.41], [56.30, 43.94], [56.13, 47.25], [55.79, 49.12], [55.74, 52.40], [54.74, 55.97]],
-    'М-5': [[55.75, 37.62], [54.63, 39.74], [53.20, 45.00], [53.16, 48.47], [53.51, 49.42], [53.20, 50.15], [53.23, 50.6], [54.74, 55.97]]
-  };
-  var SCHEME_LABEL = { 'М-7': [55.77, 50.9], 'М-5': [53.18, 46.6] };
   var ROADKEY = { 'Москва и МО': 'msk', 'Татарстан': 'tat', 'Нижегородская обл.': 'nn', 'Владимир': 'vld', 'Самарская обл.': 'sam' };
-  var CITY = [['МОСКВА', 'Москва и МО', -1], ['ВЛАДИМИР', 'Владимир', 2], ['Н. НОВГОРОД', 'Нижегородская обл.', -1], ['КАЗАНЬ', 'Татарстан', -1], ['САМАРА', 'Самарская обл.', 1]];
-  var BOX = { la0: 52.7, la1: 58.6, lo0: 35.2, lo1: 57.6 };   // мини-карта: от Смоленска до Уфы
 
   // цвет из CSS («#c41718», «rgb(…)») → [r, g, b]
   function rgbOf(v, fb) {
@@ -37,9 +28,21 @@
   AS.HeroGeo = function (root, opts) {
     opts = opts || {};
     var cv = root.querySelector('canvas'), ctx = cv.getContext('2d');
+    // 3D-квартал объекта (js/clay-map.js), если для объекта собраны данные; плоская карта региона у такого объекта
+    // не показывается вовсе. Слой — под холстом панели, поэтому уголки кадра, подписи и «пилюли» рисуются поверх него.
+    // Тема: тёмная (сайт тёмный); светлая — data-clay="light" на панели или ?clay=light в адресе
+    var clayEl = null, clay = null, clayData = null, clayFor = -1, clayMix = 0, clayWant = -1, flatA = 1;
+    // квартал, который сейчас построен на экране (подписи и нижняя строка — от него, а не от уже выбранного следующего объекта)
+    var clayOnI = -1, clayOnD = null;
+    if (AS.ClayMap) {
+      clayEl = document.createElement('div'); clayEl.className = 'hero-geo__clay'; clayEl.setAttribute('aria-hidden', 'true');
+      var clayTheme = (location.search.match(/[?&]clay=(light|dark)/) || [])[1] || root.getAttribute('data-clay') || 'dark';
+      clayEl.setAttribute('data-clay-theme', clayTheme);
+      root.insertBefore(clayEl, cv);
+      clay = AS.ClayMap(clayEl, { theme: clayTheme });
+    }
     var O = (AS.OBJECTS || []).filter(function (o) { return o.geo; });
     var OFF = AS.OFFICES || [], HQ = (OFF.filter(function (o) { return o.kind === 'hq'; })[0] || { geo: [55.75, 37.62] }).geo;
-    var UFA = OFF.filter(function (o) { return o.kind === 'dispatch'; })[0];
     var ROADS = AS.ROADS || {}, NAMES = AS.ROUTE_NAMES || {};
     var q = function (k) { return root.querySelector('[data-geo-' + k + ']'); };
     var W = 1, H = 1, K = 1, Hm = 1, GAP = 1, FH = 1, FM = 'monospace', cur = -1, vis = true, t0 = performance.now();
@@ -48,8 +51,8 @@
     var A = function (a) { return 'rgba(' + ACC.join(',') + ',' + a + ')'; }, L = function (a) { return 'rgba(' + LIG.join(',') + ',' + a + ')'; };
     var DARK = function () { return 'rgb(' + ACC.map(function (c) { return Math.round(16 + c * .06); }).join(',') + ')'; };
     // view — что сейчас на увеличенной карте, target — куда нужно; shown — объект, чей регион нарисован;
-    // ring — кружок области на мини-карте (плавно переезжает); fade — прозрачность увеличенной карты при смене региона
-    var view = null, target = null, ring = null, shown = -1, fade = 1, last = 0, hit = [];
+    // fade — прозрачность плоской карты при смене региона
+    var view = null, target = null, shown = -1, fade = 1, last = 0, hit = [], started = false;   // started — панель уже нарисовала кадр
     var copy = function (v) { return { lat: v.lat, lon: v.lon, rad: v.rad }; };
 
     // регион текущего объекта: центр и радиус увеличенной карты (км)
@@ -69,11 +72,19 @@
       LIG = rgbOf(css.getPropertyValue('--accent-3'), ACC.map(function (c) { return Math.round(c + (255 - c) * .45); }));
       // ширину берём из CSS: панель может быть скрыта (раскладка первого экрана измеряет её до показа)
       W = Math.max(200, Math.round(parseFloat(getComputedStyle(root).width) || cv.getBoundingClientRect().width || 300));
-      Hm = Math.round(W * 0.46); GAP = Math.round(W * 0.19); FH = Math.round(W * 0.9); H = Hm + GAP + FH;
+      // схемы регионов сверху больше нет: кадр квартала занимает всю панель под заголовком (высота панели прежняя);
+      // GAP — запас под заголовком для домов, выступающих за верх кадра
+      Hm = 0; GAP = Math.round(W * 0.1); H = Math.round(W * 1.55); FH = H - GAP;
       var d = Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 2);
       cv.style.height = H + 'px';
       cv.width = Math.round(W * d); cv.height = Math.round(H * d);
       ctx.setTransform(d, 0, 0, d, 0, 0);
+      if (clayEl) {   // слой 3D-карты: кадр нижней карты + поля, в которые выступают здания с края квартала
+        var bl = clay ? clay.bleed(W, FH) : { x: 0, t: 0, b: 0 };
+        clayEl.style.left = (cv.offsetLeft - bl.x) + 'px'; clayEl.style.top = (cv.offsetTop + Hm + GAP - bl.t) + 'px';
+        clayEl.style.width = (W + 2 * bl.x) + 'px'; clayEl.style.height = (FH + bl.t + bl.b) + 'px';
+        if (clay) { clay.resize(W, FH); clayEl.firstChild.style.transformOrigin = (bl.x + W / 2) + 'px ' + (bl.t + FH / 2) + 'px'; }
+      }
     }
     function show(i) {
       if (i == null || !O[i]) return;
@@ -83,22 +94,34 @@
       // подписи под картой нет (название и адрес — на карточке сферы); для экранных дикторов — в описании карты
       cv.setAttribute('aria-label', 'Карта: ' + o.short + ', ' + o.region + (o.route ? ', по трассе ' + (NAMES[o.route] || o.route) : ''));
       target = regionView(o);
+      clayData = null; clayFor = -1; clayWant = clay && clay.has(o.id) ? i : -1;
       // тот же регион — карта остаётся, меняется только подсветка; другой — карта гаснет и проявляется на новом месте
-      if (!view || reduce) { view = copy(target); ring = copy(target); shown = i; }
+      // до первого кадра (стартовый объект уточняет сфера) — без перехода; у объекта с 3D плоская карта не мелькает
+      if (!view || reduce || !started) { view = copy(target); shown = i; flatA = hasClay(i) ? 0 : 1; }
       else if (shown < 0 || O[shown].region === o.region) shown = i;
     }
 
+    // у объекта есть 3D-квартал — плоская карта региона для него не показывается вовсе (сразу квартал)
+    function hasClay(i) { return !!(clay && O[i] && clay.has(O[i].id)); }
+    function clayLoad(i) {
+      clay.load(O[i].id).then(function (dd) {
+        if (cur !== i || !dd) return;
+        clayData = dd; clayFor = i; clayOnI = i; clayOnD = dd;
+        cv.setAttribute('aria-label', 'Карта квартала: ' + dd.to + ', жильё — ' + dd.from + ', ' + clayLine(dd));
+      });
+    }
+    function clayLine(d) { return d.line || 'Пешком до склада ' + d.rows[0][1] + ' · ' + d.rows[1][1]; }
     // плашки подписей без наложений
     function pill(text, x, y, style, placed, bounds, fs) {
       ctx.font = '600 ' + ((fs || 10) * K).toFixed(1) + 'px ' + FM;
-      var lw = ctx.measureText(text).width, px = 5 * K, ph = (fs ? fs + 6 : 17) * K, bw = lw + px * 2, g = 8 * K;
+      var lw = ctx.measureText(text).width, px = 5 * K, ph = (fs ? fs + 6 : 17) * K, dotW = style === 'obj' ? 9 * K : 0, bw = lw + px * 2 + dotW, g = 8 * K;
       var shield = style === 'shield' || style === 'shield-on';
       var cand = shield ? [[x - bw / 2, y - ph / 2]] : [[x - bw / 2, y - g - ph], [x - bw / 2, y + g], [x + g, y - ph / 2], [x - g - bw, y - ph / 2], [x + g, y - g - ph], [x - g - bw, y + g], [x + g, y + g], [x - g - bw, y - g - ph]];
       // подпись текущего объекта обязательна: если свободного места нет — туда, где наложение меньше;
       // подписи офисов допускают лишь касание соседей (до 8% площади)
       var least = null, la = 1e9;
       for (var c = 0; c <= cand.length; c++) {
-        if (c === cand.length) { if (!least || !(style === 'accent' || (style === 'plain' && la < bw * ph * .08))) break; bx = least[0]; by = least[1]; }
+        if (c === cand.length) { if (!least || !(style === 'accent' || style === 'obj' || (style === 'plain' && la < bw * ph * .08))) break; bx = least[0]; by = least[1]; }
         else {
           var bx = Math.max(bounds[0], Math.min(bounds[2] - bw, cand[c][0])), by = Math.max(bounds[1], Math.min(bounds[3] - ph, cand[c][1])), ov = 0;
           for (var i = 0; i < placed.length; i++) {
@@ -108,14 +131,16 @@
           if (ov > 0) { if (ov < la) { la = ov; least = [bx, by]; } continue; }
         }
         placed.push([bx, by, bw, ph]);
-        var acc = style === 'accent', on = style === 'shield-on';
-        ctx.fillStyle = acc ? A(.95) : on ? DARK() : 'rgba(14,14,14,.92)';
-        ctx.strokeStyle = acc ? L(.7) : on ? L(.95) : shield ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.16)';
+        // obj — подпись объекта над 3D-кварталом: тёмная плашка, белый текст и красная точка (читается и на красной крыше)
+        var obj = style === 'obj', acc = style === 'accent', on = style === 'shield-on';
+        ctx.fillStyle = acc ? A(.95) : on ? DARK() : obj ? 'rgba(10,10,10,.94)' : 'rgba(14,14,14,.92)';
+        ctx.strokeStyle = acc ? L(.7) : on ? L(.95) : obj ? A(.85) : shield ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.16)';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.roundRect(bx, by, bw, ph, (shield ? 3 : 5) * K); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = acc ? '#111' : on ? L(1) : shield ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.85)';
+        if (obj) { ctx.fillStyle = A(1); ctx.beginPath(); ctx.arc(bx + px + 2.5 * K, by + ph / 2, 2.5 * K, 0, TAU); ctx.fill(); }
+        ctx.fillStyle = acc || obj ? '#fff' : on ? L(1) : shield ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.85)';
         ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-        ctx.fillText(text, bx + px, by + ph / 2 + .5); ctx.textBaseline = 'alphabetic';
+        ctx.fillText(text, bx + px + dotW, by + ph / 2 + .5); ctx.textBaseline = 'alphabetic';
         return true;
       }
       return false;
@@ -126,57 +151,49 @@
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
     }
     function dot(x, y, r, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+    // край увеличенной карты — неровный, как у 3D-квартала, и целиком внутри кадра: дороги уходят в фон до рамки,
+    // рамка их не режет. Форма — «скруглённый квадрат» кадра с волной (своя у каждого региона), в долях полукадра
+    function ragEdge(reg) {
+      var h = 2166136261; for (var i = 0; i < reg.length; i++) { h ^= reg.charCodeAt(i); h = Math.imul(h, 16777619); } h >>>= 0;
+      var ph = [0, 1, 2].map(function (k) { return ((h >>> (k * 8)) & 255) / 255 * TAU; });
+      return function (an) { return 0.9 + 0.05 * (0.5 * Math.sin(2 * an + ph[0]) + 0.3 * Math.sin(3 * an + ph[1]) + 0.2 * Math.sin(5 * an + ph[2])); };
+    }
+    function sq4(u, v) { return Math.pow(Math.pow(Math.abs(u), 4) + Math.pow(Math.abs(v), 4), 0.25); }
+    var maskCv = document.createElement('canvas'), maskKey = '';
+    // маска: 16 вложенных контуров от края (прозрачно) к 0.68 края (непрозрачно) — плавный спад без фильтров
+    function ragMask(edge, fw, fh, d, key) {
+      if (maskKey === key) return maskCv;
+      maskKey = key; maskCv.width = Math.round(fw * d); maskCv.height = Math.round(fh * d);
+      var m = maskCv.getContext('2d'), n = 16;
+      m.setTransform(d, 0, 0, d, 0, 0); m.clearRect(0, 0, fw, fh);
+      for (var k = 0; k < n; k++) {
+        var sc = 1 - 0.32 * k / (n - 1);
+        m.fillStyle = 'rgba(0,0,0,' + (1 / (n - k)).toFixed(4) + ')'; m.beginPath();
+        for (var i = 0; i <= 120; i++) {
+          var an = i / 120 * TAU, c = Math.cos(an), sn = Math.sin(an), r = edge(an) * sc / sq4(c, sn);
+          var x = fw / 2 + c * r * fw / 2, y = fh / 2 + sn * r * fh / 2;
+          if (i) m.lineTo(x, y); else m.moveTo(x, y);
+        }
+        m.fill();
+      }
+      return maskCv;
+    }
 
     function draw(t) {
       if (cur < 0 || !view || shown < 0) return;
       var reg = O[cur].region, route = O[cur].route, placed = [];
       hit = [];
       ctx.clearRect(0, 0, W, H);
-      // ---------- мини-карта ----------
-      var kx = Math.cos(55.6 * D2R), sc = Math.min(W / ((BOX.lo1 - BOX.lo0) * kx), Hm / (BOX.la1 - BOX.la0));
-      var ox = (W - (BOX.lo1 - BOX.lo0) * kx * sc) / 2, oy = (Hm - (BOX.la1 - BOX.la0) * sc) / 2;
-      var P1 = function (g) { return [ox + (g[1] - BOX.lo0) * kx * sc, oy + (BOX.la1 - g[0]) * sc]; };
-      var st = 7 * K;
-      for (var y = st / 2; y < Hm; y += st) for (var x = st / 2; x < W; x += st) {
-        var e = Math.min(x, W - x, y, Hm - y) / (Hm * .32);
-        ctx.fillStyle = 'rgba(255,255,255,' + (0.1 * Math.min(1, e)).toFixed(3) + ')'; ctx.fillRect(x, y, 1.2 * K, 1.2 * K);
-      }
-      Object.keys(SCHEME).forEach(function (ref) {
-        var on = route === ref;
-        ctx.strokeStyle = on ? L(.85) : 'rgba(255,255,255,.2)'; ctx.lineWidth = on ? 1.5 : 1;
-        ctx.beginPath(); SCHEME[ref].forEach(function (g, i) { var p = P1(g); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke();
-        var m = P1(SCHEME_LABEL[ref]); pill(ref, m[0], m[1], on ? 'shield-on' : 'shield', placed, [0, 0, W, Hm], 8.5);
-      });
-      (AS.REGIONS || []).forEach(function (r) {
-        var p = P1(r.hub), on = r.key === reg, n = O.filter(function (x) { return x.region === r.key; }).length;
-        glow(p[0], p[1], (10 + Math.sqrt(n) * 5) * K * (on ? 1.4 : 1), on ? .95 : .45);
-        dot(p[0], p[1], (on ? 3 : 2) * K, on ? '#fff' : L(1));
-        hit.push({ x: p[0], y: p[1], r: 14 * K, region: r.key });
-      });
-      if (UFA) { var pu = P1(UFA.geo); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.arc(pu[0], pu[1], 4 * K, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-      ctx.font = '600 ' + (9 * K).toFixed(1) + 'px ' + FM; ctx.textAlign = 'center';
-      CITY.forEach(function (c) {
-        var r = (AS.REGIONS || []).filter(function (x) { return x.key === c[1]; })[0]; if (!r) return;
-        var p = P1(r.hub); ctx.fillStyle = c[1] === reg ? '#fff' : 'rgba(255,255,255,.4)';
-        // Владимир рядом с Москвой — подпись снизу и правее, чтобы не наезжать на кольцо Москвы
-        if (c[2] === 2) { ctx.textAlign = 'left'; ctx.fillText(c[0], p[0] - 4 * K, p[1] + 18 * K); ctx.textAlign = 'center'; return; }
-        ctx.fillText(c[0], p[0], p[1] + c[2] * 12 * K + (c[2] > 0 ? 6 * K : 0));
-      });
-      if (UFA) { var pu2 = P1(UFA.geo); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillText('УФА', pu2[0], pu2[1] - 12 * K); }
-      ctx.textAlign = 'left';
-
-      // ---------- увеличенный регион ----------
+      // ---------- кадр: 3D-квартал объекта или (если квартала нет) плоская карта региона ----------
       var o = O[shown]; reg = o.region; route = o.route;
       var fx = 0, fy = Hm + GAP, fw = W, fh = FH, lcx = fw / 2, lcy = fy + fh / 2, s2 = Math.min(fw, fh) / 2 / view.rad * (1 + .07 * (1 - fade));
       var ctr = [view.lat, view.lon];
+      var ce = clayMix * clayMix * (3 - 2 * clayMix);   // видимость 3D-квартала
       var P2 = function (g) { var d = km(ctr, g); return [lcx + d[0] * s2, lcy - d[1] * s2]; };
-      // выноска: кружок области на мини-карте и линии к верхним уголкам кадра
-      var pc = P1([ring.lat, ring.lon]), pr = Math.max(5 * K, ring.rad / 111.3 * sc);
-      ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(pc[0], pc[1], pr, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.13)'; ctx.beginPath(); ctx.moveTo(pc[0] - pr, pc[1]); ctx.lineTo(fx + 1, fy + 1); ctx.moveTo(pc[0] + pr, pc[1]); ctx.lineTo(fx + fw - 1, fy + 1); ctx.stroke();
+      var edgeR = ragEdge(reg), vis = function (p) { var u = (p[0] - lcx) / (fw / 2), v = (p[1] - lcy) / (fh / 2); return sq4(u, v) / edgeR(Math.atan2(v, u)); };
 
       ctx.save();
-      ctx.globalAlpha = fade;
+      ctx.globalAlpha = fade * flatA;   // плоская карта — только у объектов без 3D-квартала
       ctx.beginPath(); ctx.rect(fx, fy, fw, fh); ctx.clip();
       var st2 = 9 * K;
       for (var y2 = fy; y2 < fy + fh; y2 += st2) for (var x2 = fx; x2 < fx + fw; x2 += st2) { ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(x2, y2, 1.3 * K, 1.3 * K); }
@@ -199,11 +216,15 @@
         [50, 100].forEach(function (r) { ctx.beginPath(); ctx.arc(hqp[0], hqp[1], r * s2, 0, TAU); ctx.stroke(); });
         ctx.setLineDash([]);
       }
-      var inside = function (p, m) { return p[0] > fx + m && p[0] < fx + fw - m && p[1] > fy + m && p[1] < fy + fh - m; };
+      // карта уходит в фон к неровному краю (точки, кружки и подписи ниже — поверх, целиком)
+      var ga = ctx.globalAlpha; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(ragMask(edgeR, fw, fh, cv.width / W, reg + '|' + fw + '|' + fh + '|' + cv.width), fx, fy, fw, fh);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = ga;
+      var inside = function (p) { return vis(p) < .82; };   // в видимой части карты — не у растворённого края
       var offSq = [];
       OFF.forEach(function (f, j) {
         if (f.kind === 'dispatch') return;
-        var p = P2(f.geo); if (!inside(p, 4)) return;
+        var p = P2(f.geo); if (!inside(p)) return;
         if (f.kind === 'hq') {
           var prr = (6 + (reduce ? 4 : (t * 12) % 14)) * K;
           ctx.strokeStyle = A((1 - (prr / K - 6) / 14).toFixed(2)); ctx.lineWidth = 1.3 * K; ctx.beginPath(); ctx.arc(p[0], p[1], prr, 0, TAU); ctx.stroke();
@@ -214,10 +235,11 @@
       O.forEach(function (x, i) {
         if (x.region !== reg) return;
         var p = P2(x.geo), on = i === cur, tw = reduce ? 1 : .75 + .25 * Math.sin(t * 2 + x.geo[1] * 9);
+        if (!on && !inside(p)) return;   // у края — не рисуем вовсе, а не «обрезком»
         glow(p[0], p[1], (on ? 18 : 9) * K, on ? .95 : .5 * tw);
         dot(p[0], p[1], (on ? 3.6 : 2.3) * K, on ? '#fff' : L(1));
         placed.push(on ? [p[0] - 4 * K, p[1] - 4 * K, 8 * K, 8 * K] : [p[0] - 5 * K, p[1] - 5 * K, 10 * K, 10 * K]);
-        hit.push({ x: p[0], y: p[1], r: 12 * K, i: i });
+        if (flatA > .5) hit.push({ x: p[0], y: p[1], r: 12 * K, i: i });   // точки нажимаются, только пока плоская карта видна
       });
       var bounds = [fx + 10 * K, fy + 10 * K, fx + fw - 10 * K, fy + fh - 10 * K];
       placed.push([fx, fy + fh - 22 * K, fw, 22 * K]); // место под подписи внизу кадра
@@ -229,39 +251,54 @@
       // у края кадра вариантов меньше — такие подписи ставим первыми
       var edge = function (p) { return Math.min(p[0] - fx, fx + fw - p[0], p[1] - fy, fy + fh - p[1]); };
       OFF.map(function (f, j) { return j; }).sort(function (a, b) { return edge(P2(OFF[a].geo)) - edge(P2(OFF[b].geo)); }).forEach(function (j) {
-        var f = OFF[j], p = P2(f.geo), k = placed.indexOf(offSq[j]); if (f.kind === 'dispatch' || !inside(p, 8)) return;
+        var f = OFF[j], p = P2(f.geo), k = placed.indexOf(offSq[j]); if (f.kind === 'dispatch' || !inside(p)) return;
         if (k >= 0) placed[k] = [p[0] - 4 * K, p[1] - 4 * K, 8 * K, 8 * K];
         pill(f.kind === 'hq' ? 'МОСКВА' : f.kind === 'stay' ? 'ЗАСЕЛЕНИЕ' : f.city.toUpperCase(), p[0], p[1], 'plain', placed, bounds);
         if (k >= 0) placed[k] = offSq[j];
       });
-      // таблички трасс — там, где дорога подходит к краю кадра; трасса к объекту — первой
-      var refsIn = {};
+      // таблички трасс — там, где дорога подходит к краю видимой части карты; трасса к объекту — первой
+      // не больше шести табличек — трассы с самым длинным видимым участком (без нагромождения у края)
+      var refsIn = {}, seen = {};
       ways.forEach(function (w) { refsOf(w).forEach(function (r) { (refsIn[r] = refsIn[r] || []).push(w); }); });
-      Object.keys(refsIn).sort(function (a, b) { return (b === route) - (a === route); }).forEach(function (r) {
+      Object.keys(refsIn).forEach(function (r) {
+        var L = 0;
+        refsIn[r].forEach(function (w) { for (var i = 1; i < w.p.length; i++) { var a = P2(w.p[i - 1]), b = P2(w.p[i]); if (vis(a) < .9 && vis(b) < .9) L += Math.hypot(b[0] - a[0], b[1] - a[1]); } });
+        seen[r] = L;
+      });
+      Object.keys(refsIn).filter(function (r) { return seen[r] > 30 * K || r === route; })
+        .sort(function (a, b) { return (b === route) - (a === route) || seen[b] - seen[a]; }).slice(0, 6).forEach(function (r) {
         var best = null, bd = -1;
         refsIn[r].forEach(function (w) { w.p.forEach(function (g) {
-          var p = P2(g), ix = Math.min(p[0] - fx, fx + fw - p[0]), iy = Math.min(p[1] - fy, fy + fh - p[1]);
-          if (ix > 18 * K && iy > 14 * K) { var d = Math.hypot(p[0] - lcx, (p[1] - lcy) * fw / fh); if (d > bd) { bd = d; best = p; } }
+          var p = P2(g), vv = vis(p);
+          if (vv < .74 && vv > bd) { bd = vv; best = p; }
         }); });
         if (best) pill(r, best[0], best[1], r === route ? 'shield-on' : 'shield', placed, bounds, 8.5);
       });
-      // карта растворяется к краям
-      ctx.globalCompositeOperation = 'destination-in';
-      var mk = ctx.createRadialGradient(lcx, lcy, Math.min(fw, fh) * .36, lcx, lcy, Math.max(fw, fh) * .62);
-      mk.addColorStop(0, 'rgba(0,0,0,1)'); mk.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = mk; ctx.fillRect(fx, fy, fw, fh);
-      ctx.globalCompositeOperation = 'source-over';
       ctx.restore();
       ctx.globalAlpha = 1;
-      // уголки видоискателя
+      // подписи над 3D-кварталом — те же «пилюли», что на плоской карте: склад цветом дизайна, жильё — «заселение»
+      var cp = ce > .02 && clay && clayOnI >= 0 ? clay.points() : null;
+      if (cp) {
+        ctx.save(); ctx.globalAlpha = ce;
+        var cpl = [[fx, fy + fh - 22 * K, fw, 22 * K]], cb = [fx + 10 * K, fy + 10 * K, fx + fw - 10 * K, fy + fh - 10 * K];
+        var pw = [fx + cp.wh[0], fy + cp.wh[1]], ph = cp.host && [fx + cp.host[0], fy + cp.host[1]], pa = cp.away && [fx + cp.away[0], fy + cp.away[1]];
+        cpl.push([pw[0] - 8 * K, pw[1] - 8 * K, 16 * K, 16 * K]);
+        if (ph) cpl.push([ph[0] - 7 * K, ph[1] - 7 * K, 14 * K, 14 * K]);
+        pill(O[clayOnI].short.toUpperCase(), pw[0], pw[1] - 6 * K, 'obj', cpl, cb);
+        if (ph) pill('ЗАСЕЛЕНИЕ', ph[0], ph[1], 'plain', cpl, cb);
+        if (pa && clayOnD && clayOnD.away) pill(clayOnD.away.toUpperCase(), pa[0], pa[1], 'plain', cpl, cb);   // дорога от дальнего жилья
+        ctx.restore();
+      }
+      // уголки видоискателя — общие для плоской карты и 3D-квартала
       var c = 16 * K; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.4;
       [[fx, fy, 1, 1], [fx + fw, fy, -1, 1], [fx, fy + fh, 1, -1], [fx + fw, fy + fh, -1, -1]].forEach(function (k) {
         ctx.beginPath(); ctx.moveTo(k[0] + k[2] * .7, k[1] + k[3] * c); ctx.lineTo(k[0] + k[2] * .7, k[1] + k[3] * .7); ctx.lineTo(k[0] + k[2] * c, k[1] + k[3] * .7); ctx.stroke();
       });
-      ctx.font = '600 ' + (8.5 * K).toFixed(1) + 'px ' + FM; ctx.fillStyle = 'rgba(255,255,255,' + (.4 * fade).toFixed(3) + ')'; ctx.textAlign = 'left';
-      ctx.fillText('РАДИУС ' + Math.round(view.rad) + ' КМ', fx + 10 * K, fy + fh - 9 * K);
-      ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillText('© OPENSTREETMAP', fx + fw - 10 * K, fy + fh - 9 * K);
-      ctx.textAlign = 'left';
+      // подпись внизу кадра: у плоской карты — радиус, у квартала — дорога от жилья до объекта
+      ctx.font = '600 ' + (8.5 * K).toFixed(1) + 'px ' + FM; ctx.textAlign = 'left';
+      if (flatA > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (.4 * fade * flatA).toFixed(3) + ')'; ctx.fillText('РАДИУС ' + Math.round(view.rad) + ' КМ', fx + 10 * K, fy + fh - 9 * K); }
+      if (ce > 0 && clayOnD) { ctx.fillStyle = 'rgba(255,255,255,' + (.62 * ce).toFixed(3) + ')'; ctx.fillText(clayLine(clayOnD).toUpperCase(), fx + 10 * K, fy + fh - 9 * K); }
+      // источник картографических данных (OpenStreetMap, лицензия ODbL) указан в подвале сайта, не в кадре
     }
 
     // нажатия: точка объекта — к объекту, регион на мини-карте — к первому объекту региона
@@ -270,7 +307,11 @@
       hit.forEach(function (h) { var d = Math.hypot(h.x - x, h.y - y); if (d < h.r && d < bd) { bd = d; best = h; } });
       return best;
     }
-    cv.addEventListener('pointermove', function (e) { cv.style.cursor = pick(e) ? 'pointer' : ''; });
+    cv.addEventListener('pointermove', function (e) {
+      cv.style.cursor = pick(e) ? 'pointer' : '';
+      if (clay) { var r = cv.getBoundingClientRect(), y = e.clientY - r.top - Hm - GAP; if (y >= 0 && y <= FH) clay.pointer((e.clientX - r.left) / W * 2 - 1, y / FH * 2 - 1); }
+    });
+    cv.addEventListener('pointerleave', function () { if (clay) clay.pointer(0, 0); });
     cv.addEventListener('click', function (e) {
       var h = pick(e); if (!h || !opts.onPick) return;
       if (h.i != null) opts.onPick(h.i);
@@ -290,16 +331,33 @@
       var dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
       if (!vis || document.hidden || root.hidden || !target) return;
       // смена региона: кадр гаснет (0,18 с), карта переставляется на новый регион и проявляется с лёгким приближением (0,4 с);
-      // кружок на мини-карте тем временем плавно переезжает — по времени, а не по кадрам
       var away = shown !== cur;
-      if (reduce) { view = copy(target); ring = copy(target); shown = cur; fade = 1; }
+      if (reduce) { view = copy(target); shown = cur; fade = 1; }
       else if (away) { fade = Math.max(0, fade - dt / 0.18); if (!fade) { view = copy(target); shown = cur; } }
       else fade = Math.min(1, fade + dt / 0.4);
-      var e = reduce ? 1 : 1 - Math.exp(-dt * 7);
-      ring.lat += (target.lat - ring.lat) * e; ring.lon += (target.lon - ring.lon) * e; ring.rad += (target.rad - ring.rad) * e;
-      draw((now - t0) / 1000);
+      var flatT = shown >= 0 && hasClay(shown) ? 0 : 1;
+      flatA = reduce ? flatT : flatT > flatA ? Math.min(flatT, flatA + dt / 0.35) : flatT < flatA ? Math.max(flatT, flatA - dt / 0.25) : flatA;
+      if (clayEl) {
+        if (clayWant >= 0 && clayMix === 0) { var cw = clayWant; clayWant = -1; if (cw === cur) clayLoad(cw); }
+        var want = clayData && clayFor === cur && shown === cur ? 1 : 0;
+        clayMix = reduce ? want : want ? Math.min(1, clayMix + dt / 0.7) : Math.max(0, clayMix - dt / 0.3);
+        var cm = clayMix * clayMix * (3 - 2 * clayMix);
+        clayEl.style.opacity = cm.toFixed(3);
+        // квартал «приземляется» навстречу приближению (от центра кадра)
+        if (clayEl.firstChild) clayEl.firstChild.style.transform = 'scale(' + (1.12 - .12 * cm).toFixed(4) + ')';
+        if (clayMix > 0) clay.render(now);
+      }
+      draw(Math.max(0, (now - t0) / 1000)); started = true;   // первый кадр может прийти со временем чуть раньше t0
     })(t0);
     show(0);
+    // предпросмотр: ?clay — сразу объект с 3D-данными и пауза автопоказа; ?clay&clayid=<id> — конкретный объект
+    if (/[?&]clay\b/.test(location.search) && opts.onPick && AS.CLAY_IDS) setTimeout(function () {
+      var want = (location.search.match(/[?&]clayid=([\w-]+)/) || [])[1];
+      var k = O.findIndex(function (x) { return want ? x.id === want : AS.CLAY_IDS.indexOf(x.id) >= 0; });
+      if (k < 0) return;
+      opts.onPick(k);
+      var pz = document.querySelector('[data-geo-pause]'); if (pz && !pz.classList.contains('is-paused')) pz.click();
+    }, 900);
     return { show: show, resize: resize, current: function () { return cur; } };
   };
 })();

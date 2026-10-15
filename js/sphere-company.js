@@ -433,6 +433,8 @@
   };
 
   /* ---------- hero: автопоказ и наведение ---------- */
+  // какой объект сфера покажет следующим (не сдвигая очередь) — панель «География объектов» стартует сразу с него
+  Sphere.prototype.peekObject = function () { var i = this.nextObject(); this.prompt.cursor--; return i; };
   Sphere.prototype.nextObject = function () {
     var P = this.prompt, n = this.objects.length;
     if (!P.order.length || P.cursor >= P.order.length) {
