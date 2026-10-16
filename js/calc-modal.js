@@ -3,9 +3,10 @@
    Условия задаются одной фразой: подчёркнутые слова — выбор. По нажатию от слова выезжает плашка с вариантами
    (у каждого — сколько объектов подойдёт), на телефоне — шторка снизу. Второстепенное спрятано под «Уточнить».
    «Ищу работу»: подбирает объекты под человека (регион, профессия, длительность, пол и возраст — требования вакансий)
-   и для каждого считает, сколько он привезёт домой: оплачиваемые смены (обучение не оплачивается) × ставка,
-   минус налог самозанятого, еда, где она не входит в условия, и дорога, плюс компенсация дороги; даты вахты,
-   когда приходят аванс и остаток, сравнение с зарплатой дома. Все ставки и условия — из каталога объектов (AS.OBJECTS).
+   и для каждого считает, сколько он привезёт домой: стажировка по её ставке, остальные смены — по ставке должности
+   (сдельная — при 100 % выработке), обучение не оплачивается; минус налог самозанятого, еда, где она не входит
+   в условия, и дорога, плюс компенсация дороги; даты вахты, когда приходят аванс и остаток, сравнение с зарплатой дома.
+   Ставки и условия — из AS.CALC (js/calc-data.js, собирает tools/build_calc.py из таблицы вакансий).
    «Нужен персонал»: сколько людей нужно в штате под смены и график и сколько в месяц стоит свой штат
    (оплата смен, взносы, найм взамен ушедших, обучение, жильё); цену «Альфа-Стафф» менеджер пришлёт по заявке. */
 (function () {
@@ -14,8 +15,8 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var cm = $('[data-cm]');
-  if (!cm || !AS.OBJECTS) return;
-  var O = AS.OBJECTS.filter(function (o) { return o.rateMin; });
+  var O = (AS.CALC && AS.CALC.objects) || [];
+  if (!cm || !O.length) return;
   var money = AS.money || function (n) { return String(Math.round(n)); };
   var plural = AS.plural || function (n, a, b, c) { return c; };
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -311,31 +312,24 @@
   function terms(o) {
     if (o._t) return o._t;
     var who = (o.who || '').toLowerCase(), am = who.match(/(\d+)\s*[–-]\s*(\d+)/), up = who.match(/до\s*(\d+)/);
-    var tr = (o.training || '').match(/Первые\s+(\d+)/), sf = o.shiftFull || '', meals = (o.mealsFull || '').toLowerCase(), adv = o.advanceText || '';
+    var sf = o.shiftFull || '', meals = (o.mealsFull || '').toLowerCase(), adv = o.advanceText || '', tr = o.training || {};
     return (o._t = {
       men: /мужчин/.test(who), women: /женщин/.test(who),
       ageMin: am ? +am[1] : 18, ageMax: am ? +am[2] : up ? +up[1] : 99,
-      train: tr ? +tr[1] : /Первая смена/.test(o.training || '') ? 1 : 0,
-      // графики объекта из таблицы: «6/1 или 7/0», только «7/0», «5/2»…
-      scheds: (sf.match(/\d\/\d/g) || ['7/0']).filter(function (g) { return WEEK[g]; }),
+      // обучение: первые смены не оплачиваются; входят ли они в срок вахты — как в таблице
+      unpaid: tr.unpaid || 0, counted: tr.counted !== false,
+      // графики объекта из таблицы: «6/1 или 7/0», только «7/0», «5/2»…; где график уточняется — считаем по выбранному
+      scheds: o.schedTBD ? ['6/1', '7/0'] : (sf.match(/\d\/\d/g) || ['7/0']).filter(function (g) { return WEEK[g]; }),
       // какая доля дневных трат на еду остаётся на работнике: обед и ужин за счёт объекта — завтрак; обед — завтрак и ужин
       foodShare: /обед и ужин/.test(meals) ? 0.3 : /обед/.test(meals) ? 0.6 : 1,
-      foodNote: /обед и ужин/.test(meals) ? 'обед и ужин бесплатно' : /обед/.test(meals) ? 'обед бесплатно' : 'питание за свой счёт',
+      foodNote: /обед и ужин/.test(meals) ? 'обед и ужин бесплатно' : /обед/.test(meals) ? 'обед бесплатно' : meals ? 'питание за свой счёт' : 'питание уточняется',
       weekly: /каждую неделю/.test(adv), advAfter: +((adv.match(/после\s+(\d+)/) || [])[1] || 7),
-      payNote: (o.pay || '').split(/\.\s+(?=Первая|Первые)/)[0].replace(/\.?$/, '.'),
       road: (o.transport || '').replace(/\s*до объекта/, '').replace(' · ', ', ')
     });
   }
-  // ставка за смену для этого человека: пол (у объектов с разными ставками), выработка — на сдельных объектах
-  function rateFor(o, I) {
-    var lo = o.rateMin, hi = o.rateTop;
-    var line = (o.rateLines || []).filter(function (l) { return l.trim().charAt(0) === (I.sex === 'f' ? 'Ж' : 'М'); })[0];
-    if (line) return +line.replace(/\D/g, '');
-    if (o.piece) {
-      if (lo === hi) return Math.round(hi * Math.min(I.pace, 100) / 100);   // «до N ₽ при 100 % выработки»
-      return Math.round(lo + (hi - lo) * (I.pace <= 80 ? 0 : I.pace >= 120 ? 1 : 0.5));
-    }
-    return lo === hi ? lo : Math.round((lo + hi) / 2);   // фиксированные ставки по профессиям — середина вилки
+  // должность на объекте: выбранная профессия (без выбора — главная, первая в списке); у части объектов ставки для мужчин и женщин разные
+  function posFor(o, I) {
+    return o.positions.filter(function (p) { return (!p.sex || p.sex === I.sex) && (!I.prof || p.jobs.indexOf(I.prof) >= 0); })[0] || null;
   }
   function fits(o, I) {
     var t = terms(o), why = [];
@@ -344,20 +338,26 @@
     if (I.shifts < (o.minShifts || 0)) why.push('вахта от ' + o.minShifts + ' смен');
     if (I.sex === 'm' ? !t.men : !t.women) why.push(t.men ? 'только мужчины' : 'только женщины');
     if (I.age < t.ageMin || I.age > t.ageMax) why.push(t.ageMax < 99 ? 'возраст ' + t.ageMin + '–' + t.ageMax : 'возраст от ' + t.ageMin);
+    if (!why.length && !posFor(o, I)) why.push(I.sex === 'f' ? 'только мужчины' : 'только женщины');   // эта должность — только для другого пола
     return why;
   }
   function calc(o, I) {
-    var t = terms(o), r = rateFor(o, I), paid = Math.max(0, I.shifts - t.train), gross = paid * r, tax = Math.round(gross * TAX);
+    var t = terms(o), p = posFor(o, I), r = p.rate, U = t.unpaid;
+    // смены обучения не оплачиваются; если в срок вахты не входят — человек работает их сверх вахты
+    var worked = I.shifts + (t.counted ? 0 : U), paid = Math.max(0, t.counted ? I.shifts - U : I.shifts);
+    // стажировка — первые оплачиваемые смены по её ставке, остальные — по ставке должности
+    var inN = p.intern ? Math.min(p.intern.shifts, paid) : 0, regN = paid - inN;
+    var gross = inN * (p.intern ? p.intern.rate : 0) + regN * r, tax = Math.round(gross * TAX);
     // график: выбранный человеком, если он есть на объекте, иначе — тот, что на объекте
     var sched = t.scheds.indexOf(I.sched) >= 0 ? I.sched : t.scheds[0], week = WEEK[sched];
-    var days = Math.ceil(I.shifts * 7 / week), food = Math.round(I.food * t.foodShare) * days;
+    var days = Math.ceil(worked * 7 / week), food = Math.round(I.food * t.foodShare) * days;
     var comp = I.shifts >= ROAD_COMP_FROM ? Math.min(ROAD_COMP, I.road) : 0, home = gross - tax - food - I.road + comp;
-    return { o: o, t: t, rate: r, paid: paid, gross: gross, tax: tax, days: days, food: food, comp: comp, home: home, sched: sched, week: week, own: sched !== I.sched };
+    return { o: o, t: t, p: p, rate: r, inN: inN, regN: regN, paid: paid, worked: worked, gross: gross, tax: tax, days: days, food: food, comp: comp, home: home, sched: sched, week: week, own: sched !== I.sched };
   }
 
-  var job = { region: '', prof: '', shifts: 30, sched: '6/1', sex: 'm', age: 30, pace: 100, road: 6000, food: 600, homePay: 0, start: addDays(today, 3), pick: '' };
+  var job = { region: '', prof: '', shifts: 30, sched: '6/1', sex: 'm', age: 30, road: 6000, food: 600, homePay: 0, start: addDays(today, 3), pick: '' };
   var jp = $('[data-cm-pane="job"]', cm), lastOk = [];
-  var REGS = (AS.REGIONS || []).filter(function (r) { return O.some(function (o) { return o.region === r.key; }); });
+  var REGS = (AS.CALC.regions || []).filter(function (r) { return O.some(function (o) { return o.region === r.key; }); });
   // профессия во фразе «Ищу работу …» — в творительном падеже; для женщин — женская форма, где она есть
   var PROF_AS = {
     'Комплектовщик': ['комплектовщиком', 'комплектовщицей'], 'Упаковщик': ['упаковщиком', 'упаковщицей'], 'Сортировщик': ['сортировщиком', 'сортировщицей'],
@@ -375,7 +375,6 @@
   function fitN(over) { return fitList(over).length; }
   var AGE_MIN = Math.min.apply(null, O.map(function (o) { return terms(o).ageMin; }));
   var AGE_MAX = Math.max.apply(null, O.map(function (o) { return Math.min(terms(o).ageMax, 70); }));
-  var PACE = { 80: '80 % нормы', 100: 'норму', 120: '120 % нормы' };
 
   SEL.sex = { pane: 'job', kind: 'list', name: 'Пол', title: 'Вы', head: 'объектов',
     label: function () { return job.sex === 'm' ? 'мужчина' : 'женщина'; }, cur: function () { return job.sex; },
@@ -420,11 +419,6 @@
     },
     note: 'Где на объекте только один график, считаем по нему.',
     set: function (v) { job.sched = v; } };
-  SEL.pace = { pane: 'job', kind: 'list', name: 'Выработка', title: 'Выработка на сдельных объектах',
-    label: function () { return PACE[job.pace]; }, cur: function () { return job.pace; },
-    opts: function () { return [{ v: 80, label: '80 % нормы', hint: 'пока осваиваюсь' }, { v: 100, label: 'Норму', hint: 'как большинство через неделю-две' }, { v: 120, label: '120 % нормы', hint: 'опыт на складе есть' }]; },
-    note: 'На сдельных объектах ставка за смену растёт с выработкой.',
-    set: function (v) { job.pace = +v; } };
   SEL.start = { pane: 'job', kind: 'cal', name: 'Дата выезда', title: 'Когда выезжаете',
     label: function () { return day(job.start); } };
   // объект в итоге — тоже выбор: все подходящие объекты с суммой «домой»
@@ -441,14 +435,9 @@
   function readJob() {
     job.road = num($('input[name="road"]', jp)); job.food = num($('input[name="food"]', jp)); job.homePay = num($('input[name="home"]', jp));
   }
-  // откуда ставка — коротко, из данных объекта
-  function rateNote(o) {
-    var lo = o.rateMin, hi = o.rateTop;
-    if ((o.rateLines || []).length > 1) return 'Ставка у мужчин и женщин разная: ' + o.rateLines.map(function (l) { return l.replace(/^М/, 'мужчины').replace(/^Ж/, 'женщины'); }).join(', ') + ' за смену.';
-    if (o.piece) return 'Оплата сдельная: ' + (lo === hi ? 'до ' + rub(hi) + ' за смену при 100 % нормы' : 'от ' + money(lo) + ' до ' + rub(hi) + ' за смену') + ' — считаем, если делать ' + PACE[job.pace] + '.';
-    if (lo !== hi) return 'Ставка от ' + money(lo) + ' до ' + rub(hi) + ' — зависит от профессии, считаем по середине.';
-    return 'Ставка фиксированная — ' + rub(lo) + ' за смену.';
-  }
+  // откуда ставка — как в условиях объекта
+  var BASIS = { '100': 'при 100 % выработке', given: 'сделка — по условиям объекта', fixed: 'фиксированная ставка' };
+  function rateNote(p) { return esc(p.text) + '.'; }
   function drawJob() {
     readJob();
     var all = O.map(function (o) { return { o: o, why: fits(o, job) }; }).filter(function (x) { return x.why; });
@@ -463,6 +452,7 @@
       if (!C.length) why = 'По этой профессии в выбранном регионе вакансий нет — выберите другой регион или «любую работу».';
       else if (!bySex.length) why = 'Здесь сейчас набирают только ' + (job.sex === 'm' ? 'женщин' : 'мужчин') + '. Выберите другой регион или профессию.';
       else if (!byAge.length) why = 'По возрасту здесь берут от ' + Math.min.apply(null, bySex.map(function (o) { return terms(o).ageMin; })) + ' до ' + Math.max.apply(null, bySex.map(function (o) { return terms(o).ageMax; })) + ' лет.';
+      else if (!byAge.some(function (o) { return posFor(o, job); })) why = 'Эту работу здесь предлагают только ' + (job.sex === 'f' ? 'мужчинам' : 'женщинам') + '. Выберите другую профессию.';
       else why = 'Здесь вахта — от ' + Math.min.apply(null, byAge.map(function (o) { return o.minShifts || 0; })) + ' смен. Выберите вахту длиннее.';
       best.innerHTML = '<div class="cm-empty"><span class="mono mono--dim">Не нашли</span><p class="cm-obj__name">Под эти условия объектов нет</p><p class="cm__note">' + why + '</p></div>';
       plan.innerHTML = '';
@@ -470,7 +460,7 @@
     }
     var cur = ok.filter(function (c) { return c.o.id === job.pick; })[0] || ok[0], idx = ok.indexOf(cur);
     job.pick = cur.o.id;
-    var c = cur, t = c.t, o = c.o, end = addDays(job.start, c.days), off = c.days - job.shifts;
+    var c = cur, t = c.t, o = c.o, end = addDays(job.start, c.days), off = c.days - c.worked, extra = c.worked - job.shifts;
     // полоса: из начисленного — что домой, что на налог, еду и дорогу (за вычетом компенсации)
     var segs = [['home', Math.max(0, c.home)], ['tax', c.tax], ['food', c.food], ['road', Math.max(0, job.road - c.comp)]];
     best.innerHTML =
@@ -482,26 +472,28 @@
         (ok.length > 1
           ? '<button type="button" class="cm-obj" data-cm-k="obj" aria-haspopup="dialog" aria-expanded="false" aria-label="Объект: ' + esc(o.short) + '. Все подходящие объекты"><span class="cm-obj__name">' + esc(o.short) + CHEV + '</span></button>'
           : '<p class="cm-obj"><span class="cm-obj__name">' + esc(o.short) + '</span></p>') +
-        '<p class="mono mono--dim cm-best__meta">' + esc(o.region + ' · ' + o.tag) + ' · ' + rub(c.rate) + ' за смену</p>' +
+        '<p class="mono mono--dim cm-best__meta">' + esc(o.region + ' · ' + o.tag) + ' · ' + rub(c.rate) + ' за смену' + (c.p.basis === '100' ? ' при 100 %' : '') + '</p>' +
         '<div class="cm-best__sum"><span class="mono mono--dim">Привезёте домой</span>' +
           '<span class="cm__sum"><span class="cm__approx">≈</span><span data-cm-num="' + c.home + '">' + money(shown.job == null ? c.home : shown.job) + '</span><small>₽</small></span>' +
-          '<span class="mono cm__range">за ' + job.shifts + ' смен · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте</span></div>' +
+          '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте</span></div>' +
         '<div class="cm-bar" aria-hidden="true">' + segs.map(function (s) { return s[1] > 0 ? '<i class="is-' + s[0] + '" style="flex-grow:' + s[1] + '"></i>' : ''; }).join('') + '</div>' +
         '<ul class="cm-break">' +
-          '<li class="is-home"><span>Начислено: ' + c.paid + ' × ' + rub(c.rate) + (t.train ? '<em>' + (t.train === 1 ? 'первая смена' : 'первые ' + t.train + ' смены') + ' — обучение без оплаты</em>' : '') + '</span><b>' + rub(c.gross) + '</b></li>' +
+          (t.unpaid ? '<li class="is-free"><span>Обучение: ' + (t.unpaid === 1 ? 'первая смена' : 'первые ' + t.unpaid + ' смены') + '<em>без оплаты, ' + (t.counted ? 'входит в срок вахты' : 'сверх срока вахты') + '</em></span><b>0 ₽</b></li>' : '') +
+          (c.inN ? '<li class="is-home"><span>Стажировка: ' + c.inN + ' × ' + rub(c.p.intern.rate) + '</span><b>' + rub(c.inN * c.p.intern.rate) + '</b></li>' : '') +
+          '<li class="is-home"><span>' + (c.inN ? 'Дальше: ' : 'Смены: ') + c.regN + ' × ' + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em></span><b>' + rub(c.regN * c.rate) + '</b></li>' +
           '<li class="is-tax"><span>Налог самозанятого 6 %</span><b>−' + rub(c.tax) + '</b></li>' +
-          '<li class="is-food"><span>Еда: ' + c.days + ' дн. × ' + rub(Math.round(job.food * t.foodShare)) + '<em>' + t.foodNote + (off ? ', выходные тоже считаем' : '') + '</em></span><b>' + (c.food ? '−' + rub(c.food) : '0 ₽') + '</b></li>' +
+          '<li class="is-food"><span>Еда: ' + c.days + ' дн. × ' + rub(Math.round(job.food * t.foodShare)) + '<em>' + t.foodNote + '</em></span><b>' + (c.food ? '−' + rub(c.food) : '0 ₽') + '</b></li>' +
           '<li class="is-road"><span>Дорога туда и обратно</span><b>' + (job.road ? '−' + rub(job.road) : '0 ₽') + '</b></li>' +
           (c.comp ? '<li class="is-comp"><span>Компенсация дороги — от ' + ROAD_COMP_FROM + ' смен</span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '') +
-          '<li class="is-free"><span>Жильё</span><b>бесплатно</b></li>' +
+          '<li class="is-free"><span>Жильё</span><b>' + (/бесплатно/.test(o.housing || '') ? 'бесплатно' : 'уточняется') + '</b></li>' +
         '</ul>' +
-        '<p class="cm-src">' + rateNote(o) + '</p>' +
+        '<p class="cm-src">' + rateNote(c.p) + '</p>' +
         '<a class="btn btn--outline btn--block" href="#contact" data-cm-apply="' + esc(o.id) + '"><span>Хочу на этот объект</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>' +
       '</div>';
     tween('job', $('[data-cm-num]', best));
 
     // как пройдёт вахта: выезд (дату можно поменять прямо здесь) — аванс — домой
-    var advAt = Math.ceil(t.advAfter * 7 / c.week), advPct = Math.round(Math.min(advAt / c.days, 1) * 100);
+    var advAt = Math.ceil((t.advAfter + (t.counted ? 0 : t.unpaid)) * 7 / c.week), advPct = Math.round(Math.min(advAt / c.days, 1) * 100);
     var mon = job.homePay ? Math.round(c.home / job.homePay * 10) / 10 : 0;   // дробное число месяцев — «4,1 месяца», целое — по правилам
     plan.innerHTML =
       '<p class="mono mono--dim">Как пройдёт вахта</p>' +
@@ -515,8 +507,9 @@
         '<div class="cm-tl__lbl"><span><span class="cm-tk" role="button" tabindex="0" data-cm-k="start"></span> выезд</span><span><b>≈ ' + day(end) + '</b> домой</span></div>' +
       '</div>' +
       '<ul class="cm-when">' +
-        '<li>' + (c.own ? 'На этом объекте только <b>' + c.sched + '</b> — ' + SCHED_TXT[c.sched] + ': ' : 'График <b>' + c.sched + '</b>: ') +
-          job.shifts + ' смен' + (off ? ' и ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') : ' подряд') + ' — <b>' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + '</b> на объекте, дни в дороге не входят</li>' +
+        (o.note ? '<li><b>' + esc(o.note) + '</b></li>' : '') +
+        '<li>' + (t.scheds.length > 1 && o.schedTBD ? 'График на объекте уточняется, считаем <b>' + c.sched + '</b>: ' : c.own ? 'На этом объекте только <b>' + c.sched + '</b> — ' + SCHED_TXT[c.sched] + ': ' : 'График <b>' + c.sched + '</b>: ') +
+          job.shifts + ' смен' + (extra ? ' + ' + extra + ' ' + plural(extra, 'смена', 'смены', 'смен') + ' обучения' : '') + (off ? ' и ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') : ' подряд') + ' — <b>' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + '</b> на объекте, дни в дороге не входят</li>' +
         '<li>' + (t.weekly ? 'Аванс <b>' + rub(o.advance) + '</b> каждую неделю' : 'Аванс <b>' + rub(o.advance) + '</b> после ' + t.advAfter + ' смен') + ', остаток — в конце вахты</li>' +
         '<li>' + (job.homePay ? 'Дома на эти деньги ушло бы <b>≈ ' + String(mon).replace('.', ',') + ' ' + (mon % 1 ? 'месяца' : plural(mon, 'месяц', 'месяца', 'месяцев')) + '</b> работы'
           : 'В среднем <b>' + rub(c.home / c.days) + '</b> чистыми за день на объекте') + '</li>' +
@@ -539,7 +532,7 @@
     var tb = $('[data-tab-btn="job"]', f); if (tb) tb.click();
     var r = $('input[name="shifts"][value="' + job.shifts + '"]', f); if (r) r.checked = true;
     $$('input[name="prof"]', f).forEach(function (c) { c.checked = !!job.prof && c.value === PROF_FORM[job.prof]; });
-    var sel = $('[data-object-select]', f); if (sel) sel.value = a.dataset.cmApply;
+    var sel = $('[data-object-select]', f); if (sel && sel.querySelector('option[value="' + a.dataset.cmApply + '"]')) sel.value = a.dataset.cmApply;
     close();   // до прокрутки к заявке (main.js прокручивает по ссылке #contact, когда окно уже закрыто)
   });
 
@@ -602,7 +595,10 @@
     set: function (v) { B.stay = v === 'yes'; $('[data-cm-bed]', biz).hidden = !B.stay; fitInputs(); } };
 
   // оплата за смену по умолчанию — средняя ставка этой профессии на наших объектах (12 часов)
-  function wageOf(prof) { var r = O.filter(function (o) { return (o.jobsFull || []).indexOf(prof) >= 0 && o.shift === '12 часов'; }).map(function (o) { return (o.rateMin + o.rateTop) / 2; }); return Math.round(median(r) / 10) * 10 || 4000; }
+  function wageOf(prof) {
+    var r = []; O.forEach(function (o) { o.positions.forEach(function (p) { if (p.jobs.indexOf(prof) >= 0) r.push(p.rate); }); });
+    return Math.round(median(r) / 10) * 10 || 4000;
+  }
   var wageIn = $('[data-cm-wage]', cm), wageTouched = false;
   wageIn.addEventListener('input', function () { wageTouched = !!wageIn.value; });
   function drawBiz() {
