@@ -22,7 +22,7 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // ставки в таблице заказчика — до налога; оформление через самозанятость: налог на профессиональный доход 6 %
   var TAX = 0.06;
-  // компенсация дороги (условия «Альфа-Стафф»): до 10 000 ₽ при вахте от 30 смен
+  // компенсация дороги (условия «Альфа-Стафф»): при вахте от 30 смен возвращаем стоимость дороги по билетам — до 10 000 ₽
   var ROAD_COMP = 10000, ROAD_COMP_FROM = 30;
   // свой штат: страховые взносы ≈ 30 % фонда оплаты; запас людей на невыходы (больничные, прогулы) — 8 %
   var CONTRIB = 0.3, ABSENCE = 0.08, TRAIN_SHIFTS = 2;
@@ -407,7 +407,7 @@
         return { v: n, label: n + ' смен', hint: '≈ ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + ' на объекте' + (n >= ROAD_COMP_FROM ? ' · компенсация дороги' : ''), n: fitN({ shifts: n }) };
       });
     },
-    note: 'С ' + ROAD_COMP_FROM + ' смен компенсируем дорогу — до ' + rub(ROAD_COMP) + '.',
+    note: 'При вахте от ' + ROAD_COMP_FROM + ' смен вернём стоимость дороги — до ' + rub(ROAD_COMP) + ' по билетам.',
     set: function (v) { job.shifts = +v; job.pick = ''; } };
   SEL.sched = { pane: 'job', kind: 'list', name: 'График', title: 'График', head: 'объектов',
     label: function () { return job.sched; }, cur: function () { return job.sched; },
@@ -484,7 +484,7 @@
           '<li class="is-tax"><span>Налог самозанятого 6 %</span><b>−' + rub(c.tax) + '</b></li>' +
           '<li class="is-food"><span>Еда: ' + c.days + ' дн. × ' + rub(Math.round(job.food * t.foodShare)) + '<em>' + t.foodNote + '</em></span><b>' + (c.food ? '−' + rub(c.food) : '0 ₽') + '</b></li>' +
           '<li class="is-road"><span>Дорога туда и обратно</span><b>' + (job.road ? '−' + rub(job.road) : '0 ₽') + '</b></li>' +
-          (c.comp ? '<li class="is-comp"><span>Компенсация дороги — от ' + ROAD_COMP_FROM + ' смен</span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '') +
+          (c.comp ? '<li class="is-comp"><span>Компенсация дороги<em>до ' + rub(ROAD_COMP) + ' при вахте от ' + ROAD_COMP_FROM + ' смен</em></span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '') +
           '<li class="is-free"><span>Жильё</span><b>' + (/бесплатно/.test(o.housing || '') ? 'бесплатно' : 'уточняется') + '</b></li>' +
         '</ul>' +
         '<p class="cm-src">' + rateNote(c.p) + '</p>' +
