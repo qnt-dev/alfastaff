@@ -1420,10 +1420,10 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 1.5rem; }
 .cm[hidden] { display: none; }
 .cm__backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .35s; }
-.cm__panel { position: relative; width: min(64rem, 100%); max-height: calc(100svh - 3rem); overflow: auto; overscroll-behavior: contain; padding: 1.5rem 1.75rem 1.75rem; border-radius: var(--r-sheet); background: var(--frame); color: #fff; box-shadow: 0 0 0 1px var(--line-d2), 0 2rem 5rem rgba(0, 0, 0, .55); opacity: 0; transform: translateY(1.5rem) scale(.985); transition: opacity .35s, transform .5s var(--ease); scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .2) transparent; }
+.cm__panel { position: relative; display: flex; flex-direction: column; width: min(64rem, 100%); height: min(57rem, calc(100svh - 3rem)); overflow: auto; overscroll-behavior: contain; padding: 1.5rem 1.75rem 1.75rem; border-radius: var(--r-sheet); background: var(--frame); color: #fff; box-shadow: 0 0 0 1px var(--line-d2), 0 2rem 5rem rgba(0, 0, 0, .55); opacity: 0; transform: translateY(1.5rem) scale(.985); transition: opacity .35s, transform .5s var(--ease); scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .2) transparent; }
 .cm.is-open .cm__backdrop { opacity: 1; }
 .cm.is-open .cm__panel { opacity: 1; transform: none; }
-.cm__head { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.cm__head { display: flex; flex: none; align-items: center; gap: 1rem; margin-bottom: 2rem; }
 .cm__head-t { display: grid; gap: 0.5rem; margin-right: auto; }
 .cm__title { font-family: var(--f-display); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
 .cm__close { width: 2.5rem; height: 2.5rem; flex: none; border-radius: 0.75rem; display: grid; place-items: center; background: rgba(255, 255, 255, .06); transition: background-color .3s; }
@@ -1435,11 +1435,11 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm__tab-thumb { position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0.25rem; width: calc(50% - 0.25rem); border-radius: 0.625rem; background: var(--frame-3); box-shadow: inset 0 0 0 1px var(--line-d2); transition: transform .5s var(--ease); }
 .cm[data-tab="biz"] .cm__tab-thumb { transform: translateX(100%); }
 /* слева — фраза и «как пройдёт вахта», справа — итог; на телефоне итог встаёт между ними */
-.cm__body { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "ask res" "plan res"; gap: 2rem 2.5rem; align-items: start; }
+.cm__body { flex: 1 0 auto; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "ask res" "plan res"; gap: 2rem 2.5rem; align-items: start; }
 .cm__ask { grid-area: ask; }
 .cm-plan { grid-area: plan; display: grid; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--line-d); }
 .cm-plan:empty { display: none; }
-.cm__result { grid-area: res; }
+.cm__result { grid-area: res; align-self: stretch; }
 .cm__body[hidden] { display: none; }
 
 /* фраза: связки — приглушённые, выбор — белым с красной чертой; слово может переноситься на следующую строку */
@@ -1449,6 +1449,8 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm-ph--sm { font-size: 1.1875rem; line-height: 1.85; letter-spacing: -0.02em; }
 .cm-tk { padding: 0.02em 0.32em 0.07em; border-radius: 0.42em; color: #fff; font-weight: 600; cursor: pointer; outline: none; background-color: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); -webkit-box-decoration-break: clone; box-decoration-break: clone; white-space: nowrap; transition: background-color .2s, box-shadow .2s; -webkit-tap-highlight-color: transparent; }
 .cm-tk.is-wrap { white-space: normal; }
+.cm-tk.is-empty { background-color: transparent; box-shadow: none; outline: 1px dashed rgba(255, 255, 255, .32); outline-offset: -1px; color: rgba(255, 255, 255, .78); font-weight: 500; }
+.cm-tk.is-empty:hover, .cm-tk.is-empty.is-open { background-color: rgba(255, 255, 255, .08); }
 .cm-tk:hover, .cm-tk.is-open { background-color: rgba(255, 255, 255, .15); }
 .cm-tk:focus-visible { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 0 0 0.125rem var(--accent); }
 .cm-tk__chev { display: inline-block; width: 0.5em; height: 0.5em; margin-left: 0.14em; vertical-align: 0.1em; fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .4s var(--ease); }
@@ -1456,7 +1458,7 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm-tk--in { display: inline-flex; align-items: baseline; gap: 0.2em; line-height: 1.25; cursor: text; }
 .cm-tk--in input { min-width: 1ch; padding: 0; border: 0; background: none; color: #fff; font: inherit; font-weight: 600; line-height: 1.25; letter-spacing: inherit; outline: none; }
 .cm-tk--in input::placeholder { color: rgba(255, 255, 255, .32); font-weight: 500; }
-.cm-tk--in em { font-style: normal; font-weight: 500; color: rgba(255, 255, 255, .46); }
+.cm-tk--in em { font-style: normal; font-weight: 500; color: rgba(255, 255, 255, .58); }
 .cm-tk--in:focus-within { background-color: rgba(255, 255, 255, .15); box-shadow: inset 0 0 0 1px rgba(196, 23, 24, .7); }
 .cm-tk--in:has(input:placeholder-shown):not(:focus-within) { background-color: transparent; box-shadow: none; outline: 1px dashed rgba(255, 255, 255, .28); outline-offset: -1px; }
 
@@ -1497,13 +1499,13 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm-opt > i { width: 1rem; height: 1rem; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .28); transition: box-shadow .2s, background-color .2s; }
 .cm-opt[aria-selected="true"] > i { background: radial-gradient(circle, #fff 0 0.1875rem, transparent 0.21875rem) var(--accent); box-shadow: none; }
 .cm-opt__t b { display: block; font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
-.cm-opt__t em { display: block; margin-top: 0.125rem; font-style: normal; font-size: 0.75rem; line-height: 1.35; color: var(--w-3); }
+.cm-opt__t em { display: block; margin-top: 0.125rem; font-style: normal; font-size: 0.75rem; line-height: 1.35; color: rgba(255, 255, 255, .58); }
 .cm-opt__n { min-width: 1.75rem; padding: 0.1875rem 0.375rem; border-radius: 0.375rem; background: rgba(255, 255, 255, .06); text-align: center; font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 700; color: var(--w-2); font-variant-numeric: tabular-nums; }
 .cm-opt[aria-selected="true"] .cm-opt__n { background: rgba(196, 23, 24, .25); color: #fff; }
 .cm-opt.is-zero { color: rgba(255, 255, 255, .4); }
 .cm-opt.is-zero .cm-opt__n { color: var(--w-3); background: none; }
 .cm-opt__side { font-size: 0.875rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cm-pop__note { margin: 0.375rem 0.625rem 0.375rem; padding-top: 0.625rem; border-top: 1px solid var(--line-d); font-size: 0.75rem; line-height: 1.45; color: var(--w-3); }
+.cm-pop__note { margin: 0.375rem 0.625rem 0.375rem; padding-top: 0.625rem; border-top: 1px solid var(--line-d); font-size: 0.75rem; line-height: 1.45; color: rgba(255, 255, 255, .58); }
 /* число: − / поле / + и бегунок */
 .cm-num { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem; align-items: center; gap: 0.5rem; padding: 0 0.375rem 0.75rem; }
 .cm-num > button { height: 2.75rem; border-radius: 0.75rem; background: rgba(255, 255, 255, .06); font-size: 1.25rem; line-height: 1; color: #fff; transition: background-color .2s; }
@@ -1540,8 +1542,11 @@ html.cm-lock, html.cm-lock body { overflow: hidden; }
 .cm-cal__d.is-on em { color: #fff; }
 
 /* итог: объект (тоже выбор), сумма, на что уходят деньги, ход вахты */
-.cm__result { position: relative; display: grid; gap: 1rem; padding: 1.375rem 1.5rem 1.5rem; border-radius: var(--r-card); background: var(--frame-2); box-shadow: inset 0 0 0 1px var(--line-d); }
-.cm-best { display: grid; gap: 0.875rem; }
+.cm__result { position: relative; display: flex; flex-direction: column; gap: 1rem; padding: 1.375rem 1.5rem 1.5rem; border-radius: var(--r-card); background: var(--frame-2); box-shadow: inset 0 0 0 1px var(--line-d); }
+[data-cm-best] { display: flex; flex: 1 0 auto; flex-direction: column; }
+.cm-best { display: flex; flex: 1 0 auto; flex-direction: column; gap: 0.875rem; }
+.cm-best > .btn { margin-top: auto; }   /* «Хочу на этот объект» и «Сравнить…» — всегда внизу карточки */
+.cm__result > [data-cm-ask-open] { margin-top: auto; }
 .cm-best__top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 1.75rem; }
 .cm-step { display: inline-flex; align-items: center; gap: 0.25rem; }
 .cm-step .mono { min-width: 3.75rem; text-align: center; color: var(--w-2); }
@@ -1564,37 +1569,93 @@ button.cm-obj .cm-obj__name { margin: 0 -0.28em; padding: 0.02em 0.28em 0.06em; 
 .cm__sum--md { font-size: 2.5rem; }
 .cm__range { color: #fff; }
 .cm__note { font-size: 0.8125rem; line-height: 1.45; color: var(--w-2); }
-.cm-bar { display: flex; gap: 0.125rem; height: 0.375rem; }
-.cm-bar i { min-width: 0.125rem; border-radius: 0.125rem; }
-.cm-bar .is-home, .cm-break .is-home > span::before { background: #fff; }
-.cm-bar .is-tax, .cm-break .is-tax > span::before { background: var(--accent); }
-.cm-bar .is-food, .cm-break .is-food > span::before { background: rgba(255, 255, 255, .42); }
-.cm-bar .is-road, .cm-break .is-road > span::before { background: rgba(255, 255, 255, .2); }
-.cm-bar .is-stay, .cm-break .is-stay > span::before { background: rgba(196, 23, 24, .45); }
 .cm-break { display: grid; gap: 0.4375rem; margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; line-height: 1.35; color: var(--w-2); }
 .cm-break li { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
-.cm-break li > span { position: relative; padding-left: 1.125rem; }
-.cm-break li > span::before { content: ''; position: absolute; left: 0; top: 0.3em; width: 0.5rem; height: 0.5rem; border-radius: 0.125rem; box-shadow: inset 0 0 0 1px var(--line-d2); }
-.cm-break .is-comp > span::before { box-shadow: inset 0 0 0 1px #7fd38a; }
-.cm-break em { display: block; font-style: normal; font-size: 0.75rem; color: var(--w-3); }
+.cm-break li > span { position: relative; }
+.cm-break em { display: block; font-style: normal; font-size: 0.75rem; color: rgba(255, 255, 255, .58); }
 .cm-break b { flex: none; color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cm-break b.is-plus { color: #7fd38a; }
-.cm-tl { position: relative; padding: 1.625rem 0.25rem 0; font-size: 0.8125rem; color: var(--w-2); }
-.cm-tl b { color: #fff; font-weight: 600; }
-.cm-tl__adv { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
-.cm-tl__track { position: relative; height: 0.125rem; border-radius: 0.0625rem; background: linear-gradient(90deg, #fff, rgba(255, 255, 255, .25)); }
-.cm-tl__track::before, .cm-tl__track::after { content: ''; position: absolute; top: 50%; width: 0.5rem; height: 0.5rem; margin-top: -0.25rem; border-radius: 50%; background: #fff; }
-.cm-tl__track::before { left: -0.25rem; }
-.cm-tl__track::after { right: -0.25rem; background: var(--frame-2); box-shadow: inset 0 0 0 0.125rem rgba(255, 255, 255, .5); }
-.cm-tl__track i { position: absolute; top: 50%; width: 0.5rem; height: 0.5rem; margin: -0.25rem 0 0 -0.25rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0.1875rem var(--frame-2); }
-.cm-tl__lbl { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-top: 0.75rem; }
-.cm-tl__lbl .cm-tk { font-size: 0.9375rem; }
 .cm-when { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; line-height: 1.45; color: var(--w-2); }
 .cm-when li { position: relative; padding-left: 0.875rem; }
 .cm-when li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 0.3125rem; height: 0.3125rem; border-radius: 50%; background: var(--accent); }
 .cm-when b { color: #fff; font-weight: 600; }
-.cm-src { font-size: 0.6875rem; line-height: 1.5; color: var(--w-3); }
-.cm-empty { display: grid; gap: 0.625rem; }
+.cm-src { font-size: 0.75rem; line-height: 1.45; color: rgba(255, 255, 255, .58); }
+/* основание суммы — рядом с ней: сдельно при 100 %, фиксированная ставка или цифра объекта */
+.cm-best__lab { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.cm-basis { flex: none; padding: 0.1875rem 0.5rem; border-radius: 0.4375rem; background: rgba(196, 23, 24, .2); box-shadow: inset 0 0 0 1px rgba(196, 23, 24, .45); font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 700; letter-spacing: -0.02em; text-transform: uppercase; color: #fff; }
+/* ваши расходы — обычные поля с подписью и примером внутри */
+.cm-costs { display: grid; gap: 0.75rem; }
+.cm-costs__t { font-size: 0.9375rem; font-weight: 600; color: #fff; }
+.cm-costs__t span { font-weight: 500; color: rgba(255, 255, 255, .58); }
+.cm-costs__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.cm-field { display: grid; gap: 0.4375rem; min-width: 0; }
+.cm-field > span:first-child { font-size: 0.8125rem; color: rgba(255, 255, 255, .72); }
+.cm-field__box { display: flex; align-items: center; gap: 0.5rem; height: 3rem; padding: 0 0.875rem; border-radius: 0.75rem; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .24); cursor: text; transition: box-shadow .2s, background-color .2s; }
+.cm-field__box:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .42); }
+.cm-field__box:focus-within { background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.cm-field__box input { flex: 1; width: 0; min-width: 0; height: 100%; padding: 0; border: 0; background: none; color: #fff; font: inherit; font-size: 1.0625rem; font-weight: 600; outline: none; }
+.cm-field__box input::placeholder { color: rgba(255, 255, 255, .4); font-weight: 500; }
+.cm-field__box em { flex: none; font-style: normal; color: rgba(255, 255, 255, .58); }
+/* итог без указанных трат — предупреждение рядом с суммой */
+.cm-miss { padding: 0.625rem 0.75rem; border-radius: 0.625rem; background: rgba(255, 255, 255, .05); font-size: 0.8125rem; line-height: 1.4; color: rgba(255, 255, 255, .8); }
+/* «Сравнить ещё N объектов» — крупная кнопка под расчётом */
+.cm-cmp-go { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; min-height: 3.375rem; margin-top: 0.625rem; padding: 0 1.125rem; border-radius: 1rem; background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); font-size: 1rem; font-weight: 600; color: #fff; text-align: left; transition: background-color .2s; }
+.cm-cmp-go:hover { background: rgba(255, 255, 255, .14); }
+.cm-cmp-go:focus-visible { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
+.cm-cmp-go svg { width: 1rem; height: 1rem; flex: none; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* сравнение объектов — на месте итога */
+.cm-cmp { display: flex; flex: 1 0 auto; flex-direction: column; gap: 0.75rem; animation: cmAsk .45s var(--ease) both; }
+.cm-cmp__top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.cm-cmp__t { font-family: var(--f-display); font-size: 1.375rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
+.cm-cmp .cm-sort { padding: 0; }
+.cm-cmp__list { display: grid; gap: 0.375rem; margin: 0; padding: 0 0.125rem 0 0; list-style: none; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .2) transparent; }
+.cm-cmp__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 1rem; width: 100%; padding: 0.75rem 0.875rem; border-radius: 0.875rem; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px var(--line-d); text-align: left; color: #fff; transition: background-color .2s, box-shadow .2s; }
+.cm-cmp__row:hover { background: rgba(255, 255, 255, .08); }
+.cm-cmp__row:focus-visible { outline: 0.125rem solid var(--accent); outline-offset: -0.125rem; }
+.cm-cmp__row.is-on { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.cm-cmp__name b { display: block; font-size: 0.9375rem; font-weight: 600; }
+.cm-cmp__name em { display: block; margin-top: 0.125rem; font-style: normal; font-size: 0.75rem; color: rgba(255, 255, 255, .58); }
+.cm-cmp__sum { align-self: start; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cm-cmp__facts { grid-column: 1 / -1; font-size: 0.8125rem; line-height: 1.4; color: rgba(255, 255, 255, .72); }
+/* как пройдёт вахта — список с датами */
+.cm-days { display: grid; gap: 0.625rem; margin: 0; padding: 0; list-style: none; }
+.cm-days li { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); gap: 0.75rem; align-items: baseline; font-size: 0.875rem; line-height: 1.45; color: rgba(255, 255, 255, .8); }
+.cm-days__d { font-weight: 700; color: #fff; }
+.cm-days__d .cm-tk { font-size: 0.9375rem; }
+.cm-days__sum { font-size: 0.875rem; line-height: 1.45; color: rgba(255, 255, 255, .8); }
+.cm-days__sum b { color: #fff; }
+/* сдельная — две суммы рядом: при 100 % и выше нормы; выбранную считает расшифровка (белая рамка) */
+.cm-vars { position: relative; z-index: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.125rem; }
+.cm-var { display: grid; gap: 0.4375rem; min-width: 0; padding: 0.75rem 0.875rem 0.875rem; border-radius: 0.875rem; position: relative; background: #2a2a2a; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); text-align: left; color: #fff; animation: cmBeam 7s linear infinite; transition: background-color .2s, box-shadow 1.2s ease-in-out; }
+.cm-var span { font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; text-transform: uppercase; color: rgba(255, 255, 255, .64); }
+.cm-var b { font-family: var(--f-display); font-size: 1.875rem; font-weight: 600; line-height: 1; letter-spacing: -0.05em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cm-var:hover { background-color: #303030; }   /* без сдвига: transform сделал бы плашку отдельным слоем, и сияние легло бы поверх неё */
+/* выбранная сумма (её считает расшифровка): по рамке бежит светящийся хвост по часовой стрелке — красный с белой головой,
+   снаружи за ним — мягкое красное сияние. Угол — регистрируемое свойство, иначе градиент не анимируется; ровную скорость
+   вдоль рамки задаёт calc-modal.js (beam), здесь — запасной равномерный поворот */
+@property --beam { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
+@keyframes cmBeam { to { --beam: 360deg; } }
+.cm-var[aria-pressed="true"] { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .42), 0 0 1.5rem rgba(196, 23, 24, .32); }
+.cm-var::before, .cm-var::after { content: ''; position: absolute; pointer-events: none; border-radius: inherit; opacity: 0; transition: opacity 1.2s ease-in-out; }
+.cm-var::before { inset: 0; padding: 2.5px; background: conic-gradient(from var(--beam), transparent 0deg 130deg, rgba(196, 23, 24, .5) 220deg, #e0262a 300deg, #ff6b6b 340deg, #fff 356deg, transparent 360deg); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.cm-var::after { inset: -0.375rem; z-index: -1; background: conic-gradient(from var(--beam), transparent 0deg 150deg, rgba(196, 23, 24, .55) 250deg, #ff2d2d 335deg, #ff8080 352deg, transparent 360deg); filter: blur(0.75rem); }
+.cm-var[aria-pressed="true"]::before { opacity: 1; }
+.cm-var[aria-pressed="true"]::after { opacity: .75; }
+.cm-var:focus-visible { outline: 0.125rem solid var(--accent); outline-offset: 0.125rem; }
+.cm-var b i { margin-right: 0.12em; font-style: normal; font-size: .6em; color: var(--accent); }
+.cm-var b small { margin-left: 0.15em; font-size: .5em; color: rgba(255, 255, 255, .7); }
+/* строки расшифровки для двух сумм: в одной строке обе цифры друг на друге, видна цифра выбранной плашки */
+.cm-sw > span, .cm-sw > b { display: grid; }
+.cm-sw > b { justify-items: end; }
+.cm-sw i { grid-area: 1 / 1; font-style: normal; transition: opacity .8s ease-in-out, transform .8s ease-in-out; }
+.cm-break[data-v="100"] .cm-sw [data-only="hi"], .cm-break[data-v="hi"] .cm-sw [data-only="100"] { opacity: 0; transform: translateY(0.3rem); }
+.cm-cmp__sum small { display: block; margin-top: 0.125rem; font-size: 0.75rem; font-weight: 600; color: #ff9a9a; text-align: right; }
+/* порядок объектов в списке */
+.cm-sort { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0 0.375rem 0.625rem; }
+.cm-sort button { height: 2rem; padding: 0 0.625rem; border-radius: 0.5rem; background: rgba(255, 255, 255, .06); font-size: 0.8125rem; font-weight: 600; color: rgba(255, 255, 255, .72); transition: background-color .2s, color .2s; }
+.cm-sort button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.cm-sort button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+.cm-empty { display: grid; gap: 0.625rem; margin: auto 0; }   /* «объектов нет» — по центру карточки */
 /* работодатель: заявка «Альфа-Стафф» выезжает на месте расчёта */
 .cm__result.is-ask > :not(.cm-ask) { display: none; }
 .cm-ask { position: relative; display: grid; gap: 0.75rem; animation: cmAsk .5s var(--ease) both; }
@@ -1615,7 +1676,7 @@ button.cm-obj .cm-obj__name { margin: 0 -0.28em; padding: 0.02em 0.28em 0.06em; 
 .cm__bar { display: none; }
 @media (max-height: 760px) and (min-width: 901px) {
   .cm { padding: 1rem; }
-  .cm__panel { max-height: calc(100svh - 2rem); padding: 1.25rem 1.5rem 1.5rem; }
+  .cm__panel { width: min(72rem, 100%); height: min(57rem, calc(100svh - 2rem)); padding: 1.25rem 1.5rem 1.5rem; }   /* невысокий экран — окно шире, строки итога не переносятся */
   .cm__head { margin-bottom: 1rem; }
   .cm__body { row-gap: 1.25rem; }
   .cm-ph { font-size: 1.5rem; }
@@ -1623,18 +1684,26 @@ button.cm-obj .cm-obj__name { margin: 0 -0.28em; padding: 0.02em 0.28em 0.06em; 
   .cm-plan { gap: 0.75rem; padding-top: 1rem; }
   .cm-when { gap: 0.375rem; }
   .cm__result { padding: 1.125rem 1.25rem 1.25rem; }
-  .cm-best { gap: 0.4375rem; }
+  .cm-best { gap: 0.375rem; }
   .cm-break { gap: 0.25rem; }
   .cm-break em { display: inline; }
   .cm-break em::before { content: ' · '; }
-  .cm__sum { font-size: 2.5rem; }
+  .cm__sum { font-size: 2.25rem; }
+  .cm-var b { font-size: 1.625rem; }
+  .cm-src { display: none; }   /* ставка и так видна в плашке и расшифровке */
+  .cm-var { padding: 0.625rem 0.75rem 0.6875rem; }
+  .cm-miss { padding: 0.4375rem 0.625rem; }
+  .cm__result .btn, .cm-cmp-go { min-height: 2.875rem; height: 2.875rem; }
+  .cm-costs { gap: 0.5rem; }
+  .cm-field__box { height: 2.625rem; }
+  .cm-days { gap: 0.375rem; }
 }
 @media (max-width: 900px) {
   .hero__calc { display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; height: 3.375rem; padding: 0 1.25rem; border-radius: 1rem; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); }
   .hero__calc-ico { width: 2rem; height: 2rem; flex: none; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
   .hero__calc-ico svg { width: 0.9375rem; height: 0.9375rem; }
   .cm { place-items: end stretch; padding: 0; }
-  .cm__panel { width: 100%; max-height: 92svh; padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom)); border-radius: 1.5rem 1.5rem 0 0; transform: translateY(100%); }
+  .cm__panel { width: 100%; height: 92svh; padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom)); border-radius: 1.5rem 1.5rem 0 0; transform: translateY(100%); }
   .cm__head { flex-wrap: wrap; gap: 1rem 0.75rem; margin-bottom: 1.5rem; }
   .cm__title { font-size: 1.5rem; }
   .cm__tabs { order: 3; display: grid; width: 100%; }
@@ -1644,6 +1713,9 @@ button.cm-obj .cm-obj__name { margin: 0 -0.28em; padding: 0.02em 0.28em 0.06em; 
   .cm-ph--sm { font-size: 1.0625rem; line-height: 1.95; }
   .cm__result { padding: 1.25rem 1.125rem 1.25rem; }
   .cm__sum { font-size: 2.75rem; }
+  .cm-costs__row { grid-template-columns: minmax(0, 1fr); }
+  .cm-vars { grid-template-columns: minmax(0, 1fr); }   /* на телефоне поля во всю ширину — пример виден целиком */
+  .cm-cmp__list { max-height: none; overflow: visible; }      /* список — частью шторки, без второй прокрутки */
   .cm-pop { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-width: none; max-height: 78svh; padding: 0.5rem 0.625rem calc(1rem + env(safe-area-inset-bottom)); border-radius: 1.25rem 1.25rem 0 0; opacity: 1; transform: translateY(100%); clip-path: none; transition: transform .45s var(--ease); }
   .cm-pop[data-kind] { width: auto; }
   .cm-pop.is-on { transform: none; clip-path: none; }
@@ -1659,4 +1731,7 @@ button.cm-obj .cm-obj__name { margin: 0 -0.28em; padding: 0.02em 0.28em 0.06em; 
 }
 @media (prefers-reduced-motion: reduce) {
   .cm-pop, .cm-opt, .cm-ask, .cm-more__body, .cm-more__body .cm-ph { transition: none; animation: none; }
+  .cm-var { animation: none; }
+  .cm-var::before, .cm-var::after { background: rgba(196, 23, 24, .8); transition: none; }
+  .cm-sw i { transition: none; }
 }

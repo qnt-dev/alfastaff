@@ -12,7 +12,7 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brandbook/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
-  <link rel="stylesheet" href="css/style-company.css?v=20261017b">
+  <link rel="stylesheet" href="css/style-company.css?v=20261018t">
   <link rel="stylesheet" href="css/company.css?v=20261013a">
 </head>
 <body>
@@ -947,14 +947,16 @@
         <button type="button" class="cm__close" data-cm-close aria-label="Закрыть калькулятор"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg></button>
       </div>
 
+      <p class="visually-hidden" aria-live="polite" data-cm-live></p>
       <div class="cm__body" data-cm-pane="job">
         <div class="cm__ask">
-          <p class="cm-ph"><span class="cm-ph__s">Я <span class="cm-tk" role="button" tabindex="0" data-cm-k="sex"></span>, мне <span class="cm-tk" role="button" tabindex="0" data-cm-k="age"></span>.</span> <span class="cm-ph__s">Ищу <span class="cm-tk" role="button" tabindex="0" data-cm-k="prof"></span> <span class="cm-tk" role="button" tabindex="0" data-cm-k="region"></span>.</span> <span class="cm-ph__s">Вахта&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="shifts"></span> по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sched"></span>.</span></p>
-          <div class="cm-more" data-cm-more>
-            <button type="button" class="cm-more__btn mono" aria-expanded="false" aria-controls="cm-more-job"><i aria-hidden="true"></i>Уточнить: дорога, еда, зарплата дома</button>
-            <div class="cm-more__body" id="cm-more-job" inert><div>
-              <p class="cm-ph cm-ph--sm">Дорога туда и обратно&nbsp;— <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="road" value="6 000" autocomplete="off" aria-label="Дорога туда и обратно, рублей" data-cm-money><em>₽</em></span>, на еду в день&nbsp;— <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="food" value="600" autocomplete="off" aria-label="Расходы на еду в день, рублей" data-cm-money><em>₽</em></span>. Дома получаю <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="home" value="" placeholder="сколько?" autocomplete="off" aria-label="Зарплата дома в месяц, рублей" data-cm-money><em>₽</em></span> в месяц.</p>
-            </div></div>
+          <p class="cm-ph"><span class="cm-ph__s">Ищу <span class="cm-tk" role="button" tabindex="0" data-cm-k="prof"></span> <span class="cm-tk" role="button" tabindex="0" data-cm-k="region"></span>.</span> <span class="cm-ph__s">Вахта&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="shifts"></span> по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sched"></span>.</span> <span class="cm-ph__s">Пол&nbsp;—&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sex"></span>, возраст&nbsp;—&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="age"></span>.</span></p>
+          <div class="cm-costs">
+            <p class="cm-costs__t">Ваши расходы <span>— по желанию, чтобы сумма была точнее</span></p>
+            <div class="cm-costs__row">
+              <label class="cm-field"><span>Билеты туда и обратно</span><span class="cm-field__box"><input type="text" inputmode="numeric" name="road" placeholder="например, 6 000" autocomplete="off" data-cm-money><em>₽</em></span></label>
+              <label class="cm-field"><span>На еду в день</span><span class="cm-field__box"><input type="text" inputmode="numeric" name="food" placeholder="например, 500" autocomplete="off" data-cm-money><em>₽</em></span></label>
+            </div>
           </div>
         </div>
         <div class="cm-plan" data-cm-plan></div>
@@ -1089,7 +1091,7 @@
   <script src="js/clay-map.js?v=20261015-worker1"></script>
   <script src="js/geo-panel.js?v=20261023b"></script>
   <script src="js/main.js?v=20261022a"></script>
-  <script src="js/calc-data.js?v=20261025b"></script>
-  <script src="js/calc-modal.js?v=20261017b"></script>
+  <script src="js/calc-data.js?v=20261018b"></script>
+  <script src="js/calc-modal.js?v=20261018t"></script>
 </body>
 </html>

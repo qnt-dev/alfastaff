@@ -51,10 +51,13 @@
     fitInputs();
     requestAnimationFrame(function () { requestAnimationFrame(function () { cm.classList.add('is-open'); }); });
     setTimeout(function () { var c = $('.cm__close', cm); if (c) c.focus({ preventScroll: true }); }, 60);
+    clearInterval(autoTimer); autoTimer = setInterval(autoTick, 10000);
+    setTimeout(beamSel, 80);   // размеры плашек известны только у открытого окна   // автосмена сумм у сдельной — только пока окно открыто
   }
+  var autoTimer = 0;
   function close() {
     if (cm.hidden) return;
-    closePop(true);
+    closePop(true); clearInterval(autoTimer);
     cm.classList.remove('is-open');
     document.documentElement.classList.remove('cm-lock');
     if (AS.lenis) AS.lenis.start();
@@ -115,7 +118,7 @@
   }
   function fitInputs() { $$('.cm-tk--in input', cm).forEach(fitInput); }
   $$('[data-cm-money], [data-cm-int]', cm).forEach(function (inp) {
-    inp.addEventListener('input', function () { var v = inp.value.replace(/\D/g, '').slice(0, 9); if (inp.value !== v) inp.value = v; fitInput(inp); });
+    inp.addEventListener('input', function () { var v = inp.value.split(/[.,]/)[0].replace(/\D/g, '').slice(0, 9); if (inp.value !== v) inp.value = v; fitInput(inp); });   // копейки отбрасываем: «600,00» — 600 ₽
     if (inp.hasAttribute('data-cm-money')) inp.addEventListener('blur', function () { var v = num(inp); inp.value = v ? money(v) : ''; fitInput(inp); });
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitInputs);
@@ -156,6 +159,7 @@
       // галочка не отрывается ни от последнего слова, ни от запятой или точки после слова (U+2060 — «не переносить»)
       b.innerHTML = '<span class="cm-tk__t">' + esc(l).replace(/(^|\s)(в|во|и|на|по|с|до)\s/g, '$1$2\u00a0') + '</span>\u2060' + CHEV + '\u2060';
       b.classList.toggle('is-wrap', l.length > 24);   // короткий выбор переносится целиком, длинный — по словам
+      b.classList.toggle('is-empty', !!(s.empty && s.empty()));   // не указано — пунктирная капсула
       b.setAttribute('aria-label', s.name + ': ' + l);
       b.setAttribute('aria-haspopup', 'dialog');
       if (b !== popBtn) b.setAttribute('aria-expanded', 'false');
@@ -164,7 +168,9 @@
   function refresh(s) { drawTokens(); if (s.pane === 'biz') drawBiz(); else drawJob(); place(); }
   function openPop(btn) {
     if (popBtn === btn) { closePop(false, true); return; }
+    var key0 = btn.dataset.cmK;
     closePop(true);
+    if (!document.contains(btn)) btn = $('[data-cm-pane]:not([hidden]) [data-cm-k="' + key0 + '"]', cm);   // слово перерисовано вместе с итогом
     var s = SEL[btn.dataset.cmK];
     popBtn = btn; btn.setAttribute('aria-expanded', 'true'); btn.classList.add('is-open');
     pop.setAttribute('aria-label', s.title);
@@ -226,7 +232,7 @@
   // список вариантов: справа — сколько объектов подойдёт с этим вариантом (или сумма — в списке объектов)
   function listHtml(s) {
     var cur = String(s.cur()), opts = s.opts();
-    return '<div class="cm-pop__h"><span class="mono">' + esc(s.title) + '</span>' + (s.head ? '<span class="mono mono--dim">' + esc(s.head) + '</span>' : '') + '</div>' +
+    return '<div class="cm-pop__h"><span class="mono">' + esc(s.title) + '</span>' + (s.head ? '<span class="mono mono--dim">' + esc(s.head) + '</span>' : '') + '</div>' + (s.top ? s.top() : '') +
       '<div class="cm-pop__list" role="listbox" aria-label="' + esc(s.title) + '">' + opts.map(function (o, i) {
         return '<button type="button" role="option" class="cm-opt' + (o.n === 0 ? ' is-zero' : '') + '" aria-selected="' + (String(o.v) === cur) + '" data-v="' + esc(o.v) + '" style="--d:' + i + '">' +
           '<i aria-hidden="true"></i><span class="cm-opt__t"><b>' + esc(o.label) + '</b>' + (o.hint ? '<em>' + esc(o.hint) + '</em>' : '') + '</span>' +
@@ -280,6 +286,7 @@
     var c = e.target.closest('.cm-cal__d');
     if (c && !c.disabled) { job.start = new Date(+c.dataset.t); closePop(); refresh(s); refocus(key); return; }
     if (e.target.closest('[data-cm-vol]')) { var n = volHeads(); if (n) { B.mode = 'volume'; stepSet(s, n); } }
+    if (e.target.closest('[data-cm-age-clear]')) { job.age = 0; job.pick = ''; closePop(); refresh(s); refocus(key); return; }
   });
   popIn.addEventListener('input', function (e) {
     var s = popBtn && SEL[popBtn.dataset.cmK]; if (!s) return;
@@ -321,23 +328,27 @@
       // графики объекта из таблицы: «6/1 или 7/0», только «7/0», «5/2»…; где график уточняется — считаем по выбранному
       scheds: o.schedTBD ? ['6/1', '7/0'] : (sf.match(/\d\/\d/g) || ['7/0']).filter(function (g) { return WEEK[g]; }),
       // какая доля дневных трат на еду остаётся на работнике: обед и ужин за счёт объекта — завтрак; обед — завтрак и ужин
-      foodShare: /обед и ужин/.test(meals) ? 0.3 : /обед/.test(meals) ? 0.6 : 1,
-      foodNote: /обед и ужин/.test(meals) ? 'обед и ужин бесплатно' : /обед/.test(meals) ? 'обед бесплатно' : meals ? 'питание за свой счёт' : 'питание уточняется',
+      // трёхразовое питание на объекте — своих трат на еду нет; где за питание удерживают сумму в день — считаем её
+      foodShare: o.mealTimes >= 3 ? 0 : /обед и ужин/.test(meals) ? 0.3 : /обед/.test(meals) ? 0.6 : 1,
+      foodPay: o.mealPay || 0,
+      foodNote: o.mealPay ? 'питание ' + (o.mealTimes > 1 ? o.mealTimes + ' раза в день' : 'на объекте') + ' — ' + rub(o.mealPay) + ' в день'
+        : o.mealTimes >= 3 ? 'питание 3 раза в день бесплатно' : /обед и ужин/.test(meals) ? 'обед и ужин бесплатно' : /обед/.test(meals) ? 'обед бесплатно' : meals ? 'питание за свой счёт' : 'питание уточняется',
       weekly: /каждую неделю/.test(adv), advAfter: +((adv.match(/после\s+(\d+)/) || [])[1] || 7),
       road: (o.transport || '').replace(/\s*до объекта/, '').replace(' · ', ', ')
     });
   }
   // должность на объекте: выбранная профессия (без выбора — главная, первая в списке); у части объектов ставки для мужчин и женщин разные
   function posFor(o, I) {
-    return o.positions.filter(function (p) { return (!p.sex || p.sex === I.sex) && (!I.prof || p.jobs.indexOf(I.prof) >= 0); })[0] || null;
+    return o.positions.filter(function (p) { return (!p.sex || !I.sex || p.sex === I.sex) && (!I.prof || p.jobs.indexOf(I.prof) >= 0); })[0] || null;
   }
   function fits(o, I) {
     var t = terms(o), why = [];
     if (I.region && o.region !== I.region) return null;
     if (I.prof && (o.jobsFull || []).indexOf(I.prof) < 0) return null;
-    if (I.shifts < (o.minShifts || 0)) why.push('вахта от ' + o.minShifts + ' смен');
-    if (I.sex === 'm' ? !t.men : !t.women) why.push(t.men ? 'только мужчины' : 'только женщины');
-    if (I.age < t.ageMin || I.age > t.ageMax) why.push(t.ageMax < 99 ? 'возраст ' + t.ageMin + '–' + t.ageMax : 'возраст от ' + t.ageMin);
+    var lens = o.vakhta || [];
+    if (lens.length ? lens.indexOf(I.shifts) < 0 : I.shifts < (o.minShifts || 0)) why.push('вахта ' + (lens.length ? lens.join(', ') : 'от ' + o.minShifts) + ' смен');
+    if (I.sex && (I.sex === 'm' ? !t.men : !t.women)) why.push(t.men ? 'только мужчины' : 'только женщины');
+    if (I.age && (I.age < t.ageMin || I.age > t.ageMax)) why.push(t.ageMax < 99 ? 'возраст ' + t.ageMin + '–' + t.ageMax : 'возраст от ' + t.ageMin);
     if (!why.length && !posFor(o, I)) why.push(I.sex === 'f' ? 'только мужчины' : 'только женщины');   // эта должность — только для другого пола
     return why;
   }
@@ -350,13 +361,24 @@
     var gross = inN * (p.intern ? p.intern.rate : 0) + regN * r, tax = Math.round(gross * TAX);
     // график: выбранный человеком, если он есть на объекте, иначе — тот, что на объекте
     var sched = t.scheds.indexOf(I.sched) >= 0 ? I.sched : t.scheds[0], week = WEEK[sched];
-    var days = Math.ceil(worked * 7 / week), food = Math.round(I.food * t.foodShare) * days;
+    var days = Math.ceil(worked * 7 / week), perDay = Math.round(I.food * t.foodShare) + t.foodPay, food = perDay * days;
     var comp = I.shifts >= ROAD_COMP_FROM ? Math.min(ROAD_COMP, I.road) : 0, home = gross - tax - food - I.road + comp;
-    return { o: o, t: t, p: p, rate: r, inN: inN, regN: regN, paid: paid, worked: worked, gross: gross, tax: tax, days: days, food: food, comp: comp, home: home, sched: sched, week: week, own: sched !== I.sched };
+    // сдельная выше нормы: те же смены по ставке при 150 % выработке (или по верхней цифре вилки из таблицы)
+    var hi = null;
+    if (p.high) {
+      var gH = inN * (p.intern ? p.intern.rate : 0) + regN * p.high.rate, tH = Math.round(gH * TAX);
+      hi = { rate: p.high.rate, label: p.high.label, gross: gH, tax: tH, home: gH - tH - food - I.road + comp };
+    }
+    return { o: o, t: t, p: p, rate: r, inN: inN, regN: regN, paid: paid, worked: worked, gross: gross, tax: tax, days: days, perDay: perDay, food: food, comp: comp, home: home, hi: hi, sched: sched, week: week, own: sched !== I.sched };
   }
 
-  var job = { region: '', prof: '', shifts: 30, sched: '6/1', sex: 'm', age: 30, road: 6000, food: 600, homePay: 0, start: addDays(today, 3), pick: '' };
-  var jp = $('[data-cm-pane="job"]', cm), lastOk = [];
+  // пол и возраст не подставляем: пока человек их не указал, показываем все объекты, требования — в карточке объекта
+  var job = { region: '', prof: '', shifts: 30, sched: '6/1', sex: '', age: 0, sort: 'home', view: 'calc', v: '100', auto: true, autoObj: '', road: 0, food: 0, start: addDays(today, 3), pick: '' };
+  var jp = $('[data-cm-pane="job"]', cm), lastOk = [], lastCur = null;
+  // сумма в итоге — до тысяч: это прогноз; точные строки — в расшифровке
+  function round1k(n) { return Math.round(n / 1000) * 1000; }
+  var liveEl = $('[data-cm-live]', cm), liveT = 0;
+  function announce(s) { clearTimeout(liveT); liveT = setTimeout(function () { if (liveEl) liveEl.textContent = s; }, 700); }   // скринридеру — итог, без лишней частоты
   var REGS = (AS.CALC.regions || []).filter(function (r) { return O.some(function (o) { return o.region === r.key; }); });
   // профессия во фразе «Ищу работу …» — в творительном падеже; для женщин — женская форма, где она есть
   var PROF_AS = {
@@ -377,11 +399,14 @@
   var AGE_MAX = Math.max.apply(null, O.map(function (o) { return Math.min(terms(o).ageMax, 70); }));
 
   SEL.sex = { pane: 'job', kind: 'list', name: 'Пол', title: 'Вы', head: 'объектов',
-    label: function () { return job.sex === 'm' ? 'мужчина' : 'женщина'; }, cur: function () { return job.sex; },
-    opts: function () { return [{ v: 'm', label: 'Мужчина', n: fitN({ sex: 'm' }) }, { v: 'f', label: 'Женщина', n: fitN({ sex: 'f' }) }]; },
+    label: function () { return job.sex === 'm' ? 'мужской' : job.sex === 'f' ? 'женский' : 'не указан'; }, cur: function () { return job.sex; },
+    empty: function () { return !job.sex; },
+    opts: function () { return [{ v: 'm', label: 'Мужчина', n: fitN({ sex: 'm' }) }, { v: 'f', label: 'Женщина', n: fitN({ sex: 'f' }) }, { v: '', label: 'Не указывать', hint: 'покажем все объекты, требования — в карточке', n: fitN({ sex: '' }) }]; },
     set: function (v) { job.sex = v; job.pick = ''; } };
   SEL.age = { pane: 'job', kind: 'step', name: 'Возраст', title: 'Возраст', min: 18, max: 65,
-    label: function () { return job.age + ' ' + plural(job.age, 'год', 'года', 'лет'); }, cur: function () { return job.age; },
+    label: function () { return job.age ? job.age + ' ' + plural(job.age, 'год', 'года', 'лет') : 'не указан'; }, cur: function () { return job.age || 30; },
+    empty: function () { return !job.age; },
+    extra: function () { return job.age ? '<div class="cm-vol"><button type="button" class="cm-vol__go" data-cm-age-clear>Не указывать возраст</button></div>' : ''; },
     unit: function (n) { return plural(n, 'год', 'года', 'лет'); }, count: function (n) { return fitN({ age: n }); },
     note: 'Берём с ' + AGE_MIN + ' до ' + AGE_MAX + ' лет — у каждого объекта свои рамки.',
     set: function (v) { job.age = v; job.pick = ''; } };
@@ -419,110 +444,218 @@
     },
     note: 'Где на объекте только один график, считаем по нему.',
     set: function (v) { job.sched = v; } };
-  SEL.start = { pane: 'job', kind: 'cal', name: 'Дата выезда', title: 'Когда выезжаете',
+  SEL.start = { pane: 'job', kind: 'cal', name: 'Дата заезда', title: 'Когда заезжаете на объект',
     label: function () { return day(job.start); } };
-  // объект в итоге — тоже выбор: все подходящие объекты с суммой «домой»
-  SEL.obj = { pane: 'job', kind: 'list', name: 'Объект', head: 'домой',
-    get title() { return 'Подходят ' + lastOk.length + ' ' + plural(lastOk.length, 'объект', 'объекта', 'объектов'); },
-    cur: function () { return job.pick; },
-    opts: function () {
-      return lastOk.map(function (x) {
-        return { v: x.o.id, label: x.o.short, hint: x.o.tag + ' · ' + rub(x.rate) + ' за смену' + (x.own ? ' · только ' + x.sched : ''), side: '≈ ' + rub(x.home) };
-      });
-    },
-    set: function (v) { job.pick = v; } };
-
   function readJob() {
-    job.road = num($('input[name="road"]', jp)); job.food = num($('input[name="food"]', jp)); job.homePay = num($('input[name="home"]', jp));
+    job.road = num($('input[name="road"]', jp)); job.food = num($('input[name="food"]', jp));   // пустое поле — трата не указана
   }
-  // откуда ставка — как в условиях объекта
+  // откуда ставка — как в условиях объекта; основание суммы — рядом с ней
   var BASIS = { '100': 'при 100 % выработке', given: 'сделка — по условиям объекта', fixed: 'фиксированная ставка' };
-  function rateNote(p) { return esc(p.text) + '.'; }
+  var CHIP = { '100': 'при 100 % выработке', given: 'сделка, цифра объекта', fixed: 'фиксированная ставка' };
+  var PAY_SHORT = { '100': 'при 100 %', given: 'сделка', fixed: 'фикс' };
+  function foodShort(t) { return t.foodPay ? 'еда ' + rub(t.foodPay) + '/день' : t.foodShare === 0 ? 'еда бесплатно' : t.foodShare < 0.5 ? 'обед и ужин бесплатно' : t.foodShare < 1 ? 'обед бесплатно' : 'еда своя'; }
+  // налог — полные 6 % (есть ли у человека налоговый бонус, узнать нельзя — не учитываем и не упоминаем)
+  function rateNote(p) { return esc(p.text) + '. Небольшую плату за рабочую форму мы не считали.'; }
+  // порядок объектов: сколько останется, меньше дней вне дома или сначала фиксированная оплата
+  var SORTS = { home: 'Больше денег', days: 'Меньше дней', fixed: 'Фикс. оплата' };
+  function sortOk(a, b) {
+    if (job.sort === 'days') return a.days - b.days || b.home - a.home;
+    if (job.sort === 'fixed') return (a.p.basis !== 'fixed') - (b.p.basis !== 'fixed') || b.home - a.home;
+    return b.home - a.home;
+  }
   function drawJob() {
     readJob();
     var all = O.map(function (o) { return { o: o, why: fits(o, job) }; }).filter(function (x) { return x.why; });
-    var ok = all.filter(function (x) { return !x.why.length; }).map(function (x) { return calc(x.o, job); }).sort(function (a, b) { return b.home - a.home; });
+    var ok = all.filter(function (x) { return !x.why.length; }).map(function (x) { return calc(x.o, job); }).sort(sortOk);
     var best = $('[data-cm-best]', cm), plan = $('[data-cm-plan]', cm);
     lastOk = ok;
     if (!ok.length) {
       // почему ничего не подошло: по порядку — пол, возраст, длительность вахты (среди объектов выбранного региона и профессии)
       var C = all.map(function (x) { return x.o; }), why;
-      var bySex = C.filter(function (o) { return job.sex === 'm' ? terms(o).men : terms(o).women; });
-      var byAge = bySex.filter(function (o) { return job.age >= terms(o).ageMin && job.age <= terms(o).ageMax; });
+      var bySex = job.sex ? C.filter(function (o) { return job.sex === 'm' ? terms(o).men : terms(o).women; }) : C;
+      var byAge = job.age ? bySex.filter(function (o) { return job.age >= terms(o).ageMin && job.age <= terms(o).ageMax; }) : bySex;
+      var lens = []; byAge.filter(function (o) { return posFor(o, job); }).forEach(function (o) { (o.vakhta || []).forEach(function (n) { if (lens.indexOf(n) < 0) lens.push(n); }); });
+      lens.sort(function (a, b) { return a - b; });
       if (!C.length) why = 'По этой профессии в выбранном регионе вакансий нет — выберите другой регион или «любую работу».';
       else if (!bySex.length) why = 'Здесь сейчас набирают только ' + (job.sex === 'm' ? 'женщин' : 'мужчин') + '. Выберите другой регион или профессию.';
       else if (!byAge.length) why = 'По возрасту здесь берут от ' + Math.min.apply(null, bySex.map(function (o) { return terms(o).ageMin; })) + ' до ' + Math.max.apply(null, bySex.map(function (o) { return terms(o).ageMax; })) + ' лет.';
       else if (!byAge.some(function (o) { return posFor(o, job); })) why = 'Эту работу здесь предлагают только ' + (job.sex === 'f' ? 'мужчинам' : 'женщинам') + '. Выберите другую профессию.';
-      else why = 'Здесь вахта — от ' + Math.min.apply(null, byAge.map(function (o) { return o.minShifts || 0; })) + ' смен. Выберите вахту длиннее.';
+      else why = 'Здесь вахта — ' + lens.join(', ') + ' смен. Выберите другую длительность.';
       best.innerHTML = '<div class="cm-empty"><span class="mono mono--dim">Не нашли</span><p class="cm-obj__name">Под эти условия объектов нет</p><p class="cm__note">' + why + '</p></div>';
       plan.innerHTML = '';
-      shown.job = null; bar.job = ['Нет объектов', 'измените условия', 'Подробнее']; drawBar(); return;
+      shown.job = null; lastCur = null; bar.job = ['Нет объектов', 'измените условия', 'Подробнее']; drawBar(); announce('Под эти условия объектов нет.'); return;
     }
-    var cur = ok.filter(function (c) { return c.o.id === job.pick; })[0] || ok[0], idx = ok.indexOf(cur);
+    var cur = ok.filter(function (c) { return c.o.id === job.pick; })[0] || ok[0];
     job.pick = cur.o.id;
-    var c = cur, t = c.t, o = c.o, end = addDays(job.start, c.days), off = c.days - c.worked, extra = c.worked - job.shifts;
-    // полоса: из начисленного — что домой, что на налог, еду и дорогу (за вычетом компенсации)
-    var segs = [['home', Math.max(0, c.home)], ['tax', c.tax], ['food', c.food], ['road', Math.max(0, job.road - c.comp)]];
-    best.innerHTML =
-      '<div class="cm-best">' +
-        '<div class="cm-best__top"><span class="mono mono--dim">' + (ok.length === 1 ? 'Подходит один объект' : idx === 0 ? 'Больше всего — здесь' : (idx + 1) + '-й из ' + ok.length + ' по сумме') + '</span>' +
-          (ok.length > 1 ? '<span class="cm-step"><button type="button" class="cm-step__b" data-cm-step="-1" aria-label="Предыдущий объект"' + (idx ? '' : ' disabled') + '>' + ARROW(-1) + '</button>' +
-            '<span class="mono">' + (idx + 1) + ' / ' + ok.length + '</span>' +
-            '<button type="button" class="cm-step__b" data-cm-step="1" aria-label="Следующий объект"' + (idx < ok.length - 1 ? '' : ' disabled') + '>' + ARROW(1) + '</button></span>' : '') + '</div>' +
-        (ok.length > 1
-          ? '<button type="button" class="cm-obj" data-cm-k="obj" aria-haspopup="dialog" aria-expanded="false" aria-label="Объект: ' + esc(o.short) + '. Все подходящие объекты"><span class="cm-obj__name">' + esc(o.short) + CHEV + '</span></button>'
-          : '<p class="cm-obj"><span class="cm-obj__name">' + esc(o.short) + '</span></p>') +
-        '<p class="mono mono--dim cm-best__meta">' + esc(o.region + ' · ' + o.tag) + ' · ' + rub(c.rate) + ' за смену' + (c.p.basis === '100' ? ' при 100 %' : '') + '</p>' +
-        '<div class="cm-best__sum"><span class="mono mono--dim">Привезёте домой</span>' +
-          '<span class="cm__sum"><span class="cm__approx">≈</span><span data-cm-num="' + c.home + '">' + money(shown.job == null ? c.home : shown.job) + '</span><small>₽</small></span>' +
-          '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте</span></div>' +
-        '<div class="cm-bar" aria-hidden="true">' + segs.map(function (s) { return s[1] > 0 ? '<i class="is-' + s[0] + '" style="flex-grow:' + s[1] + '"></i>' : ''; }).join('') + '</div>' +
-        '<ul class="cm-break">' +
-          (t.unpaid ? '<li class="is-free"><span>Обучение: ' + (t.unpaid === 1 ? 'первая смена' : 'первые ' + t.unpaid + ' смены') + '<em>без оплаты, ' + (t.counted ? 'входит в срок вахты' : 'сверх срока вахты') + '</em></span><b>0 ₽</b></li>' : '') +
-          (c.inN ? '<li class="is-home"><span>Стажировка: ' + c.inN + ' × ' + rub(c.p.intern.rate) + '</span><b>' + rub(c.inN * c.p.intern.rate) + '</b></li>' : '') +
-          '<li class="is-home"><span>' + (c.inN ? 'Дальше: ' : 'Смены: ') + c.regN + ' × ' + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em></span><b>' + rub(c.regN * c.rate) + '</b></li>' +
-          '<li class="is-tax"><span>Налог самозанятого 6 %</span><b>−' + rub(c.tax) + '</b></li>' +
-          '<li class="is-food"><span>Еда: ' + c.days + ' дн. × ' + rub(Math.round(job.food * t.foodShare)) + '<em>' + t.foodNote + '</em></span><b>' + (c.food ? '−' + rub(c.food) : '0 ₽') + '</b></li>' +
-          '<li class="is-road"><span>Дорога туда и обратно</span><b>' + (job.road ? '−' + rub(job.road) : '0 ₽') + '</b></li>' +
-          (c.comp ? '<li class="is-comp"><span>Компенсация дороги<em>до ' + rub(ROAD_COMP) + ' при вахте от ' + ROAD_COMP_FROM + ' смен</em></span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '') +
-          '<li class="is-free"><span>Жильё</span><b>' + (/бесплатно/.test(o.housing || '') ? 'бесплатно' : 'уточняется') + '</b></li>' +
-        '</ul>' +
-        '<p class="cm-src">' + rateNote(c.p) + '</p>' +
-        '<a class="btn btn--outline btn--block" href="#contact" data-cm-apply="' + esc(o.id) + '"><span>Хочу на этот объект</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>' +
-      '</div>';
-    tween('job', $('[data-cm-num]', best));
+    var c = cur, t = c.t, o = c.o, off = c.days - c.worked, extra = c.worked - job.shifts, R = round1k(c.home);
+    var richest = ok.reduce(function (a, b) { return b.home > a.home ? b : a; });
+    // другой объект — снова с суммы при 100 %, и автосмена плашек снова включена
+    if (o.id !== job.autoObj) { job.autoObj = o.id; job.auto = true; job.v = '100'; }
+    var hiOn = !!(c.hi && job.v === 'hi');   // расшифровка — для выбранной суммы: при 100 % или выше нормы
+    // строки смен и налога; у сдельной в каждой — обе цифры друг на друге, видна та, что у выбранной плашки
+    function payRows() {
+      var lead = (c.inN ? 'Дальше: ' : 'Смены: ') + c.regN + ' × ';
+      if (!c.hi) return '<li><span>' + lead + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em></span><b>' + rub(c.regN * c.rate) + '</b></li>' +
+        '<li><span>Налог самозанятого 6 %</span><b>−' + rub(c.tax) + '</b></li>';
+      var sw = function (a, b) { return '<i data-only="100" aria-hidden="' + hiOn + '">' + a + '</i><i data-only="hi" aria-hidden="' + !hiOn + '">' + b + '</i>'; };
+      return '<li class="cm-sw"><span>' + sw(lead + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em>', lead + rub(c.hi.rate) + '<em>' + c.hi.label + '</em>') + '</span><b>' + sw(rub(c.regN * c.rate), rub(c.regN * c.hi.rate)) + '</b></li>' +
+        '<li class="cm-sw"><span>Налог самозанятого 6 %</span><b>' + sw('−' + rub(c.tax), '−' + rub(c.hi.tax)) + '</b></li>';
+    }
+    lastCur = c;
+    var rest = ok.length - 1;
+    if (job.view === 'compare' && rest) { best.innerHTML = compareHtml(ok, c); fitCmp(); }
+    else {
+      job.view = 'calc';
+      // еда: что указал человек (минус то, что даёт объект) и фиксированный вычет за питание, если он есть
+      var foodRow = c.food
+        ? '<li><span>Еда: ' + c.days + ' дн. × ' + rub(c.perDay) + '<em>' + t.foodNote + '</em></span><b>−' + rub(c.food) + '</b></li>'
+        : '<li><span>Еда<em>' + (t.foodShare === 0 ? 'бесплатно на объекте' : t.foodShare < 1 ? t.foodNote + ' · ваши траты не указаны' : 'ваши траты не указаны') + '</em></span><b>' + (t.foodShare === 0 ? 'бесплатно' : '—') + '</b></li>';
+      var roadRows = job.road
+        ? '<li><span>Билеты туда и обратно</span><b>−' + rub(job.road) + '</b></li>' +
+          (c.comp ? '<li class="is-comp"><span>Компенсация билетов<em>до ' + rub(ROAD_COMP) + ' при вахте от ' + ROAD_COMP_FROM + ' смен</em></span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '')
+        : '<li><span>Билеты туда и обратно<em>не указаны' + (job.shifts >= ROAD_COMP_FROM ? ' · вернём до ' + rub(ROAD_COMP) + ' от ' + ROAD_COMP_FROM + ' смен' : '') + '</em></span><b>—</b></li>';
+      var miss = [];
+      if (!job.road) miss.push('билетов');
+      if (!c.food && t.foodShare > 0) miss.push('еды');
+      best.innerHTML =
+        '<div class="cm-best">' +
+          '<span class="mono mono--dim">' + (!rest ? 'Подходит один объект' : c === richest ? 'Больше всего денег — здесь' : 'Выбранный объект') + '</span>' +
+          '<p class="cm-obj"><span class="cm-obj__name">' + esc(o.short) + '</span></p>' +
+          '<p class="mono mono--dim cm-best__meta">' + esc(o.region + ' · ' + o.tag + (job.sex && job.age ? '' : ' · берут: ' + o.who)) + '</p>' +
+          (c.hi
+            // сдельная: две суммы рядом — при 100 % и выше нормы; нажатие переключает расшифровку
+            ? '<div class="cm-best__sum"><span class="mono mono--dim">Привезёте домой</span>' +
+                '<div class="cm-vars" role="group" aria-label="Выработка">' +
+                  '<button type="button" class="cm-var" data-cm-var="100" aria-pressed="' + !hiOn + '"><span>при 100 % выработке</span><b><i>≈</i>' + money(R) + '<small>₽</small></b></button>' +
+                  '<button type="button" class="cm-var" data-cm-var="hi" aria-pressed="' + hiOn + '"><span>' + c.hi.label + '</span><b><i>≈</i>' + money(round1k(c.hi.home)) + '<small>₽</small></b></button>' +
+                '</div>' +
+                '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте · сдельная оплата</span></div>'
+            : '<div class="cm-best__sum"><span class="cm-best__lab"><span class="mono mono--dim">Привезёте домой</span><span class="cm-basis">' + CHIP[c.p.basis] + '</span></span>' +
+                '<span class="cm__sum"><span class="cm__approx">≈</span><span data-cm-num="' + R + '">' + money(shown.job == null ? R : shown.job) + '</span><small>₽</small></span>' +
+                '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте</span></div>') +
+          (miss.length ? '<p class="cm-miss">Без учёта ' + miss.join(' и ') + ' — укажите их в «Ваших расходах».</p>' : '') +
+          '<ul class="cm-break" data-cm-break data-v="' + (hiOn ? 'hi' : '100') + '">' +
+            (t.unpaid ? '<li><span>Обучение: ' + (t.unpaid === 1 ? 'первая смена' : 'первые ' + t.unpaid + ' смены') + '<em>без оплаты, ' + (t.counted ? 'входит в срок вахты' : 'сверх срока вахты') + '</em></span><b>0 ₽</b></li>' : '') +
+            (c.inN ? '<li><span>Стажировка: ' + c.inN + ' × ' + rub(c.p.intern.rate) + '</span><b>' + rub(c.inN * c.p.intern.rate) + '</b></li>' : '') +
+            // у сдельной — строки для обеих сумм; видны те, что у выбранной плашки (переключение — без перерисовки)
+            payRows() +
+            foodRow + roadRows +
+            '<li><span>Жильё</span><b>' + (/бесплатно/.test(o.housing || '') ? 'бесплатно' : 'уточняется') + '</b></li>' +
+          '</ul>' +
+          '<p class="cm-src">' + rateNote(c.p) + '</p>' +
+          '<a class="btn btn--outline btn--block" href="#contact" data-cm-apply="' + esc(o.id) + '"><span>Хочу на этот объект</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>' +
+        '</div>' +
+        (rest ? '<button type="button" class="cm-cmp-go" data-cm-compare><span>Сравнить ещё ' + rest + ' ' + plural(rest, 'объект', 'объекта', 'объектов') + '</span>' + ARROW(1) + '</button>' : '');
+      tween('job', $('[data-cm-num]', best));
+      // сияние по рамке выбранной суммы идёт непрерывно: при перерисовке продолжаем с той же точки круга
+      beamSel();
+    }
+    announce('Привезёте домой около ' + money(R) + ' рублей ' + CHIP[c.p.basis] + (c.hi ? ', ' + c.hi.label + ' — около ' + money(round1k(c.hi.home)) + ' рублей' : '') + ' — ' + o.short + ', ' + job.shifts + ' смен.');
 
-    // как пройдёт вахта: выезд (дату можно поменять прямо здесь) — аванс — домой
-    var advAt = Math.ceil((t.advAfter + (t.counted ? 0 : t.unpaid)) * 7 / c.week), advPct = Math.round(Math.min(advAt / c.days, 1) * 100);
-    var mon = job.homePay ? Math.round(c.home / job.homePay * 10) / 10 : 0;   // дробное число месяцев — «4,1 месяца», целое — по правилам
+    // как пройдёт вахта — по датам, простыми словами (дату заезда можно поменять прямо здесь)
+    var advAt = Math.ceil((t.advAfter + (t.counted ? 0 : t.unpaid)) * 7 / c.week), U = t.unpaid;
     plan.innerHTML =
       '<p class="mono mono--dim">Как пройдёт вахта</p>' +
-      '<div class="cm-tl">' +
+      '<ol class="cm-days">' +
+        '<li><span class="cm-days__d"><span class="cm-tk" role="button" tabindex="0" data-cm-k="start"></span></span><span>Заезд на объект.' + (U ? ' ' + (U === 1 ? 'Первая смена' : 'Первые ' + U + ' смены') + ' — обучение, не оплачивается.' : '') + '</span></li>' +
         (t.weekly
-          ? '<span class="cm-tl__adv" style="left:50%"><b>' + rub(o.advance) + '</b> аванс каждую неделю</span>'
-          : '<span class="cm-tl__adv" style="left:clamp(5rem, ' + advPct + '%, calc(100% - 5rem))"><b>≈ ' + day(addDays(job.start, advAt)) + '</b> аванс ' + rub(o.advance) + '</span>') +
-        '<div class="cm-tl__track">' + (t.weekly
-          ? Array.apply(null, { length: Math.floor((c.days - 1) / 7) }).map(function (_, k) { return '<i style="left:' + ((k + 1) * 7 / c.days * 100) + '%"></i>'; }).join('')
-          : '<i style="left:' + advPct + '%"></i>') + '</div>' +
-        '<div class="cm-tl__lbl"><span><span class="cm-tk" role="button" tabindex="0" data-cm-k="start"></span> выезд</span><span><b>≈ ' + day(end) + '</b> домой</span></div>' +
-      '</div>' +
+          ? '<li><span class="cm-days__d">Каждую неделю</span><span>Аванс ' + rub(o.advance) + '.</span></li>'
+          : '<li><span class="cm-days__d">≈ ' + day(addDays(job.start, advAt)) + '</span><span>Аванс ' + rub(o.advance) + ' — после ' + t.advAfter + ' смен.</span></li>') +
+        '<li><span class="cm-days__d">' + (off ? 'Раз в неделю' : 'Каждый день') + '</span><span>' +
+          (off ? 'Выходной, всего ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') + ' (график ' + c.sched + ').' : 'Работа без выходных (график ' + c.sched + ').') +
+          (o.schedTBD ? ' График на объекте ещё уточняется.' : c.own ? ' Другого графика на этом объекте нет.' : '') + '</span></li>' +
+        '<li><span class="cm-days__d">≈ ' + day(addDays(job.start, c.days - 1)) + '</span><span>Последняя смена. Остаток зарплаты — в конце вахты.</span></li>' +
+      '</ol>' +
+      '<p class="cm-days__sum">Всего <b>' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + '</b> на объекте: ' + job.shifts + ' смен вахты' +
+        (extra ? ', ' + extra + ' ' + plural(extra, 'смена', 'смены', 'смен') + ' обучения' : '') + (off ? ' и ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') : '') + '. Дорога сюда не входит.</p>' +
       '<ul class="cm-when">' +
         (o.note ? '<li><b>' + esc(o.note) + '</b></li>' : '') +
-        '<li>' + (t.scheds.length > 1 && o.schedTBD ? 'График на объекте уточняется, считаем <b>' + c.sched + '</b>: ' : c.own ? 'На этом объекте только <b>' + c.sched + '</b> — ' + SCHED_TXT[c.sched] + ': ' : 'График <b>' + c.sched + '</b>: ') +
-          job.shifts + ' смен' + (extra ? ' + ' + extra + ' ' + plural(extra, 'смена', 'смены', 'смен') + ' обучения' : '') + (off ? ' и ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') : ' подряд') + ' — <b>' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + '</b> на объекте, дни в дороге не входят</li>' +
-        '<li>' + (t.weekly ? 'Аванс <b>' + rub(o.advance) + '</b> каждую неделю' : 'Аванс <b>' + rub(o.advance) + '</b> после ' + t.advAfter + ' смен') + ', остаток — в конце вахты</li>' +
-        '<li>' + (job.homePay ? 'Дома на эти деньги ушло бы <b>≈ ' + String(mon).replace('.', ',') + ' ' + (mon % 1 ? 'месяца' : plural(mon, 'месяц', 'месяца', 'месяцев')) + '</b> работы'
-          : 'В среднем <b>' + rub(c.home / c.days) + '</b> чистыми за день на объекте') + '</li>' +
+        '<li>В среднем <b>' + rub(c.home / c.days) + '</b> чистыми за день на объекте</li>' +
         (t.road ? '<li>От жилья до работы — ' + esc(t.road) + '</li>' : '') +
       '</ul>';
     drawTokens();
-    bar.job = ['≈ ' + rub(c.home) + ' домой', o.short + ' · ' + job.shifts + ' смен · ' + c.sched, 'Подробнее']; drawBar();
+    bar.job = [(c.hi ? '≈ ' + money(R / 1000) + '–' + money(round1k(c.hi.home) / 1000) + ' тыс. ₽' : '≈ ' + rub(R)) + ' домой', o.short + ' · ' + job.shifts + ' смен · ' + c.sched, 'Подробнее']; drawBar();
   }
-  jp.addEventListener('input', function (e) { if (e.target.matches('.cm-tk--in input')) drawJob(); });
+  // сравнение объектов — на месте итога: одинаковые строки у всех, выбор порядка, по нажатию — расчёт этого объекта
+  // список сравнения заполняет карточку до низа окна и прокручивается внутри (окно не растёт); на телефоне — частью шторки
+  function fitCmp() {
+    var l = $('.cm-cmp__list', cm); if (!l) return;
+    l.style.maxHeight = '';
+    if (sheet.matches) return;
+    var pr = panel.getBoundingClientRect(), lr = l.getBoundingClientRect(), card = l.closest('.cm__result');
+    var pad = parseFloat(getComputedStyle(card).paddingBottom) + parseFloat(getComputedStyle(panel).paddingBottom);
+    l.style.maxHeight = Math.max(160, Math.floor(pr.bottom - pad - lr.top)) + 'px';
+  }
+  window.addEventListener('resize', function () { if (job.view === 'compare') fitCmp(); });
+  function compareHtml(ok, cur) {
+    return '<div class="cm-cmp">' +
+      '<div class="cm-cmp__top"><button type="button" class="cm-ask__back mono" data-cm-back>' + ARROW(-1) + 'К расчёту</button>' +
+        '<span class="mono mono--dim">' + ok.length + ' ' + plural(ok.length, 'объект', 'объекта', 'объектов') + '</span></div>' +
+      '<p class="cm-cmp__t">Объекты под ваши условия</p>' +
+      // пока еда не указана, объекты без питания выглядят выгоднее — говорим об этом прямо
+      (job.food ? '' : '<p class="cm-miss">Еда не учтена: где питание своё, на руках останется меньше. Укажите траты на еду — суммы станут сравнимыми.</p>') +
+      '<div class="cm-sort" role="group" aria-label="Порядок объектов">' + Object.keys(SORTS).map(function (k) {
+        return '<button type="button" data-cm-sort="' + k + '" aria-pressed="' + (job.sort === k) + '">' + SORTS[k] + '</button>';
+      }).join('') + '</div>' +
+      '<ul class="cm-cmp__list">' + ok.map(function (x) {
+        return '<li><button type="button" class="cm-cmp__row' + (x === cur ? ' is-on' : '') + '" data-cm-pick="' + esc(x.o.id) + '"' + (x === cur ? ' aria-current="true"' : '') + '>' +
+          '<span class="cm-cmp__name"><b>' + esc(x.o.short) + '</b><em>' + esc(x.o.region + ' · ' + x.o.tag) + '</em></span>' +
+          '<span class="cm-cmp__sum">≈ ' + rub(round1k(x.home)) + (x.hi ? '<small>до ≈ ' + rub(round1k(x.hi.home)) + '</small>' : '') + '</span>' +
+          '<span class="cm-cmp__facts">' + rub(x.rate) + ' за смену ' + PAY_SHORT[x.p.basis] + ' · ' + foodShort(x.t) + ' · ' + x.days + ' ' + plural(x.days, 'день', 'дня', 'дней') + (x.own ? ' · только ' + x.sched : '') + '</span>' +
+        '</button></li>';
+      }).join('') + '</ul></div>';
+  }
+  jp.addEventListener('input', function (e) { if (e.target.matches('.cm-field input')) drawJob(); });
+  // «Сравнить ещё N объектов» → список на месте итога; «К расчёту» и выбор объекта → обратно к расчёту
+  function focusRes(sel) {
+    var r = $('[data-cm-res]', cm), el = $(sel, r);
+    if (el) el.focus({ preventScroll: true });
+    if (r.getBoundingClientRect().top < panel.getBoundingClientRect().top) panel.scrollTo({ top: r.offsetTop - 16, behavior: reduce ? 'auto' : 'smooth' });
+  }
+  // сдельная: выбранная сумма — плашка с сиянием и строки расшифровки; переключение без перерисовки расчёта
+  function applyVar() {
+    var r = $('[data-cm-res]', cm), ul = $('[data-cm-break]', r);
+    $$('.cm-var', r).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.cmVar === job.v)); });
+    if (ul) { ul.dataset.v = job.v; $$('[data-only]', ul).forEach(function (i) { i.setAttribute('aria-hidden', String(i.dataset.only !== job.v)); }); }   // скрытую цифру не читаем вслух
+    beamSel();
+  }
+  // сияние по рамке выбранной суммы — с постоянной скоростью вдоль рамки. Градиент поворачивается по углу, а плашка вытянута:
+  // при ровном повороте хвост по длинным сторонам летит быстрее. Поэтому угол на каждом шаге — тот, под которым из центра
+  // видна точка, прошедшая по рамке равную долю пути. Фаза — от общего времени: при перерисовке хвост не прыгает в начало
+  var BEAM_MS = 7000;
+  function beam(el) {
+    var w = el.offsetWidth, h = el.offsetHeight;
+    if (!w || !h || !el.animate) return;
+    var P = 2 * (w + h), N = 64, frames = [], prev = 0, turn = 0;
+    for (var i = 0; i <= N; i++) {
+      var d = (i / N * P + w / 2) % P, x, y;   // путь от середины верха по часовой стрелке
+      if (d < w) { x = d; y = 0; } else if (d < w + h) { x = w; y = d - w; } else if (d < 2 * w + h) { x = 2 * w + h - d; y = h; } else { x = 0; y = P - d; }
+      var a = Math.atan2(x - w / 2, h / 2 - y) * 180 / Math.PI; if (a < 0) a += 360;
+      if (i && a + turn < prev - 180) turn += 360;
+      prev = a + turn;
+      frames.push({ '--beam': prev + 'deg', offset: i / N });
+    }
+    if (el._beam) el._beam.cancel();
+    el._beam = el.animate(frames, { duration: BEAM_MS, iterations: Infinity, easing: 'linear', delay: -(performance.now() % BEAM_MS) });
+  }
+  function beamSel() {
+    if (reduce) return;
+    $$('.cm-var', cm).forEach(beam);   // у обеих плашек: при смене выбора сияние не начинается заново, а проявляется уже в движении
+  }
+  window.addEventListener('resize', function () { clearTimeout(beamSel._t); beamSel._t = setTimeout(beamSel, 150); });
+  // каждые 10 секунд плашки сами сменяют друг друга (100 % ↔ выше нормы), пока человек не выбрал сам;
+  // без анимаций в системе, при закрытом окне, в другой вкладке, в сравнении и при открытом списке — стоим
+  function autoTick() {
+    if (reduce || cm.hidden || document.hidden || cm.dataset.tab !== 'job' || job.view !== 'calc' || !job.auto || popBtn || !lastCur || !lastCur.hi) return;
+    job.v = job.v === 'hi' ? '100' : 'hi'; applyVar();
+  }
   jp.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-cm-step]'); if (!b) return;
-    var i = lastOk.map(function (x) { return x.o.id; }).indexOf(job.pick) + (+b.dataset.cmStep);
-    if (lastOk[i]) { job.pick = lastOk[i].o.id; drawJob(); var nb = $('[data-cm-step="' + b.dataset.cmStep + '"]', jp); if (nb && !nb.disabled) nb.focus({ preventScroll: true }); }
+    var t = e.target, pk = t.closest('[data-cm-pick]'), so = t.closest('[data-cm-sort]');
+    if (t.closest('[data-cm-compare]')) { job.view = 'compare'; drawJob(); focusRes('[data-cm-back]'); }
+    else if (t.closest('[data-cm-back]')) { job.view = 'calc'; drawJob(); focusRes('[data-cm-compare]'); }
+    else if (pk) { job.pick = pk.dataset.cmPick; job.view = 'calc'; drawJob(); focusRes('[data-cm-apply]'); }
+    else if (so) { job.sort = so.dataset.cmSort; drawJob(); focusRes('[data-cm-sort="' + job.sort + '"]'); }
+    else if (t.closest('[data-cm-var]')) { job.v = t.closest('[data-cm-var]').dataset.cmVar; job.auto = false; applyVar(); }   // выбрал сам — автосмена до смены объекта выключена
   });
   // «Хочу на этот объект» — к общей заявке: объект, длительность и профессия уже выбраны
   var PROF_FORM = { 'Комплектовщик': 'Комплектовщик', 'Упаковщик': 'Упаковщик', 'Сортировщик': 'Сортировщик', 'Водитель высотного штабелёра': 'ВВШ' };
@@ -532,7 +665,14 @@
     var tb = $('[data-tab-btn="job"]', f); if (tb) tb.click();
     var r = $('input[name="shifts"][value="' + job.shifts + '"]', f); if (r) r.checked = true;
     $$('input[name="prof"]', f).forEach(function (c) { c.checked = !!job.prof && c.value === PROF_FORM[job.prof]; });
-    var sel = $('[data-object-select]', f); if (sel && sel.querySelector('option[value="' + a.dataset.cmApply + '"]')) sel.value = a.dataset.cmApply;
+    var c = lastCur, sel = $('[data-object-select]', f);
+    if (sel && c) { if (!sel.querySelector('option[value="' + c.o.id + '"]')) sel.add(new Option(c.o.short, c.o.id)); sel.value = c.o.id; }
+    var msg = $('textarea[name="message"]', f);
+    if (msg && c && (!msg.value.trim() || /^Из калькулятора:/.test(msg.value))) {
+      msg.value = 'Из калькулятора: ' + c.o.short + ', ' + (job.prof ? job.prof.toLowerCase() : 'любая работа') + ', ' + job.shifts + ' смен по графику ' + c.sched +
+        ', заезд ' + day(job.start).replace('\u00a0', ' ') + ', ≈ ' + money(round1k(c.home)) + ' ₽ домой (' + CHIP[c.p.basis] + ')' + (c.hi ? ', ' + c.hi.label + ' — ≈ ' + money(round1k(c.hi.home)) + ' ₽' : '') + '.';
+      msg.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     close();   // до прокрутки к заявке (main.js прокручивает по ссылке #contact, когда окно уже закрыто)
   });
 
@@ -611,7 +751,6 @@
     var hireCost = Math.round(hiresMonth * hire), trainCost = Math.round(hiresMonth * TRAIN_SHIFTS * wage * (1 + CONTRIB)), housing = B.stay ? staff * bed : 0;
     var total = pay + contrib + hireCost + trainCost + housing, perHour = total / Math.max(1, shiftsMonth * B.hours);
     var out = $('[data-cm-bout]', cm), bplan = $('[data-cm-bplan]', cm);
-    var segs = [['home', pay], ['tax', contrib], ['food', hireCost], ['road', trainCost], ['stay', housing]];
     out.innerHTML =
       '<div class="cm-best">' +
         '<div class="cm-best__sum"><span class="mono mono--dim">Нужно в штате</span>' +
@@ -619,7 +758,6 @@
         '<div class="cm-best__sum"><span class="mono mono--dim">Свой штат обойдётся в месяц</span>' +
           '<span class="cm__sum' + (total >= 1e7 ? ' cm__sum--md' : '') + '"><span class="cm__approx">≈</span><span data-cm-num="' + total + '">' + money(shown.biz == null ? total : shown.biz) + '</span><small>₽</small></span>' +
           '<span class="mono cm__range">≈ ' + rub(perHour) + ' за час работы одного человека</span></div>' +
-        '<div class="cm-bar" aria-hidden="true">' + segs.map(function (x) { return x[1] > 0 ? '<i class="is-' + x[0] + '" style="flex-grow:' + x[1] + '"></i>' : ''; }).join('') + '</div>' +
         '<ul class="cm-break">' +
           '<li class="is-home"><span>Оплата смен: ' + money(shiftsMonth) + ' × ' + rub(wage) + '</span><b>' + rub(pay) + '</b></li>' +
           '<li class="is-tax"><span>Страховые взносы ≈ 30 %</span><b>' + rub(contrib) + '</b></li>' +
@@ -643,6 +781,7 @@
     var brief = B.prof + ', ' + posts + ' на смене' + (B.mode === 'volume' ? ' — по объёму ' + money(B.vol) + ' ед. за смену при норме ' + money(B.norm) : '') + ', в штате ≈ ' + staff + ', ' + (B.daily === 2 ? '2 смены' : '1 смена') + ' по ' + B.hours + ' ч, ' + B.opdays + ' дн. в неделю, график ' + B.sched + ', ' + B.where + (B.stay ? ', с проживанием' : '') + '; свой штат ≈ ' + rub(total) + ' в месяц';
     $('input[name="brief"]', biz).value = brief; $('[data-cm-brief]', biz).textContent = brief;
     bar.biz = [people(staff) + ' · ≈ ' + rub(total), 'свой штат в месяц', 'К заявке']; drawBar();
+    if (cm.dataset.tab === 'biz') announce('Нужно в штате ' + people(staff) + ', свой штат — около ' + money(round1k(total)) + ' рублей в месяц.');
   }
   biz.addEventListener('input', function (e) { if (e.target.matches('.cm-tk--in input')) drawBiz(); });
   // заявка «Альфа-Стафф» выезжает на месте расчёта

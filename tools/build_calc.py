@@ -45,6 +45,16 @@ def cfg_for(name):
         if k.startswith(ck): return ck, c
     return k, None
 
+def position(p):
+    """Должность для калькулятора; у сдельной — вторая ставка выше нормы (при highPct % или верхняя цифра вилки)."""
+    out = {x: p[x] for x in ('jobs', 'rate', 'basis', 'text', 'sex', 'intern') if x in p}
+    h = p.get('high')
+    if h:
+        pct = CFG.get('highPct', 150)
+        out['high'] = ({'rate': int(round(h.get('base', 0) + h['per'] * pct)), 'label': f'при {pct} % выработке'} if 'per' in h
+                       else {'rate': h['rate'], 'label': 'при высокой выработке'})
+    return out
+
 def build(path):
     regions = {r['sheet']: r for r in CFG['regions']}
     objs, warn = [], []
@@ -62,6 +72,12 @@ def build(path):
             if miss: warn.append(f"{k}: в таблице нет чисел {miss} — проверьте ставку «{p['text']}»")
         sf, opts = B.shift_of(r)
         meals, mealsFull = B.meals_of(r)
+        # питание: сколько раз в день и сколько за него удерживают (Форум-Авто: «3 раз в день, вычет за питание 200 р/день»)
+        mt = B.text(B.first(r, 'ПИТАНИЕ'))
+        mpay = re.search(r'вычет\w*\s*за\s*питание\D{0,5}(\d+)', mt, re.I)
+        mtimes = re.search(r'(\d)\s*раз\w*\s*в\s*день', mt, re.I)
+        mealPay, mealTimes = (int(mpay.group(1)) if mpay else 0), (int(mtimes.group(1)) if mtimes else 0)
+        if mealPay: mealsFull = (f'{mealTimes} раза в день' if mealTimes > 1 else 'питание') + f', {mealPay} ₽ в день'
         adv, advText = B.advance_of(r)
         jobs = []
         for p in c['positions']:
@@ -75,11 +91,11 @@ def build(path):
             'note': c.get('note', ''),
             'who': B.who_of(r), 'shiftFull': sf, 'schedTBD': bool(c.get('schedTBD')),
             'vakhta': opts, 'minShifts': opts[0] if opts else None,
-            'mealsFull': mealsFull, 'transport': B.transport_of(r), 'housing': B.housing_of(r),
+            'mealsFull': mealsFull, 'mealPay': mealPay, 'mealTimes': mealTimes, 'transport': B.transport_of(r), 'housing': B.housing_of(r),
             'advance': adv, 'advanceText': advText,
             'training': training(r), 'hours': c.get('hours', 11),
             'jobsFull': jobs,
-            'positions': [{x: p[x] for x in ('jobs', 'rate', 'basis', 'text', 'sex', 'intern') if x in p} for p in c['positions']],
+            'positions': [position(p) for p in c['positions']],
         }
         objs.append(o)
     return objs, warn
