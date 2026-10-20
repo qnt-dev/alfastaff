@@ -127,23 +127,23 @@ async function calcViewsRegression(w) {
     var targetBox=$('#ag-target').getBoundingClientRect(),knobBox=$('.ag-money-knob').getBoundingClientRect();
     check(knobBox.width>0&&Math.abs((targetBox.top+targetBox.height/2)-(knobBox.top+knobBox.height/2))<=2,'The editable amount follows the knob after motion settles');
     check(targetBox.top>higherTargetTop+10,'Reducing the target from 300 to 180 thousand moves the editable amount down the scale');
-    check($('#ag-shifts').textContent==='30'&&net()===186767,'Goal uses current 36-day rates: 207880 minus 12473 minus 8640');
+    check($('#ag-shifts').textContent==='29'&&net()===180067,'Goal finds 29 paid shifts: 200880 minus 12053 tax, 8160 food and 600 road');
     check(d.querySelectorAll('#ag-schedule [data-sched]').length===2,'Sofyino offers both actual schedules');
     click('#ag-schedule [data-sched="7/0"]');
-    check(api.state().job.sched==='7/0'&&$('#ag-days').textContent==='31'&&net()===187967,'The compact 7/0 button recalculates calendar and food expenses');
+    check(api.state().job.sched==='7/0'&&$('#ag-days').textContent==='30'&&net()===181027,'The compact 7/0 button recalculates 29 shifts into 30 calendar days and their food expenses');
     click('#ag-schedule [data-sched="6/1"]');
-    check($('#ag-days').textContent==='36'&&$('#ag-schedule [data-sched="6/1"]').getAttribute('aria-pressed')==='true','Switching back restores 6/1 and its selected state');
+    check($('#ag-days').textContent==='34'&&$('#ag-schedule [data-sched="6/1"]').getAttribute('aria-pressed')==='true','Switching back restores 34 calendar days at 6/1 and its selected state');
     var highButton=$('[data-ag-yield="hi"]');highButton.focus();highButton.click();
     check(api.state().job.v==='hi'&&highButton.getAttribute('aria-pressed')==='true'&&$('[data-ag-yield="100"]').getAttribute('aria-pressed')==='false','The 150 percent segment publishes its selected mode');
     check($('#ag-shifts').textContent==='20'&&root.alfaGoal.state().target===180000,'Higher output finds a shorter contract without changing the goal');
     check(d.activeElement===highButton,'Yield update preserves keyboard focus');
     click('[data-ag-yield="100"]');
-    check(api.state().job.v==='100'&&$('#ag-shifts').textContent==='30'&&net()===186767,'The 100 percent segment restores the base calculation');
+    check(api.state().job.v==='100'&&$('#ag-shifts').textContent==='29'&&net()===180067,'The 100 percent segment restores the 29-shift base calculation');
     change('#ag-object','lemana-north');
     check(d.querySelectorAll('#ag-schedule [data-sched]').length===1&&$('#ag-schedule [data-sched="7/0"]'),'Lemana North exposes only its permitted 7/0 schedule');
     change('#ag-object','ym-sofyino');click('#ag-schedule [data-sched="6/1"]');
     input('#ag-target','250');
-    check($('#ag-shifts').textContent==='45'&&net()===281387,'Goal finds a real 45-shift contract for 250000 rubles');
+    check($('#ag-shifts').textContent==='41'&&net()===256267,'Goal finds 41 shifts including the extension for 250000 rubles');
     input('#ag-target','180');change('#ag-region','Татарстан');
     check(!$('#ag-empty').hidden,'Goal asks for an object after its region changes');
     click('[data-cm-tab="biz"]');click('[data-cm-tab="job"]');
@@ -297,7 +297,7 @@ async function calcHandoffRegression(w) {
     form.querySelector('[data-tab-btn="business"]').click();
     message.value='Личный комментарий\nИз калькулятора: прежний расчёт';
     var current=api.state(),expectedShifts=current.job.shifts,expectedObject=current.current.o.id;
-    check(expectedObject==='ym-sofyino'&&expectedShifts===45,'The handoff fixture is the actual Sofyino 45-shift calculation');
+    check(expectedObject==='ym-sofyino'&&expectedShifts===41,'The handoff fixture is the actual Sofyino 41-shift calculation');
     check(api.apply()===true,'The preserved shared apply API accepts a valid Goal calculation');
     await calcWaitFor(w,function(){return modal.hidden&&!modal.classList.contains('is-open');},'apply closing the calculator');
     check(!d.documentElement.classList.contains('cm-lock'),'Applying closes the modal and releases the page scroll lock');
@@ -307,7 +307,7 @@ async function calcHandoffRegression(w) {
     check(selectedRoles.length===1&&selectedRoles[0]==='Комплектовщик','Applying transfers only the selected candidate profession');
     var lines=message.value.split('\n').filter(function(line){return /^\s*Из калькулятора:/.test(line);});
     check(message.value.startsWith('Личный комментарий\n\n')&&lines.length===1&&!message.value.includes('прежний расчёт'),'Applying preserves the personal comment and replaces the old calculator line without duplicates');
-    check(lines.length===1&&lines[0].includes('Софьино')&&lines[0].includes('комплектовщик')&&lines[0].includes('45 смен по графику 6/1'),'The transferred comment describes the actual object, role, duration and schedule');
+    check(lines.length===1&&lines[0].includes('Софьино')&&lines[0].includes('комплектовщик')&&lines[0].includes('41 смен по графику 6/1'),'The transferred comment describes the actual object, role, extended duration and schedule');
     check(messageInputs===1&&submissions===0,'Applying notifies the contact field without submitting a request');
     var contact=d.getElementById('contact')||form;
     await calcWaitFor(w,function(){
@@ -383,8 +383,9 @@ async function calcGeometryRegression(w) {
           check(box.left>=durationContent.left-1&&box.right<=durationContent.right+1&&box.top>=durationContent.top-1&&box.bottom<=durationContent.bottom+1,key+' duration '+cluster.name+' cluster stays inside its content column',{cluster:cluster.name,left:box.left,right:box.right,top:box.top,bottom:box.bottom,content:durationContent.toJSON()});
         });
         var firstClusterGap=calendarCluster.top-summaryCluster.bottom,secondClusterGap=schedule.top-calendarCluster.bottom;
-        var durationInset=Math.abs(region.querySelector('.ag-duration').getBoundingClientRect().top-region.querySelector('.ag-goal').getBoundingClientRect().top)<1?18:0;
-        if(durationInset){
+        var sideBySide=Math.abs(region.querySelector('.ag-duration').getBoundingClientRect().top-region.querySelector('.ag-goal').getBoundingClientRect().top)<1;
+        var durationTopInset=sideBySide?10:0,durationBottomInset=sideBySide?18:0;
+        if(sideBySide){
           var calendarLine=region.querySelector('.ag-days'),calendarLineBox=calendarLine.getBoundingClientRect(),arrowBox=region.querySelector('.ag-link-arrow').getBoundingClientRect();
           var firstLineCenter=calendarLineBox.top+parseFloat(w.getComputedStyle(calendarLine).lineHeight)/2,arrowCenter=arrowBox.top+arrowBox.height/2;
           check(Math.abs(firstLineCenter-arrowCenter)<1,key+' the first calendar line is centered on the connecting arrow',{calendarFirstLineCenter:firstLineCenter,arrowCenter:arrowCenter});
@@ -392,7 +393,7 @@ async function calcGeometryRegression(w) {
         }else{
           check(firstClusterGap>=19&&secondClusterGap>=19&&Math.abs(firstClusterGap-secondClusterGap)<=1,key+' stacked duration clusters retain equal vertical gaps of at least 20px',{summaryToCalendar:firstClusterGap,calendarToSchedule:secondClusterGap});
         }
-        check(Math.abs(summaryCluster.top-durationContent.top-durationInset)<=1&&Math.abs(durationContent.bottom-schedule.bottom-durationInset)<=1,key+' duration clusters are inset in two columns without stretching the stacked card',{topInset:summaryCluster.top-durationContent.top,bottomInset:durationContent.bottom-schedule.bottom});
+        check(Math.abs(summaryCluster.top-durationContent.top-durationTopInset)<=1&&Math.abs(durationContent.bottom-schedule.bottom-durationBottomInset)<=1,key+' duration clusters reserve room for the extension while preserving the bottom inset',{topInset:summaryCluster.top-durationContent.top,bottomInset:durationContent.bottom-schedule.bottom,expectedTop:durationTopInset,expectedBottom:durationBottomInset});
         var sound=region.querySelector('#ag-sound-toggle').getBoundingClientRect(),card=region.getBoundingClientRect();
         check(sound.width>=43.9&&sound.height>=43.9&&sound.left>=card.left-1&&sound.right<=card.right+1&&sound.top>=card.top-1&&sound.bottom<=card.bottom+1,key+' sound toggle stays inside the card with a 44px touch target',{width:sound.width,height:sound.height,left:sound.left,right:sound.right,cardLeft:card.left,cardRight:card.right});
         if(theme==='dark'){
@@ -477,17 +478,20 @@ async function calcMoneySliderRegression(w) {
       for(var iteration=0;iteration<20;iteration++){var middle=(lo+hi)/2;p=path.getPointAtLength(middle);if(p.y<row+.5)lo=middle;else hi=middle;}
       boundary[row]=path.getPointAtLength((lo+hi)/2).x;
     }
-    var nonzero=0,total=0,above=0,below=0,right=0;
+    var nonzero=0,total=0,above=0,below=0,right=0,farVertical=0;
+    var lightCenter=Number(source.querySelector('.ag-money-line-glow').getAttribute('cy'));
     for(var y=0;y<height;y++)for(var x=0;x<width;x++){
       var alpha=rgba[(y*width+x)*4+3];if(!alpha)continue;
       var localY=y-offsetY,localX=x-offsetX+.5;
       nonzero++;total+=alpha;columns[x]+=alpha;
+      if(Math.abs(localY+.5-lightCenter)>40)farVertical+=alpha;
       if(localY<0)above+=alpha;
       else if(localY>=scaleHeight)below+=alpha;
       // Exclude the fractional edge pixel, where clip antialiasing is valid.
       else if(localX>boundary[localY]+.75)right+=alpha;
     }
-    return {rasterScale:1,width:width,height:height,nonzeroPixels:nonzero,totalAlpha:total,aboveAlpha:above,belowAlpha:below,rightAlpha:right,
+    return {rasterScale:1,width:width,height:height,nonzeroPixels:nonzero,totalAlpha:total,aboveAlpha:above,belowAlpha:below,rightAlpha:right,farVerticalFraction:farVertical/total,
+      spread:[30,35,40,55].map(function(x){return {x:x,alpha:columns[x+offsetX]};}),
       columns:[46,47,48,49,50,51,52].map(function(x){return {x:x,alpha:columns[x+offsetX]};})};
   }
   try {
@@ -519,6 +523,8 @@ async function calcMoneySliderRegression(w) {
           check(pixels.aboveAlpha===0&&pixels.belowAlpha===0,key+' actual glow pixels fade to zero above and below the scale',{aboveAlpha:pixels.aboveAlpha,belowAlpha:pixels.belowAlpha});
           check(pixels.rightAlpha===0,key+' actual glow has no pixels beyond the right clip edge',{rightAlpha:pixels.rightAlpha,edgeAllowance:.75});
           check(column48>0&&column49>0&&column48>=column49*.35,key+' actual glow crosses the old x49 filter boundary without a hard cutoff',{column48:column48,column49:column49,columns:pixels.columns});
+          check(pixels.spread[1].alpha>pixels.spread[3].alpha*.08,key+' light spreads visibly into the left field instead of remaining a narrow rim',pixels.spread);
+          check(pixels.farVerticalFraction<.03,key+' the diffuse halo stays local to the knob instead of washing out half the ruler',{fractionBeyond40px:pixels.farVerticalFraction});
           sample.lightPixels=pixels;
         }
         samples.push(sample);
@@ -607,13 +613,14 @@ async function calcApprovedRegression(w) {
         check(Math.abs(actual-expected)<.01,label+' '+item.n+' marker uses equal spacing between available durations',{actual:actual,expected:expected});
       });
     }
-    var selected=buttons.filter(function(item){return item.el.getAttribute('aria-pressed')==='true';})[0];
-    if(selected){
-      var arrow=w.getComputedStyle(selected.el,'::after'),arrowWidth=parseFloat(arrow.borderLeftWidth)||parseFloat(arrow.width)||0;
+    var selected=$('#ag-duration-selected'),selectedRect=selected.getBoundingClientRect();
+    if(selectedRect.width){
+      check(Number(selected.textContent)==Number($('#ag-shifts').textContent),label+' floating duration badge matches the complete shift count');
+      var arrow=w.getComputedStyle(selected,'::after'),arrowWidth=parseFloat(arrow.borderLeftWidth)||parseFloat(arrow.width)||0;
       check(arrow.content!=='none'&&arrow.content!=='normal'&&arrowWidth>0&&arrowWidth<=7,label+' selected duration has the compact outward arrow',{content:arrow.content,width:arrowWidth});
       ticks.forEach(function(tick){
         var tr=tick.getBoundingClientRect();
-        if(tr.bottom>=selected.r.top&&tr.top<=selected.r.bottom)check(tr.left-(selected.r.right+arrowWidth*scale)>=7*scale-1,label+' duration pointer keeps an 8px gap before the ticks',{gap:tr.left-selected.r.right-arrowWidth*scale});
+        if(tr.bottom>=selectedRect.top&&tr.top<=selectedRect.bottom)check(tr.left-(selectedRect.right+arrowWidth*scale)>=7*scale-1,label+' duration pointer keeps an 8px gap before the ticks',{gap:tr.left-selectedRect.right-arrowWidth*scale});
       });
     }
     samples.push({kind:'duration',label:label,scale:scale,height:bounds.height,values:buttons.map(function(item){return {shifts:item.n,center:item.r.top+item.r.height/2};})});

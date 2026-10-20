@@ -10,7 +10,7 @@
 
   function catalog(engine, state) {
     var result = Object.create(null);
-    engine.durations('', state).forEach(function (shifts) {
+    engine.shiftCounts('', state).forEach(function (shifts) {
       engine.list(Object.assign({}, state, { shifts: shifts })).forEach(function (quote) {
         if (!result[quote.o.id]) result[quote.o.id] = [];
         result[quote.o.id].push({ shifts: shifts, quote: quote });
@@ -74,8 +74,8 @@
     var ticks = [];
     values.forEach(function (value, i) {
       ticks.push(value);
-      // These are decorative subdivisions of a discrete choice, not extra
-      // offered contracts. Interpolate values so top() also serves tick nodes.
+      // Catalog milestones stay equally spaced. Interpolate positions so an
+      // intermediate total and the decorative ticks follow the same rail.
       if (i < intervals) {
         for (var step = 1; step <= 4; step++) ticks.push(value + (values[i + 1] - value) * step / 5);
       }

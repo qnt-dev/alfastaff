@@ -28,11 +28,11 @@ function check(name, run) {
   console.log('PASS ' + name);
 }
 
-check('reachable target chooses the shortest real contract', () => {
+check('reachable target chooses the shortest sufficient total including extensions', () => {
   const { result } = solve(state(), 180000);
   assert.equal(result.reachable, true);
-  assert.equal(result.selected.shifts, 30);
-  assert.equal(result.actual, 195407);
+  assert.equal(result.selected.shifts, 28);
+  assert.equal(result.actual, 182247);
   assert.equal(result.baseMax, 392807);
   assert.equal(result.highMax, 583627);
   assert.equal(result.maximum, 583627);
@@ -64,7 +64,8 @@ check('high earnings require an explicit mode choice, preserving the target', ()
   assert.equal(chosen.target, 450000);
   assert.equal(chosen.high, true);
   assert.equal(chosen.reachable, true);
-  assert.equal(chosen.actual, 583627);
+  assert.equal(chosen.selected.shifts, 47);
+  assert.equal(chosen.actual, 455317);
 });
 
 check('fixed-rate packaging keeps the real 30-shift maximum and has no high offer', () => {

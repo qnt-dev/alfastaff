@@ -26,7 +26,7 @@ vm.runInContext([
   between('  function modelInput(', '  function modelSet('),
   between('  function modelSet(', '  AS.CalcModal ='),
   between('  function refreshJobModel(', '  // сумма в итоге'),
-  'AS.CalcModal={state:modelState,set:modelSet,preview:modelPreview,durations:function(id){return modelDurations(id,job);},solve:modelSolve,parseAmount:parseNum};'
+  'AS.CalcModal={state:modelState,set:modelSet,preview:modelPreview,durations:function(id){return modelDurations(id,job);},shiftCounts:modelShiftCounts,solve:modelSolve,parseAmount:parseNum};'
 ].join('\n'), context);
 const adapter = path.join(base, 'js/calculators/engine-adapter.js');
 if (fs.existsSync(adapter)) vm.runInContext(fs.readFileSync(adapter, 'utf8'), context);

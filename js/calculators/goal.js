@@ -6,9 +6,9 @@
   function wholeThousands(n){return Math.floor(Math.max(0,Number(n)||0)/1000)*1000;}
   var state=E.initial(),initialQuote=E.current(state);if(initialQuote)state.pick=initialQuote.o.id;
   var high=state.v==='hi',goal=initialQuote?wholeThousands(high&&initialQuote.hi?initialQuote.hi.home:initialQuote.home):180000,selected=null,offers=[],trials=[],lastDurationKey='',lastScheduleKey='',lastObjectName=initialQuote?initialQuote.o.short:'Выбранный объект';
-  var quoteCache=null,quoteCacheKey='',feasibility=null,alternativeOffers=[],alternativesOpen=false,alternativesKey='';
-  var moneySlider=window.AlfaMoneySlider(root,function(value){goal=wholeThousands(value);render(false);},{integer:true,step:1000});
-  function snapshot(){var copy=Object.assign({},state,{target:goal,high:high,v:high?'hi':'100',auto:false});if(copy.start&&typeof copy.start.getTime==='function')copy.start=new Date(copy.start.getTime());return copy;}
+  var quoteCache=null,quoteCacheKey='',feasibility=null,alternativeOffers=[],alternativesOpen=false,alternativesKey='',chosenShifts=0;
+  var moneySlider=window.AlfaMoneySlider(root,function(value){chosenShifts=0;goal=wholeThousands(value);render(false);},{integer:true,step:1000});
+  function snapshot(){var copy=Object.assign({},state,{target:goal,high:high,v:high?'hi':'100',auto:false,chosenShifts:chosenShifts});if(copy.start&&typeof copy.start.getTime==='function')copy.start=new Date(copy.start.getTime());return copy;}
   function changed(){root.dispatchEvent(new CustomEvent('alfa:change',{bubbles:true,detail:{state:snapshot()}}));}
   var text=function(id,value){$(id).textContent=value;};
   function option(select,value,label){var el=document.createElement('option');el.value=value;el.textContent=label;select.appendChild(el);}
@@ -26,16 +26,31 @@
   function exact(n){var trial=(quoteCatalog()[state.pick]||[]).filter(function(item){return item.shifts===n;})[0];return trial?trial.quote:null;}
   function amount(c){return high&&c.hi?c.hi.home:c.home;}
   function dl(id,rows){var list=$(id);list.replaceChildren();rows.forEach(function(row){var div=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=row[0];dd.textContent=row[1];div.append(dt,dd);list.appendChild(div);});}
+  var durationLayout=null;
+  function updateDurationSelection(){
+    if(!durationLayout)return;
+    var track=$('ag-duration-track'),badge=$('ag-duration-selected'),tick=$('ag-duration-selected-tick'),top=durationLayout.top(state.shifts);
+    badge.textContent=state.shifts;badge.style.top=tick.style.top=top+'%';
+    // Keep the milestone hit areas intact, but avoid text underneath the moving badge.
+    var height=track.clientHeight||durationLayout.height;
+    track.querySelectorAll('[data-shifts]').forEach(function(b){
+      b.setAttribute('aria-pressed',String(+b.dataset.shifts===state.shifts));
+      b.querySelector('.ag-duration-anchor-label').style.opacity=Math.abs(durationLayout.top(+b.dataset.shifts)-top)*height/100<34?'0':'1';
+    });
+  }
   function durationControls(c){
     var lens=E.durations(c.o.id,state),key=c.o.id+':'+lens.join(',');
     if(key!==lastDurationKey){
-      lastDurationKey=key;var track=$('ag-duration-track'),layout=F.durationLayout(lens);track.replaceChildren();
+      lastDurationKey=key;var track=$('ag-duration-track'),layout=durationLayout=F.durationLayout(lens);track.replaceChildren();
       track.style.minHeight=layout.height+'px';
       layout.ticks.forEach(function(n){var tick=document.createElement('span');tick.className='ag-duration-tick';tick.dataset.durationTick=n;tick.setAttribute('aria-hidden','true');tick.style.top=layout.top(n)+'%';track.appendChild(tick);});
-      lens.forEach(function(n){var b=document.createElement('button');b.type='button';b.dataset.shifts=n;b.setAttribute('aria-label',n+' смен — изменить цель на доход этой вахты');b.textContent=n;b.style.top=layout.top(n)+'%';track.appendChild(b);});
+      lens.forEach(function(n){var b=document.createElement('button'),label=document.createElement('span');b.type='button';b.dataset.shifts=n;b.setAttribute('aria-label',n+' смен — изменить цель на доход этой вахты');label.className='ag-duration-anchor-label';label.textContent=n;b.appendChild(label);b.style.top=layout.top(n)+'%';track.appendChild(b);});
+      var tick=document.createElement('span');tick.id='ag-duration-selected-tick';tick.className='ag-duration-tick is-selected';tick.setAttribute('aria-hidden','true');
+      var badge=document.createElement('output');badge.id='ag-duration-selected';badge.className='ag-duration-selected';badge.setAttribute('aria-hidden','true');track.append(tick,badge);
     }
-    root.querySelectorAll('[data-shifts]').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.shifts===state.shifts));});
-    root.querySelectorAll('[data-duration-tick]').forEach(function(tick){tick.classList.toggle('is-selected',+tick.dataset.durationTick===state.shifts);});
+    updateDurationSelection();
+    var base=lens.filter(function(n){return n<=state.shifts;}).pop(),extra=state.shifts-base;
+    text('ag-duration-extension',extra?base+' основных + '+extra+' '+(extra%100>=11&&extra%100<=14?'дополнительных':extra%10===1?'дополнительная':extra%10>=2&&extra%10<=4?'дополнительные':'дополнительных'):'');
     var sk=c.o.id+':'+c.t.scheds.join(',');
     if(sk!==lastScheduleKey){
       lastScheduleKey=sk;var box=$('ag-schedule');box.replaceChildren();
@@ -89,14 +104,19 @@
     if(!base.hi)high=false;$('ag-high-wrap').hidden=!base.hi;
     root.querySelectorAll('[data-ag-yield]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.agYield==='hi')===high));});
     root.querySelector('[data-ag-yield="hi"]').textContent=base.hi?base.hi.label:'';
-    trials=quoteCatalog()[base.o.id]||[];var lengths=trials.map(function(trial){return trial.shifts;});
+    trials=quoteCatalog()[base.o.id]||[];var lengths=E.durations(base.o.id,state);
+    var chosen=chosenShifts?trials.filter(function(trial){return trial.shifts===chosenShifts;})[0]:null;
+    if(chosen)goal=wholeThousands(amount(chosen.quote));else chosenShifts=0;
     feasibility=F.evaluate(trials,goal,high);
+    // Clicking a duration is an explicit choice. Rounding its income for the
+    // money field must not solve backwards into a different, shorter stay.
+    if(chosen){feasibility.selected=chosen;feasibility.actual=amount(chosen.quote);feasibility.reachable=feasibility.actual>=goal;}
     selected=feasibility.selected?feasibility.selected.quote:null;
     var c=selected;if(!c){changed();return;}state.shifts=feasibility.selected.shifts;
     var reachable=feasibility.reachable,actual=feasibility.actual,valid=goal>0;
     moneySlider.sync(goal,wholeThousands(feasibility.maximum),{baseMax:feasibility.baseMax,highMax:feasibility.highMax});
     $('ag-target-error').hidden=valid;$('ag-target').setAttribute('aria-invalid',String(!valid));
-    text('ag-shifts',state.shifts);text('ag-days',c.days);text('ag-duration-label',reachable?'Для этого нужно':'По этим условиям');text('ag-duration-note',reachable?'Минимальная подходящая вахта':'Доступные сроки — до '+feasibility.maxShifts+' смен');
+    text('ag-shifts',state.shifts);text('ag-shifts-unit',state.shifts%100>=11&&state.shifts%100<=14?'смен':state.shifts%10===1?'смена':state.shifts%10>=2&&state.shifts%10<=4?'смены':'смен');text('ag-days',c.days);text('ag-duration-label',chosen?'Вы выбрали':reachable?'Для этого нужно':'По этим условиям');text('ag-duration-note',chosen?'Расчёт на выбранный срок':reachable?'Минимальная подходящая вахта':'Доступные сроки — до '+feasibility.maxShifts+' смен');
     text('ag-home',E.money(actual));text('ag-delta',reachable?(actual===goal?'Цель совпадает с расчётом':'На '+rub(actual-goal)+' больше цели'):'Цель выше дохода за доступную вахту');
     text('ag-basis',basis(c));
     text('ag-calendar-unit',c.days%100>=11&&c.days%100<=14?'календарных дней':c.days%10===1?'календарный день':c.days%10>=2&&c.days%10<=4?'календарных дня':'календарных дней');
@@ -108,22 +128,24 @@
     text('ag-food-note',c.t.foodNote+'. С учётом питания на объекте ваши расходы — '+rub(c.perDay)+' в календарный день.');
     text('ag-training',(c.t.unpaid?c.t.unpaid+' неоплач. смен'+(c.t.unpaid===1?'а':'ы')+' обучения '+(c.t.counted?'включено в срок вахты.':'добавлено к сроку вахты.'):'Без неоплачиваемого обучения.')+' Оплаченных смен: '+c.paid+'.'+(c.inN?' Первые '+c.inN+' — по '+rub(c.p.intern.rate)+'.':'')+' График '+c.sched+'; календарный срок приблизительный.');
     text('ag-condition-title',c.o.short);text('ag-position',c.p.text);
-    dl('ag-condition-list',[['Должность',state.prof||c.p.jobs[0]],['Кому подходит',c.o.who],['Смены',c.o.shiftFull],['Жильё',c.o.housing],['Питание',c.o.mealsFull],['До объекта',c.o.transport],['Аванс',c.o.advanceText],['Доступные сроки',lengths.join(', ')+' смен']]);
+    dl('ag-condition-list',[['Должность',state.prof||c.p.jobs[0]],['Кому подходит',c.o.who],['Смены',c.o.shiftFull],['Жильё',c.o.housing],['Питание',c.o.mealsFull],['До объекта',c.o.transport],['Аванс',c.o.advanceText],['Доступные сроки',lengths.length>1?lengths[0]+'–'+lengths[lengths.length-1]+' смен, с шагом 1 смена':lengths[0]+' смен']]);
     text('ag-condition-note',(c.o.note?c.o.note+'. ':'')+'Условия и дату заезда нужно подтвердить перед поездкой.');
     changed();
   }
-  root.addEventListener('click',function(event){var b=event.target.closest('button');if(!b||!root.contains(b))return;if(b.dataset.shifts){var c=exact(+b.dataset.shifts);if(c){goal=wholeThousands(amount(c));render(true);}}else if(b.dataset.sched){state.sched=b.dataset.sched;render(true);}else if(b.dataset.agYield){high=b.dataset.agYield==='hi';render(true);}else if(b.id==='ag-try-high'&&feasibility&&feasibility.canReachHigh){high=true;render(true);root.querySelector('[data-ag-yield="hi"]').focus({preventScroll:true});}else if(b.id==='ag-alternatives-toggle'&&alternativeOffers.length){alternativesOpen=!alternativesOpen;feasibilityControls(selected);}else if(b.dataset.agAlternative&&alternativeOffers.some(function(item){return item.id===b.dataset.agAlternative;})){state.pick=b.dataset.agAlternative;$('ag-object').value=state.pick;render(true);$('ag-object').focus({preventScroll:true});}else if(b.id==='ag-conditions-open'){$('ag-conditions').open=true;}});
-  $('ag-region').addEventListener('change',function(){state.region=this.value;refreshOffers();render(true);});
-  $('ag-role').addEventListener('change',function(){state.prof=this.value;refreshOffers();render(true);});
-  $('ag-object').addEventListener('change',function(){state.pick=this.value;render(true);});
+  root.addEventListener('click',function(event){var b=event.target.closest('button');if(!b||!root.contains(b))return;if(b.dataset.shifts){var c=exact(+b.dataset.shifts);if(c){chosenShifts=+b.dataset.shifts;render(true);}}else if(b.dataset.sched){state.sched=b.dataset.sched;render(true);}else if(b.dataset.agYield){high=b.dataset.agYield==='hi';render(true);}else if(b.id==='ag-try-high'&&feasibility&&feasibility.canReachHigh){high=true;render(true);root.querySelector('[data-ag-yield="hi"]').focus({preventScroll:true});}else if(b.id==='ag-alternatives-toggle'&&alternativeOffers.length){alternativesOpen=!alternativesOpen;feasibilityControls(selected);}else if(b.dataset.agAlternative&&alternativeOffers.some(function(item){return item.id===b.dataset.agAlternative;})){chosenShifts=0;state.pick=b.dataset.agAlternative;$('ag-object').value=state.pick;render(true);$('ag-object').focus({preventScroll:true});}else if(b.id==='ag-conditions-open'){$('ag-conditions').open=true;}});
+  $('ag-region').addEventListener('change',function(){chosenShifts=0;state.region=this.value;refreshOffers();render(true);});
+  $('ag-role').addEventListener('change',function(){chosenShifts=0;state.prof=this.value;refreshOffers();render(true);});
+  $('ag-object').addEventListener('change',function(){chosenShifts=0;state.pick=this.value;render(true);});
   ['food','road'].forEach(function(field){$('ag-'+field).addEventListener('input',function(){state[field]=E.parseMoney(this.value);render(false);});});
   function syncInputs(){['food','road'].forEach(function(field){$('ag-'+field).value=E.money(state[field]);});$('ag-region').value=state.region;$('ag-role').value=state.prof;}
   root.alfaGoal={state:snapshot,current:function(){return selected;},setState:function(next){
     next=next||{};var previous=snapshot(),external=['region','prof','pick','shifts','sched','sex','age','v','food','road'].some(function(key){return Object.prototype.hasOwnProperty.call(next,key)&&next[key]!==previous[key];});
     state=Object.assign({},state,next);high=Object.prototype.hasOwnProperty.call(next,'v')?next.v==='hi':Object.prototype.hasOwnProperty.call(next,'high')?!!next.high:high;
+    chosenShifts=Number(next.chosenShifts)||0;
     var quote=E.current(state);if(quote)state.pick=quote.o.id;
     if(Object.prototype.hasOwnProperty.call(next,'target'))goal=wholeThousands(E.parseMoney(next.target));else if(external&&quote)goal=wholeThousands(amount(quote));
     syncInputs();refreshOffers();render(true);return snapshot();
   }};
   syncInputs();refreshOffers();render(true);
+  if(window.ResizeObserver)new ResizeObserver(updateDurationSelection).observe($('ag-duration-track'));
 })();

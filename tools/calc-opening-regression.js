@@ -1,22 +1,28 @@
-/* Opening must reach its final text layout before the first visible frame.
-   Measure in panel-local coordinates so the intentional entrance transform
-   does not count as reflow. Run through calc-views-regression.html?opening=1. */
+/* Opening must reach its final text position and size before the first visible
+   frame. Check screen coordinates as well as local layout: normalizing away an
+   entrance transform used to hide the visible text "settling" regression. */
 async function calcOpeningRegression(w) {
   var d=w.document,modal=d.querySelector('[data-cm]'),panel=d.querySelector('.cm__panel');
   var opener=Array.from(d.querySelectorAll('[data-calc-open]')).find(function(button){
     return button.getClientRects().length&&w.getComputedStyle(button).visibility!=='hidden';
   }),checks=[],errors=[],runs=[];
   if(!modal||!panel||!opener)throw Error('Missing calculator opening controls');
-  var wasHidden=modal.hidden,savedTab=modal.dataset.tab;
+  var wasHidden=modal.hidden,savedTab=modal.dataset.tab,savedTheme=modal.dataset.calcTheme;
+  var params=new URLSearchParams(location.search),audience=params.get('audience')==='biz'?'biz':'job',theme=params.get('theme')==='dark'?'dark':'light';
   var traces=[];w.calcOpeningFrameTraces=traces;
   var includeFrames=new URLSearchParams(location.search).has('frames');
   var selectors={
     brand:'#alfa-goal .calc-source-brand',
+    emblem:'#alfa-goal .calc-source-mark',wordmark:'#alfa-goal .calc-source-wordmark',
     title:'#alfa-goal>h2',context:'#alfa-goal .ag-context',select:'#ag-object',
     ruler:'#alfa-goal .ag-money-scale',readout:'#alfa-goal .ag-money-readout',
     amount:'#ag-target',unit:'#alfa-goal .ag-money-value-unit',
     duration:'#alfa-goal .ag-duration',result:'#alfa-goal .ag-result'
   };
+  if(audience==='biz'){
+    Object.keys(selectors).forEach(function(key){selectors[key]=selectors[key].replace(/#alfa-goal/g,'#alfa-employer').replace(/#ag-/g,'#ec-');});
+    selectors.select='#ec-region';
+  }
   function check(ok,name){(ok?checks:errors).push(name);}
   function round(n){return Math.round(n*1000)/1000;}
   function nextFrame(){
@@ -30,17 +36,20 @@ async function calcOpeningRegression(w) {
     var matrix=new w.DOMMatrixReadOnly(style.transform==='none'?undefined:style.transform);
     var sx=matrix.a||1,sy=matrix.d||1;
     function rect(r){return [round((r.left-p.left)/sx),round((r.top-p.top)/sy),round(r.width/sx),round(r.height/sy)];}
+    function screenRect(r){return [round(r.left),round(r.top),round(r.width),round(r.height)];}
     var workspace=w.getComputedStyle(d.querySelector('.calc-workspace'));
     var result={
       ms:round(w.performance.now()-start),visible:!modal.hidden&&style.visibility!=='hidden'&&workspace.visibility!=='hidden'&&Number(style.opacity)>0,
       open:modal.classList.contains('is-open'),opacity:round(Number(style.opacity)),
       transform:style.transform,panel:[round(p.width/sx),round(p.height/sy)],
+      screenPanel:screenRect(p),
+      transformIdentity:Math.abs(matrix.a-1)<.0001&&Math.abs(matrix.d-1)<.0001&&Math.abs(matrix.b)<.0001&&Math.abs(matrix.c)<.0001&&Math.abs(matrix.e)<.01&&Math.abs(matrix.f)<.01,
       fonts:{status:d.fonts.status,onest:d.fonts.check('450 52px Onest','0123456789₽'),heading:d.fonts.check('650 36px Onest','С какой суммой')},
       nodes:{},glyphs:[]
     };
     Object.keys(selectors).forEach(function(key){
       var el=d.querySelector(selectors[key]),s=w.getComputedStyle(el);
-      result.nodes[key]={rect:rect(el.getBoundingClientRect()),fontSize:parseFloat(s.fontSize),fontFamily:s.fontFamily};
+      result.nodes[key]={rect:rect(el.getBoundingClientRect()),screenRect:screenRect(el.getBoundingClientRect()),fontSize:parseFloat(s.fontSize),fontFamily:s.fontFamily};
       if(key==='amount'){result.nodes[key].width=parseFloat(s.width);result.nodes[key].value=el.value;}
     });
     var title=d.querySelector(selectors.title),walker=d.createTreeWalker(title,w.NodeFilter.SHOW_TEXT),node;
@@ -66,11 +75,17 @@ async function calcOpeningRegression(w) {
     }while(visibleSince===null||sample.ms-visibleSince<1200||d.fonts.status==='loading');
     var visible=frames.filter(function(frame){return frame.visible;}),drift={};
     check(visible.length>=6,label+': enough real visible frames were observed');
+    check(visible.every(function(frame){return frame.transformIdentity;}),label+': no visible frame translates or scales the calculator panel');
+    var screenPanelDrift=[0,1,2,3].map(function(i){return maxDelta(visible,function(f){return f.screenPanel[i];});});
+    drift.screenPanel=screenPanelDrift;
+    check(screenPanelDrift.every(function(n){return n<=.25;}),label+': panel appears at its final screen position and size');
     Object.keys(selectors).forEach(function(key){
       var geometry=[0,1,2,3].map(function(i){return maxDelta(visible,function(f){return f.nodes[key].rect[i];});});
       var fontSize=maxDelta(visible,function(f){return f.nodes[key].fontSize;});
-      drift[key]={rect:geometry,fontSize:fontSize};
+      var screenGeometry=[0,1,2,3].map(function(i){return maxDelta(visible,function(f){return f.nodes[key].screenRect[i];});});
+      drift[key]={rect:geometry,screenRect:screenGeometry,fontSize:fontSize};
       check(geometry.every(function(n){return n<=1;}),label+': '+key+' keeps its layout throughout opening');
+      check(screenGeometry.every(function(n){return n<=.25;}),label+': '+key+' stays stationary at its final rendered size');
       check(fontSize<=.05,label+': '+key+' keeps its text size throughout opening');
     });
     var glyphCount=visible[0].glyphs.length;
@@ -113,7 +128,8 @@ async function calcOpeningRegression(w) {
   }
   try{
     if(!modal.hidden)await calcCloseModal(w);
-    d.querySelector('[data-cm-tab="job"]').click();
+    d.querySelector('[data-cm-tab="'+audience+'"]').click();
+    d.querySelector('[data-cv-theme="'+theme+'"]').click();
     await opening('first opening');
     await calcCloseModal(w);
     await opening('warm reopening');
@@ -121,7 +137,8 @@ async function calcOpeningRegression(w) {
   }catch(error){errors.push(error.stack||error.message);}
   finally{
     if(savedTab)d.querySelector('[data-cm-tab="'+savedTab+'"]').click();
+    if(savedTheme)d.querySelector('[data-cv-theme="'+savedTheme+'"]').click();
     if(wasHidden)await calcCloseModal(w);
   }
-  return {pass:!errors.length,checked:checks.length,checks:checks,errors:errors,runs:runs,viewport:[w.innerWidth,w.innerHeight],devicePixelRatio:w.devicePixelRatio};
+  return {pass:!errors.length,checked:checks.length,checks:checks,errors:errors,runs:runs,audience:audience,theme:theme,viewport:[w.innerWidth,w.innerHeight],devicePixelRatio:w.devicePixelRatio};
 }

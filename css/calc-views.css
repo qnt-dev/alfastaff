@@ -22,6 +22,9 @@
 /* Extra calculation details grow downward, without moving either ruler. */
 .cm:is([data-calc-view="goal"],[data-calc-view="biz"]) { align-items:start; }
 .cm:is([data-calc-view="goal"],[data-calc-view="biz"]) .cm__panel { border-radius:24px; overflow-anchor:none; scrollbar-gutter:stable; }
+/* Keep text at its final screen coordinates from the first visible frame.
+   The legacy desktop zoom and mobile slide resampled every glyph on opening. */
+.cm:is([data-calc-view="goal"],[data-calc-view="biz"]) .cm__panel { transform:none; transition:opacity .35s; }
 .cm:is([data-calc-view="goal"],[data-calc-view="biz"]) .cm__head { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip-path:inset(50%); }
 .cm:is([data-calc-view="goal"],[data-calc-view="biz"]) .cm__bar { display:none; }
 .cm[data-calc-theme="dark"]:is([data-calc-view="goal"],[data-calc-view="biz"]) .cm__panel { background:#191919; }

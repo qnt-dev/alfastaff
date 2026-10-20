@@ -128,12 +128,21 @@
   function posFor(o, I) {
     return o.positions.filter(function (p) { return (!p.sex || !I.sex || p.sex === I.sex) && (!I.prof || p.jobs.indexOf(I.prof) >= 0); })[0] || null;
   }
+  function shiftBounds(o) {
+    var lengths = (o.vakhta || []).filter(function (n) {
+      return typeof n === 'number' && isFinite(n) && n > 0 && Math.floor(n) === n;
+    });
+    return lengths.length ? { min: Math.min.apply(null, lengths), max: Math.max.apply(null, lengths) }
+      : { min: Math.max(1, Math.ceil(o.minShifts || 1)), max: 90 };
+  }
   function fits(o, I) {
     var t = terms(o), why = [];
     if (I.region && o.region !== I.region) return null;
     if (I.prof && (o.jobsFull || []).indexOf(I.prof) < 0) return null;
-    var lens = o.vakhta || [];
-    if (lens.length ? lens.indexOf(I.shifts) < 0 : I.shifts < (o.minShifts || 0)) why.push('вахта ' + (lens.length ? lens.join(', ') : 'от ' + o.minShifts) + ' смен');
+    var bounds = shiftBounds(o);
+    // A stay may be extended by whole shifts between the catalog milestones.
+    // 20 + 10 uses the same 30-shift calculation, without restarting training.
+    if (Math.floor(I.shifts) !== I.shifts || I.shifts < bounds.min || I.shifts > bounds.max) why.push('вахта от ' + bounds.min + ' до ' + bounds.max + ' смен');
     if (I.sex && (I.sex === 'm' ? !t.men : !t.women)) why.push(t.men ? 'только мужчины' : 'только женщины');
     if (I.age && (I.age < t.ageMin || I.age > t.ageMax)) why.push(t.ageMax < 99 ? 'возраст ' + t.ageMin + '–' + t.ageMax : 'возраст от ' + t.ageMin);
     if (!why.length && !posFor(o, I)) why.push(I.sex === 'f' ? 'только мужчины' : 'только женщины');   // эта должность — только для другого пола
@@ -201,6 +210,18 @@
     });
     return result.sort(function (a, b) { return a - b; });
   }
+  function modelShiftCounts(id, overrides) {
+    var I = Object.assign({}, job, overrides || {});
+    var objects = id ? O.filter(function (o) { return o.id === id; }) : O, result = [];
+    objects.forEach(function (o) {
+      var bounds = shiftBounds(o);
+      for (var n = bounds.min; n <= bounds.max; n++) {
+        var why = fits(o, Object.assign({}, I, { shifts: n }));
+        if (why && !why.length && result.indexOf(n) < 0) result.push(n);
+      }
+    });
+    return result.sort(function (a, b) { return a - b; });
+  }
   function modelSolve(target, options) {
     options = options || {};
     target = Number(target);
@@ -209,8 +230,9 @@
     if (!I || !validTarget) return empty;
     var objects = options.id ? O.filter(function (o) { return o.id === options.id; }) : O;
     objects.forEach(function (o) {
-      modelDurations(o.id, I).forEach(function (shifts) {
+      modelShiftCounts(o.id, I).forEach(function (shifts) {
         var quote = calc(o, Object.assign({}, I, { shifts: shifts }));
+        if (I.v === 'hi' && !quote.hi) return;
         var home = I.v === 'hi' && quote.hi ? quote.hi.home : quote.home;
         candidates.push({ quote: quote, shifts: shifts, reached: home >= target, home: home, target: target });
       });
@@ -248,6 +270,7 @@
     set: modelSet,
     preview: modelPreview,
     durations: function (id) { return modelDurations(id, job); },
+    shiftCounts: modelShiftCounts,
     solve: modelSolve,
     subscribe: function (fn) {
       if (typeof fn !== 'function') return function () {};
@@ -291,7 +314,21 @@
     var f = $('[data-form]'); if (!f) return false;
     if (job.view !== 'calc') { job.view = 'calc'; modelNotify(); }
     var tb = $('[data-tab-btn="job"]', f); if (tb) tb.click();
-    var r = $('input[name="shifts"][value="' + job.shifts + '"]', f); if (r) r.checked = true;
+    $$('[data-calc-shift-choice]', f).forEach(function (choice) { choice.remove(); });
+    var r = $('input[name="shifts"][value="' + job.shifts + '"]', f);
+    if (!r) {
+      var template = $('input[name="shifts"]', f), label = template && template.closest('label');
+      if (label) {
+        var choice = label.cloneNode(true);
+        choice.setAttribute('data-calc-shift-choice', '');
+        r = $('input[name="shifts"]', choice);
+        r.value = String(job.shifts);
+        r.removeAttribute('checked');
+        $('span', choice).textContent = job.shifts + ' ' + plural(job.shifts, 'смена', 'смены', 'смен');
+        label.parentNode.appendChild(choice);
+      }
+    }
+    if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
     var pk = job.prof ? profKey(job.prof) : '';
     $$('input[name="prof"]', f).forEach(function (c) { c.checked = !!pk && c.value === pk; });
     var c = lastCur, sel = $('[data-object-select]', f);

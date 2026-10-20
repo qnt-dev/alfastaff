@@ -31,7 +31,7 @@
 #alfa-employer .ag-footer { color:var(--ag-muted);font-size:11px;line-height:1.5; }
 #alfa-employer #ec-calculation>summary:is(:hover,:focus-visible) .ag-click-hint { visibility:visible; }
 #alfa-employer .ag-money-line-lit,#alfa-employer .ag-money-line-near { stroke:url(#ec-money-light); }
-#alfa-employer .ag-money-line-glow { stroke:url(#ec-money-bloom); }
+#alfa-employer .ag-money-line-glow { fill:url(#ec-money-bloom);stroke:none; }
 #alfa-employer .ag-money-help:has(.ag-error:not([hidden])) #ec-goal-hint { visibility:hidden; }
 @supports (appearance:base-select) {
   #alfa-employer :is(.ec-operation,.ec-settings) select { display:flex;align-items:center;justify-content:space-between;gap:10px; }

@@ -148,3 +148,13 @@
 @container calc-card (min-width:761px) {
   #alfa-goal .ag-duration-calendar { left:30px;right:104px;font-size:15px; }
 }
+/* The total can fall between catalog milestones. Reserve the explanation's
+   space so a milestone never changes the card height or moves the calendar. */
+#alfa-goal .ag-duration-extension{min-height:2.8em;margin:3px 0 0;font-size:11px;line-height:1.4;font-weight:500}
+#alfa-goal .ag-duration-track button[aria-pressed="true"]{background:transparent;color:#fff;box-shadow:none}
+#alfa-goal .ag-duration-track button[aria-pressed="true"]::after{display:none}
+#alfa-goal .ag-duration-selected{position:absolute;left:0;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:7px;background:#fff;color:var(--ag-coral);font-size:14px;font-weight:700;line-height:1;transform:translateY(-50%);pointer-events:none}
+#alfa-goal .ag-duration-selected::after{content:"";position:absolute;left:100%;top:50%;transform:translateY(-50%);border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:6px solid #fff}
+#alfa-goal .ag-duration-track button:focus-visible .ag-duration-anchor-label{opacity:1!important}
+#alfa-goal .ag-duration-track:has(button:focus-visible) .ag-duration-selected{visibility:hidden}
+@container calc-card (min-width:631px){#alfa-goal .ag-duration-content{padding-top:10px}}

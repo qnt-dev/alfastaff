@@ -27,6 +27,7 @@
     });
     return result.sort(function (a, b) { return a - b; });
   }
+  function shiftCounts(id, state) { return model.shiftCounts(id, state); }
   function money(value) {
     value = Number(value);
     return formatter.format(isFinite(value) ? Math.round(value) || 0 : 0);
@@ -45,7 +46,7 @@
   }
 
   var engine = {
-    initial: initial, list: list, current: current, durations: durations,
+    initial: initial, list: list, current: current, durations: durations, shiftCounts: shiftCounts,
     money: money,
     rounded: function (value) { return money(Math.round(Number(value) / 1000) * 1000); },
     parseMoney: function (value) { return model.parseAmount(value); },

@@ -14,6 +14,7 @@
     var line = find('money-line');
     var light = find('money-light');
     var bloom = find('money-bloom');
+    var lightField = root.querySelector('.ag-money-line-glow');
     var fade = find('money-fade');
     var fadeMask = find('money-fade-mask');
     var leftShape = find('money-left-shape');
@@ -151,12 +152,15 @@
       rasterMetrics();
       var center = yFor(position), path = contour(center);
       line.setAttribute('d', path);
-      // The light fades to zero around the knob; the clip only chooses its side.
+      // The radial light follows the knob; the clip only chooses its side.
       // Do not terminate this shape at the scale ends: that cuts the halo flat.
       leftShape.setAttribute('d', path.replace(/^(M[^ ]+) 0/, '$1 -80') + ' V' + (height + 80) + ' H-60 V-80 Z');
       light.setAttribute('cx', 60 + raster.shift); bloom.setAttribute('cx', 59 + raster.shift);
       light.setAttribute('cy', center); bloom.setAttribute('cy', center);
-      fade.setAttribute('y1', center - 30); fade.setAttribute('y2', center + 30);
+      lightField.setAttribute('cx', 59 + raster.shift); lightField.setAttribute('cy', center);
+      // Keep the halo local to the notch. The thin lit rail continues beyond it.
+      // Compress around the moving center while preserving the horizontal reach.
+      bloom.setAttribute('gradientTransform', 'translate(0 ' + (.36 * center) + ') scale(1 .64)');
       scale.style.setProperty('--ag-slider-y', center + 'px');
       var hasHighZone = highMaximum > baseMaximum && baseMaximum < maximum;
       highZone.setAttribute('visibility', hasHighZone ? 'visible' : 'hidden');
@@ -201,6 +205,9 @@
       height = scale.clientHeight;
       if (!height) return;
       svg.setAttribute('viewBox', '0 0 120 ' + height);
+      // Only fade at the scale ends. A second knob-centred mask used to
+      // multiply the radial fade and crush the halo into a tiny bright rim.
+      fade.setAttribute('y1', 0); fade.setAttribute('y2', height);
       svg.querySelectorAll('filter').forEach(function (filter) { filter.setAttribute('height', height + 160); });
       fadeMask.setAttribute('height', height + 160);
       fadeMask.querySelector('rect').setAttribute('height', height + 160);

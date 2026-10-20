@@ -50,8 +50,11 @@
 }
 
 :is(#alfa-goal,#alfa-employer) .calc-source-wordmark {
-  width: 120px;
+  /* Match the original aspect ratio: the lettering itself is 12px tall,
+     without fractional vertical letterboxing inside a 120x12 viewport. */
+  width: auto;
   height: 12px;
+  aspect-ratio: 665.361725 / 57.807037;
   fill: currentColor;
 }
 
@@ -160,9 +163,6 @@
     height: 24px;
   }
 
-  :is(#alfa-goal,#alfa-employer) .calc-source-wordmark {
-    width: 112px;
-  }
 }
 
 /* Native, keyboard-accessible pickers with a shared field/menu geometry.

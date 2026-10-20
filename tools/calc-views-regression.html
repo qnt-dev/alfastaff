@@ -2,7 +2,7 @@
 <html lang="ru"><meta charset="utf-8"><title>Calculator regression</title>
 <style>body{font:15px monospace;background:#f4f6fa;color:#111}iframe{width:1280px;height:800px;border:1px solid #aaa}pre{white-space:pre-wrap}body.capture{margin:0;background:#fff}body.capture iframe{display:block;border:0}</style>
 <h1>Calculator regression</h1><pre id="result">Running…</pre>
-<iframe title="Real site under test" data-src="../?calc-check=20261020opening39"></iframe>
+<iframe title="Real site under test" data-src="../?calc-check=20261020glow47"></iframe>
 <script>
 var testParams=new URLSearchParams(location.search),testWidth=Number(testParams.get('width'))||1280,testHeight=Number(testParams.get('height'))||800;
 var captureScale=testParams.has('capture')&&testParams.get('captureScale')==='2'?2:1;
@@ -16,9 +16,10 @@ if(captureScale===2){
   document.body.style.width=(testWidth*2)+'px';document.body.style.height=(testHeight*2)+'px';
 }
 </script>
-<script src="calc-views-regression.js?v=20261020opening39"></script>
-<script src="calc-opening-regression.js?v=20261020opening2"></script>
+<script src="calc-views-regression.js?v=20261020glow47"></script>
+<script src="calc-opening-regression.js?v=20261020glow44"></script>
 <script src="calc-format-regression.js?v=20261020opening39"></script>
+<script src="calc-extension-regression.js?v=20261020extension42"></script>
 <script>
 var harnessStarted=false;
 var startupTimer=setTimeout(function(){
@@ -30,6 +31,7 @@ document.querySelector('iframe').addEventListener('load',async function(){
   if(harnessStarted||!this.contentDocument.querySelector('[data-cm]'))return;
   harnessStarted=true;clearTimeout(startupTimer);
   var frame=this,w=frame.contentWindow,out={viewport:w.innerWidth,styles:Array.from(w.document.querySelectorAll('link[rel="stylesheet"]')).filter(function(el){return el.href.includes('calc')}).map(function(el){return el.href})};
+  out.sliderSource=w.document.querySelector('script[src*="calculators/money-slider.js"]')?.getAttribute('src');
   var result=document.querySelector('#result');
   async function run(name,operation){try{out[name]=await operation();}catch(e){out[name]={pass:false,error:e.stack||e.message};}}
   async function bounded(operation,label){var timer;try{return await Promise.race([operation,new Promise(function(_,reject){timer=setTimeout(function(){reject(Error(label+' timed out after 20 seconds'));},20000);})]);}finally{clearTimeout(timer);}}
@@ -38,7 +40,13 @@ document.querySelector('iframe').addEventListener('load',async function(){
       await run('opening',function(){return calcOpeningRegression(w);});
     }else{
     await bounded(w.document.fonts.ready,'Site fonts');
-    if(testParams.has('formatting')){
+    if(testParams.has('model')){
+      var modelScript=w.document.createElement('script');modelScript.src='tools/calc-model-regression.js?v=20261020extension42';
+      await new Promise(function(resolve,reject){modelScript.onload=resolve;modelScript.onerror=reject;w.document.body.appendChild(modelScript);});
+      await run('model',function(){return w.runCalcModelRegression();});
+    }else if(testParams.has('extensions')){
+      await run('extensions',function(){return calcExtensionRegression(w);});
+    }else if(testParams.has('formatting')){
       await run('formatting',function(){return calcFormatRegression(w);});
     }else if(testParams.has('capture')){
       out.preview=await bounded(calcPreview(w,testParams),'Capture preparation');
@@ -52,9 +60,11 @@ document.querySelector('iframe').addEventListener('load',async function(){
       await run('handoff',function(){return calcHandoffRegression(w);});
     }else if(testParams.has('stability')){
       await run('stability',function(){return calcStabilityRegression(w);});
+    }else if(testParams.has('slider')){
+      await run('moneySlider',function(){return calcMoneySliderRegression(w);});
     }else{
       if(!testParams.has('approved')){
-        var s=w.document.createElement('script');s.src='tools/calc-model-regression.js?v=20261020employer36';
+        var s=w.document.createElement('script');s.src='tools/calc-model-regression.js?v=20261020extension42';
         await new Promise(function(resolve,reject){s.onload=resolve;s.onerror=reject;w.document.body.appendChild(s);});
         await run('model',function(){return w.runCalcModelRegression();});
         await run('views',function(){return calcViewsRegression(w);});
