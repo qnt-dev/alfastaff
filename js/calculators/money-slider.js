@@ -2,25 +2,28 @@
    the contour, ticks, knob and editable readout on a shared vertical axis. */
 (function () {
   'use strict';
-  window.AlfaMoneySlider = function (root, onChange) {
+  window.AlfaMoneySlider = function (root, onChange, options) {
+    options = options || {};
+    var prefix = options.prefix || "ag", divisor = options.divisor || 1000, minimum = options.minimum || 0;
+    function find(suffix) { return root.querySelector("#" + prefix + "-" + suffix); }
     var ns = 'http://www.w3.org/2000/svg';
-    var range = root.querySelector('#ag-target-range');
-    var input = root.querySelector('#ag-target');
+    var range = find('target-range');
+    var input = find('target');
     var scale = root.querySelector('.ag-money-scale');
-    var svg = root.querySelector('#ag-money-contour');
-    var line = root.querySelector('#ag-money-line');
-    var light = root.querySelector('#ag-money-light');
-    var bloom = root.querySelector('#ag-money-bloom');
-    var fade = root.querySelector('#ag-money-fade');
-    var fadeMask = root.querySelector('#ag-money-fade-mask');
-    var leftShape = root.querySelector('#ag-money-left-shape');
-    var tickGroup = root.querySelector('#ag-money-ticks');
-    var labelGroup = root.querySelector('#ag-money-labels');
-    var sound = window.AlfaSliderSound ? window.AlfaSliderSound(root.querySelector('#ag-sound-toggle')) : null;
+    var svg = find('money-contour');
+    var line = find('money-line');
+    var light = find('money-light');
+    var bloom = find('money-bloom');
+    var fade = find('money-fade');
+    var fadeMask = find('money-fade-mask');
+    var leftShape = find('money-left-shape');
+    var tickGroup = find('money-ticks');
+    var labelGroup = find('money-labels');
+    var sound = window.AlfaSliderSound ? window.AlfaSliderSound(find('sound-toggle')) : null;
     var readout = root.querySelector('.ag-money-readout');
     var unit = readout.querySelector('.ag-money-value-unit');
-    var highZone = node('g', { id: 'ag-money-high-zone', 'class': 'ag-money-high-zone',
-      'clip-path': 'url(#ag-money-left-clip)', visibility: 'hidden' });
+    var highZone = node('g', { id: prefix + '-money-high-zone', 'class': 'ag-money-high-zone',
+      'clip-path': 'url(#' + prefix + '-money-left-clip)', visibility: 'hidden' });
     // The upper range is indicated by the existing ticks, without an added band.
     svg.insertBefore(highZone, svg.querySelector('.ag-money-line-base'));
     // Measure with the same tabular numeral features as the input; Canvas uses proportional glyphs.
@@ -29,7 +32,7 @@
     metrics.setAttribute('aria-hidden', 'true');
     readout.appendChild(metrics);
     var motion = matchMedia('(prefers-reduced-motion: reduce)');
-    var fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 3 });
+    var fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: options.integer ? 0 : 3 });
     var ticks = [], labels = [], height = 0, lastTickKey = '', maximum = 600000;
     var baseMaximum = maximum, highMaximum = maximum;
     var value = 0, position = null, target = 0, frame = 0, lastTime = 0, dragging = false, editing = false;
@@ -44,13 +47,15 @@
 
     // Exact limits need to remain reachable even when they are not multiples of 1000.
     // The interaction handlers below retain the thousand-ruble increment.
-    range.step = '1';
+    range.step = '1'; range.min = minimum;
 
-    function format(n) { return fmt.format(n / 1000); }
+    function format(n) { return fmt.format(n / divisor); }
     function parse(s) {
       s = s.trim().replace(/[\s\u00a0\u202f]/g, '').replace(',', '.');
       if (!/^\d+(?:\.\d{0,3})?$/.test(s)) return null;
-      var n = Number(s) * 1000;
+      if (options.integer && !/^\d+$/.test(s)) return null;
+      var n = Number(s) * divisor;
+      if (options.inputMaximum && (n < minimum || n > options.inputMaximum)) return null;
       return Number.isFinite(n) && n <= 999999999 ? Math.round(n) : null;
     }
     function node(tag, attrs) {
@@ -64,7 +69,7 @@
       return (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 2.5 ? 2.5 : factor <= 5 ? 5 : 10) * power;
     }
     function scaleText(n) {
-      return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: maximum < 1000 ? 3 : 1 }).format(n / 1000);
+      return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: options.integer ? 0 : maximum < 1000 ? 3 : 1 }).format(n / divisor);
     }
     function buildTicks() {
       var key = maximum + ':' + height;
@@ -162,12 +167,12 @@
         var end = snapEdge(railX + raster.shift - 7) - offset;
         var length = Math.round((item.strong ? 12 : 7) * raster.x) / raster.x;
         item.el.setAttribute('d', 'M' + (end - length) + ' ' + y + 'H' + end);
-        item.el.style.opacity = isHigh ? 1 : .25 + .7 * offset / 10;
+        item.el.style.opacity = isHigh ? 1 : Math.min(1, .5 + .45 * offset / 10);
       });
       labels.forEach(function (item) {
         var y = yFor(fraction(item.value)), offset = railX + raster.shift - contourX(y, center);
         item.el.setAttribute('x', 39 + raster.shift - offset * .45); item.el.setAttribute('y', y);
-        item.el.style.opacity = .38 + .62 * offset / 10;
+        item.el.style.opacity = Math.min(1, .68 + .32 * offset / 10);
       });
       if (!editing) {
         // A rescaled ruler must never invent intermediate monetary amounts.
@@ -205,6 +210,7 @@
       if (!measureFrame) measureFrame = requestAnimationFrame(function () { measureFrame = 0; measure(); });
     }
     function interactionStep() {
+      if (options.step) return options.step;
       return maximum >= 1000 ? 1000 : Math.max(1, Math.pow(10, Math.floor(Math.log10(Math.max(1, maximum) / 20))));
     }
     function audibleDivision(n) {
@@ -217,7 +223,7 @@
     function selectRangeValue(n, event) {
       var previous = Math.max(0, Math.min(maximum, value));
       editing = false; showUnit();
-      n = Math.max(0, Math.min(maximum, n));
+      n = Math.max(minimum, Math.min(maximum, n));
       if (sound) sound.move(audibleDivision(previous), audibleDivision(n), 1, event);
       range.value = n; onChange(n);
     }
@@ -240,7 +246,7 @@
     });
     range.addEventListener('keydown', function (e) {
       var next = +range.value, step = interactionStep();
-      if (e.key === 'Home') next = 0;
+      if (e.key === 'Home') next = minimum;
       else if (e.key === 'End') next = maximum;
       else if (e.key === 'ArrowUp' || e.key === 'ArrowRight') next += step;
       else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') next -= step;
@@ -261,11 +267,11 @@
       editing = true; hideUnit(); fitNumber();
       var n = parse(input.value);
       input.setAttribute('aria-invalid', String(n === null || n <= 0));
-      root.querySelector('#ag-target-error').hidden = n !== null && n > 0;
+      find('target-error').hidden = n !== null && n > 0;
       if (n !== null) onChange(n);
       if (n !== null && n > 0) typingTimer = setTimeout(showUnit, 900);
     });
-    input.addEventListener('blur', function () { editing = false; showUnit(); input.value = format(value); input.setAttribute('aria-invalid', String(value <= 0)); root.querySelector('#ag-target-error').hidden = value > 0; fitNumber(); });
+    input.addEventListener('blur', function () { editing = false; showUnit(); input.value = format(value); input.setAttribute('aria-invalid', String(value <= 0)); find('target-error').hidden = value > 0; fitNumber(); });
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); input.blur(); }
@@ -297,7 +303,7 @@
       highMaximum = Number.isFinite(limits.highMax) ? Math.max(0, limits.highMax) : maximum;
       target = maximum ? fraction(value) : value > 0 ? 1 : 0;
       range.max = maximum; range.value = Math.min(value, maximum); range.disabled = maximum <= 0;
-      var amountText = new Intl.NumberFormat('ru-RU').format(value) + ' рублей';
+      var amountText = new Intl.NumberFormat('ru-RU').format(value) + ' ' + (options.ariaUnit || 'рублей');
       if (value > maximum) amountText += ', выше максимума шкалы ' + new Intl.NumberFormat('ru-RU').format(maximum) + ' рублей';
       range.setAttribute('aria-valuetext', amountText);
       measure(); schedule();

@@ -4,5 +4,5 @@
 
 /* Standalone replacement for the preview host's cursor preference class.
    Palette, layout and control styles remain in each component's own CSS. */
-#alfa-goal .cursor-interaction { cursor: pointer; }
-#alfa-goal :disabled { cursor: default; }
+:is(#alfa-goal,#alfa-employer) .cursor-interaction { cursor: pointer; }
+:is(#alfa-goal,#alfa-employer) :disabled { cursor: default; }

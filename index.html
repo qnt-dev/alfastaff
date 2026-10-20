@@ -14,12 +14,12 @@
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
   <link rel="stylesheet" href="css/style-company.css?v=20261019a">
   <link rel="stylesheet" href="css/company.css?v=20261013a">
-  <link rel="stylesheet" href="css/calculators/ui-base.css?v=20261020primary29">
-<link rel="stylesheet" href="css/calc-views.css?v=20261020primary29">
-<link rel="stylesheet" href="css/calculators/goal.css?v=20261020spacing28">
-<link rel="stylesheet" href="css/calculators/money-slider.css?v=20261020stable23">
-<link rel="stylesheet" href="css/calculators/themes.css?v=20261020primary29">
-<link rel="stylesheet" href="css/calculators/employer-light.css?v=20261020primary29">
+  <link rel="stylesheet" href="css/calculators/ui-base.css?v=20261020business38">
+<link rel="stylesheet" href="css/calc-views.css?v=20261020business38">
+<link rel="stylesheet" href="css/calculators/goal.css?v=20261020business38">
+<link rel="stylesheet" href="css/calculators/money-slider.css?v=20261020business38">
+<link rel="stylesheet" href="css/calculators/themes.css?v=20261020business38">
+<link rel="stylesheet" href="css/calculators/employer.css?v=20261020business38">
 </head>
 <body>
   <a class="skip" href="#main">К содержанию</a>
@@ -1044,48 +1044,69 @@
       <p class="visually-hidden" aria-live="polite" data-cm-live></p>
 
 
-      <form class="cm__body" data-cm-pane="biz" hidden novalidate>
-        <div class="cm__ask">
-          <p class="cm-ph"><span class="cm-ph__s">Нужны <span class="cm-tk" role="button" tabindex="0" data-cm-k="bjob"></span>&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="posts"></span> на смену.</span> <span class="cm-ph__s">Склад работает <span class="cm-tk" role="button" tabindex="0" data-cm-k="daily"></span>, <span class="cm-tk" role="button" tabindex="0" data-cm-k="opdays"></span> в неделю.</span> <span class="cm-ph__s">Сотрудник выходит по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="bsched"></span>.</span> <span class="cm-ph__s">Объект&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="where"></span>.</span></p>
-          <div class="cm-more" data-cm-more>
-            <button type="button" class="cm-more__btn mono" aria-expanded="false" aria-controls="cm-more-biz"><i aria-hidden="true"></i>Уточнить: оплата смены, найм, текучка, жильё</button>
-            <div class="cm-more__body" id="cm-more-biz" inert><div>
-              <p class="cm-ph cm-ph--sm">Платим <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="wage" value="" autocomplete="off" aria-label="Оплата за смену, рублей" data-cm-money data-cm-wage><em>₽</em></span> за смену. Найм одного человека стоит <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="hire" value="20 000" autocomplete="off" aria-label="Стоимость найма одного человека, рублей" data-cm-money><em>₽</em></span>, за год уходит <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="turn" value="40" autocomplete="off" maxlength="3" aria-label="Текучка в год, процентов" data-cm-int><em>%</em></span> людей. Жильё сотрудникам <span class="cm-tk" role="button" tabindex="0" data-cm-k="stay"></span><span data-cm-bed hidden> — <span class="cm-tk cm-tk--in"><input type="text" inputmode="numeric" name="bed" value="12 000" autocomplete="off" aria-label="Жильё на человека в месяц, рублей" data-cm-money><em>₽</em></span> на человека в месяц</span>.</p>
-            </div></div>
-          </div>
+      <section id="alfa-employer" data-cm-pane="biz" aria-label="Калькулятор персонала для компаний" hidden>
+  <header class="ag-header"><span class="calc-source-brand"><img src="assets/brandbook/mark.svg" alt=""><span>АЛЬФА-СТАФФ</span></span><div class="ag-header-tools"><span class="ag-kicker">Для компаний</span><button type="button" class="ag-sound-toggle" id="ec-sound-toggle" aria-pressed="true" aria-label="Выключить звук шкалы" title="Выключить звук шкалы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="ag-sound-waves" d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/><path class="ag-sound-off" d="m16 9 6 6m0-6-6 6"/></svg><span>Звук</span></button></div></header>
+        <h2>Сколько людей нужно<br>для вашей задачи?</h2>
+        <div class="ag-context ec-context">
+          <label>Регион<select id="ec-region" aria-label="Регион объекта"></select></label>
+          <label>Кто нужен<select id="ec-role" aria-label="Профессия сотрудников"></select></label>
         </div>
-        <div class="cm-plan" data-cm-bplan></div>
-        <div class="cm__result" data-cm-bres>
-          <div data-cm-bout></div>
-          <button type="button" class="btn btn--outline btn--block" data-cm-ask-open><span>Узнать цену через «Альфа-Стафф»</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
-          <div class="cm-ask" data-cm-ask hidden inert>
-            <button type="button" class="cm-ask__back mono" data-cm-ask-close><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5" /></svg>К расчёту</button>
-            <p class="cm-ask__t">Цена через «Альфа-Стафф»</p>
-            <p class="cm__note">Найм, замены, оформление, жильё и выплаты — на нас. Цену за час под ваш объект пришлём в течение рабочего дня.</p>
-            <p class="cm-ask__brief mono" data-cm-brief></p>
-            <input type="hidden" name="brief">
-            <label class="field"><span class="mono">Имя<sup>*</sup></span><input type="text" name="name" autocomplete="name" placeholder="Иванов Иван Иванович" required></label>
-            <label class="field"><span class="mono">Компания</span><input type="text" name="company" autocomplete="organization" placeholder="ООО «Склад»"></label>
-            <label class="field"><span class="mono">Телефон<sup>*</sup></span><input type="tel" name="phone" autocomplete="tel" placeholder="+7 (___) ___-__-__" required></label>
-            <button class="btn btn--outline btn--block" type="submit"><span>Получить расчёт</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
-            <p class="form__legal mono mono--dim"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" /><path d="M8 7v4M8 4.8v.2" /></svg>Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных.</p>
-            <div class="cm__done" hidden>
-              <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
-              <p class="cm__done-title">Запрос принят</p>
-              <p class="mono mono--dim">Менеджер пришлёт расчёт в течение рабочего дня.</p>
-              <button type="button" class="btn btn--glass" data-cm-again><span>Новый расчёт</span></button>
-            </div>
-          </div>
+        <div class="ec-operation" aria-label="Режим работы объекта">
+          <label>Смен в сутки<select id="ec-daily"><option value="1">1 смена</option><option value="2">2 смены</option></select></label>
+          <label>Дней в неделю<select id="ec-opdays"><option value="5">5 дней</option><option value="6">6 дней</option><option value="7" selected>7 дней</option></select></label>
         </div>
-      </form>
-      <div class="cm__bar" data-cm-bar>
-        <span class="cm__bar-txt"><b data-cm-bar-main></b><span class="mono mono--dim" data-cm-bar-sub></span></span>
-        <button type="button" class="cm__bar-go" data-cm-bar-go><span class="mono" data-cm-bar-btn>Подробнее</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" /></svg></button>
+        <div class="ag-instruments ec-instruments">
+          <section class="ag-instrument ag-goal" aria-label="Потребность на одной смене">
+            <div class="ag-money-heading"><span class="ag-endpoint" id="ec-money-unit">чел.</span><label for="ec-target">На каждой смене</label></div>
+      <div class="ag-money-scale">
+        <svg class="ag-money-contour" id="ec-money-contour" viewBox="0 0 120 250" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="ec-money-light" gradientUnits="userSpaceOnUse" cx="60" cy="150" r="36"><stop offset="0" stop-color="var(--ag-light-core)"/><stop offset=".3" stop-color="var(--ag-light-edge)"/><stop offset=".65" stop-color="var(--ag-slider-accent)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-slider-accent)" stop-opacity="0"/></radialGradient>
+            <radialGradient id="ec-money-bloom" gradientUnits="userSpaceOnUse" cx="59" cy="150" r="32"><stop offset="0" stop-color="var(--ag-light-bloom)"/><stop offset=".45" stop-color="var(--ag-light-bloom)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-light-bloom)" stop-opacity="0"/></radialGradient>
+            <!-- Explicit filter bounds: the contour is only 10px wide, so
+                 objectBoundingBox percentages cut the blur into a rectangle. -->
+            <filter id="ec-money-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="7"/></filter>
+            <filter id="ec-money-tight-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2"/></filter>
+            <filter id="ec-money-edge-aa" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".25"/></filter>
+            <linearGradient id="ec-money-fade" gradientUnits="userSpaceOnUse" x1="0" y1="120" x2="0" y2="180"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".16" stop-color="white" stop-opacity=".2"/><stop offset=".35" stop-color="white" stop-opacity=".8"/><stop offset=".5" stop-color="white"/><stop offset=".65" stop-color="white" stop-opacity=".8"/><stop offset=".84" stop-color="white" stop-opacity=".2"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+            <mask id="ec-money-fade-mask" maskUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" style="mask-type:alpha"><rect x="-60" y="-80" width="240" height="410" fill="url(#ec-money-fade)"/></mask>
+            <path id="ec-money-line" d="M69 0V250"/>
+            <path id="ec-money-left-shape" d="M69 -80V330H-60V-80Z"/>
+            <clipPath id="ec-money-left-clip" clipPathUnits="userSpaceOnUse"><use href="#ec-money-left-shape"/></clipPath>
+          </defs>
+          <use href="#ec-money-line" class="ag-money-line-base"/>
+          <g class="ag-money-light-field" clip-path="url(#ec-money-left-clip)" mask="url(#ec-money-fade-mask)">
+            <use href="#ec-money-line" class="ag-money-line-glow" filter="url(#ec-money-blur)"/>
+            <use href="#ec-money-line" class="ag-money-line-near" filter="url(#ec-money-tight-blur)"/>
+          </g>
+          <g id="ec-money-ticks"></g><g id="ec-money-labels"></g>
+          <use href="#ec-money-line" class="ag-money-line-lit" filter="url(#ec-money-edge-aa)" mask="url(#ec-money-fade-mask)"/>
+        </svg>
+        <span class="ag-money-knob" aria-hidden="true"><svg viewBox="0 0 14 22"><path d="M7 2l4 7H3zM7 20l-4-7h8z"/></svg></span>
+        <input id="ec-target-range" type="range" min="1" max="200" step="1" value="20" aria-label="Количество людей на смене">
+        <div class="ag-money-readout"><input id="ec-target" inputmode="numeric" type="text" value="20" autocomplete="off" aria-label="Людей на каждой смене" aria-describedby="ec-goal-hint ec-money-unit ec-target-error"><span class="ag-money-value-unit" aria-hidden="true">чел.</span></div>
       </div>
+            <div class="ag-money-help"><p id="ec-goal-hint">Одновременно на рабочем месте</p><p id="ec-target-error" class="ag-error" role="alert" hidden>Укажите от 1 до 200 человек.</p></div>
+            <span class="ag-link-arrow" aria-hidden="true">→</span>
+          </section>
+          <section class="ag-instrument ag-duration ec-team" aria-label="Расчётная численность команды">
+            <div><span class="ag-instrument-label">Для этого нужна команда</span><div class="ag-shift-number"><output id="ec-total">44</output><span id="ec-people-unit">человека</span></div></div>
+            <div class="ec-staff-parts"><div><b id="ec-base">40</b><span>для покрытия графика</span></div><div><b>+ <span id="ec-reserve-count">4</span></b><span id="ec-reserve-label">резерв 8 %</span></div></div>
+            <div class="ag-schedule"><div class="ag-segments" role="group" aria-label="График одного сотрудника"><button type="button" data-ec-sched="2/2" aria-pressed="true">2/2</button><button type="button" data-ec-sched="5/2" aria-pressed="false">5/2</button><button type="button" data-ec-sched="6/1" aria-pressed="false">6/1</button><button type="button" data-ec-sched="7/0" aria-pressed="false">7/0</button></div><span>ГРАФИК СОТРУДНИКА</span></div>
+          </section>
+        </div>
+        <div class="ag-result ec-result">
+          <div><span class="ag-result-label" id="ec-coverage">20 человек на каждой смене</span><span class="ag-result-delta" id="ec-summary"></span></div>
+          <div class="ag-result-action"><span>Стоимость под вашу задачу</span><button type="button" id="ec-request">Запросить стоимость <span aria-hidden="true">↗</span></button></div>
+        </div>
+        <details id="ec-calculation"><summary><span>Резерв и полный расчёт <span class="ag-click-hint" aria-hidden="true">[кликни]</span></span><span aria-hidden="true">+</span></summary>
+          <div class="ag-detail-body"><div class="ec-settings"><label>Резерв на замены<select id="ec-reserve"><option value="0">Без резерва</option><option value="5">5 %</option><option value="8" selected>8 %</option><option value="10">10 %</option><option value="15">15 %</option><option value="20">20 %</option><option value="30">30 %</option></select></label></div><p class="ec-small" id="ec-reserve-note"></p><dl class="ag-breakdown" id="ec-breakdown"></dl><p class="ec-small">Один сотрудник — не больше одной смены в сутки. При графике 2/2 считаем две чередующиеся команды. Итог округляем вверх; точный состав и сроки выхода согласуем после уточнения задачи.</p></div>
+        </details>
+        <label class="ec-stay"><input type="checkbox" id="ec-stay">Нужно проживание сотрудников</label>
+        <p class="ag-footer">Подготовим предложение по вашему объекту, графику и составу команды.</p>
+      </section>
     </div>
     </div>
-    <div class="cm-scrim" data-cm-scrim hidden></div>
-    <div class="cm-pop" data-cm-pop role="dialog" aria-modal="false" data-lenis-prevent hidden><div class="cm-pop__in"></div></div>
   </div>
 
   <!-- ============ ПОДВАЛ ============ -->
@@ -1172,12 +1193,13 @@
   <script src="js/geo-panel.js?v=20261019a"></script>
   <script src="js/main.js?v=20261019a"></script>
   <script src="js/calc-data.js?v=20261019a"></script>
-  <script src="js/calc-modal.js?v=20261020primary29"></script>
+  <script src="js/calc-modal.js?v=20261020business38"></script>
   <script src="js/calculators/engine-adapter.js?v=20261019controls7"></script>
-  <script src="js/calculators/slider-sound.js?v=20261020sound26"></script>
-  <script src="js/calculators/money-slider.js?v=20261020sound26"></script>
+  <script src="js/calculators/slider-sound.js?v=20261020business38"></script>
+  <script src="js/calculators/money-slider.js?v=20261020business38"></script>
   <script src="js/calculators/goal-feasibility.js?v=20261020stable23"></script>
   <script src="js/calculators/goal.js?v=20261020stable23"></script>
+  <script src="js/calculators/employer.js?v=20261020business38"></script>
   <script src="js/calc-views.js?v=20261020primary29"></script>
 </body>
 </html>

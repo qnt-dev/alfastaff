@@ -65,7 +65,7 @@ function fixture(options = {}) {
   vm.runInNewContext(source, { window, document, Math, Number, Promise });
   assert.equal(typeof window.AlfaSliderSound, 'function', 'Sound controller must be available');
   const sound = window.AlfaSliderSound(button);
-  return { sound, button, contexts, started, storage, document, classes };
+  return { sound, button, contexts, started, storage, document, classes, create: window.AlfaSliderSound };
 }
 
 function check(name, run) {
@@ -180,6 +180,24 @@ async function main() {
     assert.equal(f.sound.move(0, 1, 1, trusted('keydown')), true);
     assert.doesNotThrow(() => f.button.click());
     assert.equal(f.button.getAttribute('aria-pressed'), 'false');
+  });
+  check('both audience controls share mute immediately, including active audio', () => {
+    const f = fixture({ throwStorage: true }), attrs = {}, listeners = {};
+    const secondButton = {
+      dataset: {}, classList: { toggle() {} },
+      setAttribute(name, value) { attrs[name] = value; },
+      addEventListener(name, fn) { listeners[name] = fn; }
+    };
+    const second = f.create(secondButton);
+    second.unlock(trusted('pointerdown'));
+    assert.equal(second.move(0, 1, 1, trusted('input')), true);
+    f.button.click();
+    assert.equal(attrs['aria-pressed'], 'false');
+    assert.equal(f.started[0].stopped, true);
+    assert.equal(second.move(1, 2, 1, trusted('input')), false);
+    listeners.click(trusted('click'));
+    assert.equal(attrs['aria-pressed'], 'true');
+    assert.equal(f.button.getAttribute('aria-pressed'), 'true');
   });
   check('unsupported audio hides and disables only the sound control', () => {
     const f = fixture({ unsupported: true });

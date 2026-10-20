@@ -2,34 +2,56 @@
 <html lang="ru"><meta charset="utf-8"><title>Calculator regression</title>
 <style>body{font:15px monospace;background:#f4f6fa;color:#111}iframe{width:1280px;height:800px;border:1px solid #aaa}pre{white-space:pre-wrap}body.capture{margin:0;background:#fff}body.capture iframe{display:block;border:0}</style>
 <h1>Calculator regression</h1><pre id="result">Running…</pre>
-<iframe title="Real site under test" src="../?calc-check=20261020handoff30"></iframe>
+<iframe title="Real site under test" data-src="../?calc-check=20261020employer36"></iframe>
 <script>
 var testParams=new URLSearchParams(location.search),testWidth=Number(testParams.get('width'))||1280,testHeight=Number(testParams.get('height'))||800;
+var captureScale=testParams.has('capture')&&testParams.get('captureScale')==='2'?2:1;
 if(testWidth<320||testWidth>2560)testWidth=1280;
 if(testHeight<600||testHeight>2160)testHeight=800;
 document.querySelector('iframe').style.width=testWidth+'px';document.querySelector('iframe').style.height=testHeight+'px';
 if(testParams.has('capture')){document.body.classList.add('capture');document.querySelector('h1').hidden=true;document.querySelector('#result').hidden=true;}
+if(captureScale===2){
+  var captureFrame=document.querySelector('iframe');
+  captureFrame.style.transformOrigin='0 0';captureFrame.style.transform='scale(2)';
+  document.body.style.width=(testWidth*2)+'px';document.body.style.height=(testHeight*2)+'px';
+}
 </script>
-<script src="calc-views-regression.js?v=20261020handoff30"></script>
+<script src="calc-views-regression.js?v=20261020employer36"></script>
 <script>
+var harnessStarted=false;
+var startupTimer=setTimeout(function(){
+  if(harnessStarted)return;
+  var out={previewReady:false,error:'The site iframe did not finish loading within 20 seconds.'},result=document.querySelector('#result');
+  result.textContent=JSON.stringify(out,null,2);result.dataset.ready='true';window.calcRegressionResult=out;
+},20000);
 document.querySelector('iframe').addEventListener('load',async function(){
+  if(harnessStarted||!this.contentDocument.querySelector('[data-cm]'))return;
+  harnessStarted=true;clearTimeout(startupTimer);
   var frame=this,w=frame.contentWindow,out={viewport:w.innerWidth,styles:Array.from(w.document.querySelectorAll('link[rel="stylesheet"]')).filter(function(el){return el.href.includes('calc')}).map(function(el){return el.href})};
   var result=document.querySelector('#result');
   async function run(name,operation){try{out[name]=await operation();}catch(e){out[name]={pass:false,error:e.stack||e.message};}}
+  async function bounded(operation,label){var timer;try{return await Promise.race([operation,new Promise(function(_,reject){timer=setTimeout(function(){reject(Error(label+' timed out after 20 seconds'));},20000);})]);}finally{clearTimeout(timer);}}
   try {
-    await w.document.fonts.ready;
+    await bounded(w.document.fonts.ready,'Site fonts');
     if(testParams.has('capture')){
-      out.preview=await calcPreview(w,testParams);out.previewReady=true;
+      out.preview=await bounded(calcPreview(w,testParams),'Capture preparation');
+      out.preview.captureScale=captureScale;out.preview.captureSurface={width:testWidth*captureScale,height:testHeight*captureScale};
+      out.previewReady=true;
+    }else if(testParams.has('employer')){
+      await run('employer',function(){return calcEmployerRegression(w);});
+    }else if(testParams.has('geometry')){
+      await run('geometry',function(){return calcGeometryRegression(w);});
     }else if(testParams.has('handoff')){
       await run('handoff',function(){return calcHandoffRegression(w);});
     }else if(testParams.has('stability')){
       await run('stability',function(){return calcStabilityRegression(w);});
     }else{
       if(!testParams.has('approved')){
-        var s=w.document.createElement('script');s.src='tools/calc-model-regression.js?v=20261020handoff30';
+        var s=w.document.createElement('script');s.src='tools/calc-model-regression.js?v=20261020employer36';
         await new Promise(function(resolve,reject){s.onload=resolve;s.onerror=reject;w.document.body.appendChild(s);});
         await run('model',function(){return w.runCalcModelRegression();});
         await run('views',function(){return calcViewsRegression(w);});
+        await run('employer',function(){return calcEmployerRegression(w);});
         await run('handoff',function(){return calcHandoffRegression(w);});
         await run('moneySlider',function(){return calcMoneySliderRegression(w);});
         await run('geometry',function(){return calcGeometryRegression(w);});
@@ -50,5 +72,6 @@ document.querySelector('iframe').addEventListener('load',async function(){
   result.textContent=JSON.stringify(out,null,2);result.dataset.ready='true';
   window.calcRegressionResult=out;
 });
+document.querySelector('iframe').src=document.querySelector('iframe').dataset.src;
 </script>
 </html>

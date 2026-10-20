@@ -11,17 +11,32 @@ async function calcWaitFor(w,predicate,label,timeout) {
   }
 }
 async function calcSettle(w,label) {
-  var d=w.document,started=Date.now(),last='',stable=0;
-  await calcWaitFor(w,function(){
-    var values=['.cm__panel','.ag-money-knob','#ag-target','.ag-money-value-unit'].map(function(selector){
+  var d=w.document,started=Date.now(),last='',stable=0,observations=0,lastAt=null,intervals=[],changes=[],latest=null;
+  try {await calcWaitFor(w,function(){
+    var elapsed=Date.now()-started;
+    observations++;
+    if(lastAt!==null){intervals.push(elapsed-lastAt);if(intervals.length>10)intervals.shift();}
+    lastAt=elapsed;
+    var employer=d.querySelector('[data-cm]')?.dataset.tab==='biz',active=employer?'#alfa-employer':'#alfa-goal',prefix=employer?'ec':'ag';
+    var selectors=['.cm__panel',active+' .ag-money-knob','#'+prefix+'-target',active+' .ag-money-value-unit'];
+    var values=selectors.map(function(selector){
       var el=d.querySelector(selector),r=el&&el.getBoundingClientRect();
       return r?[r.x,r.y,r.width,r.height].map(function(n){return Math.round(n*1000)/1000;}):null;
     });
-    var path=d.querySelector('#ag-money-line');values.push(path&&path.getAttribute('d'));
+    var path=d.querySelector('#'+prefix+'-money-line');values.push(path&&path.getAttribute('d'));
     var signature=JSON.stringify(values);
+    latest={elapsed:elapsed,selectors:selectors,values:values};
+    if(signature!==last){changes.push(latest);if(changes.length>5)changes.shift();}
     stable=signature===last?stable+1:0;last=signature;
     return stable>=6&&Date.now()-started>=250;
-  },label||'calculator geometry to settle');
+  },label||'calculator geometry to settle');}
+  catch(error){
+    throw Error((error.message||String(error))+'; settle diagnostics: '+JSON.stringify({
+      elapsedMs:Date.now()-started,observations:observations,consecutiveStable:stable,
+      lastFrameIntervalsMs:intervals,lastDistinctStates:changes,latest:latest,
+      documentVisibility:d.visibilityState,devicePixelRatio:w.devicePixelRatio
+    }));
+  }
 }
 async function calcOpenCandidate(w) {
   var d=w.document,modal=d.querySelector('[data-cm]');
@@ -40,25 +55,39 @@ async function calcCloseModal(w) {
   await calcWaitFor(w,function(){return modal.hidden&&!modal.classList.contains('is-open');},'the modal closing transition');
 }
 async function calcPreview(w,params) {
-  var d=w.document,api=w.AS.CalcModal,goal=d.querySelector('#alfa-goal'),objectId=params.get('object')||'ym-sofyino';
-  var object=api.state().objects.find(function(item){return item.id===objectId;});
-  if(!object)throw Error('Unknown preview object: '+objectId);
-  if(params.get('preview')&&params.get('preview')!=='goal')throw Error('Only the current Goal calculator is available for preview');
+  var d=w.document,api=w.AS.CalcModal,mode=params.get('preview')||'goal',goal=d.querySelector('#alfa-goal'),object=null;
+  if(mode!=='goal'&&mode!=='employer')throw Error('Only Goal and employer calculators are available for preview');
   function number(name,fallback){var raw=params.get(name),value=raw===null?fallback:Number(raw);if(!Number.isFinite(value)||value<0)throw Error('Invalid preview '+name);return value;}
-  var role=params.get('role')||object.jobsFull[0],sched=params.get('sched')||'6/1';
-  var fixture={region:object.region,prof:role,pick:object.id,sex:'',age:0,shifts:30,sched:sched,road:number('road',0),food:number('food',0),v:params.get('output')==='hi'?'hi':'100',auto:false,target:number('goal',180000)};
   await calcOpenCandidate(w);
-  goal.alfaGoal.setState(fixture);
-  if(!goal.alfaGoal.current()||goal.alfaGoal.current().o.id!==object.id)throw Error('The requested role/object combination has no eligible quote');
+  if(mode==='employer'){
+    var business={prof:params.get('role')||'Комплектовщик',region:params.get('region')||'Москва и МО',posts:number('posts',20),daily:number('daily',1),opdays:number('opdays',7),sched:params.get('sched')||'2/2',reservePct:number('reserve',8),stay:params.get('stay')==='1'};
+    var applied=api.employerSet(business);
+    if(Object.keys(business).some(function(key){return applied[key]!==business[key];}))throw Error('Unsupported employer preview settings');
+    d.querySelector('[data-cm-tab="biz"]').click();
+    d.querySelector('#ec-calculation').open=params.get('details')==='1';
+  }else{
+    var objectId=params.get('object')||'ym-sofyino';object=api.state().objects.find(function(item){return item.id===objectId;});
+    if(!object)throw Error('Unknown preview object: '+objectId);
+    var role=params.get('role')||object.jobsFull[0],sched=params.get('sched')||'6/1';
+    var fixture={region:object.region,prof:role,pick:object.id,sex:'',age:0,shifts:30,sched:sched,road:number('road',0),food:number('food',0),v:params.get('output')==='hi'?'hi':'100',auto:false,target:number('goal',180000)};
+    goal.alfaGoal.setState(fixture);
+    if(!goal.alfaGoal.current()||goal.alfaGoal.current().o.id!==object.id)throw Error('The requested role/object combination has no eligible quote');
+    goal.querySelector('#ag-expenses').open=params.get('details')==='1';
+    goal.querySelector('#ag-conditions').open=params.get('conditions')==='1';
+  }
   d.querySelector('[data-cv-theme="'+(params.get('theme')==='dark'?'dark':'light')+'"]').click();
-  goal.querySelector('#ag-expenses').open=params.get('details')==='1';
-  goal.querySelector('#ag-conditions').open=params.get('conditions')==='1';
-  await d.fonts.ready;
-  await calcSettle(w,'the requested capture fixture');
-  var panel=d.querySelector('.cm__panel');
-  panel.scrollTop=params.get('position')==='bottom'?panel.scrollHeight:0;
+  await d.fonts.ready;await calcSettle(w,'the requested capture fixture');
+  var panel=d.querySelector('.cm__panel');panel.scrollTop=params.get('position')==='bottom'?panel.scrollHeight:0;
   await calcSettle(w,'capture scroll placement');
-  return {object:object.id,state:goal.alfaGoal.state(),net:d.querySelector('#ag-home').textContent,days:d.querySelector('#ag-days').textContent,theme:d.querySelector('[data-cm]').dataset.calcTheme,viewport:{width:w.innerWidth,height:w.innerHeight},devicePixelRatio:w.devicePixelRatio};
+  var background=params.get('background')==='1';
+  if(background){
+    // Capture-only composition plate: production backdrop and site stay intact.
+    if(w.AS.lenis)w.AS.lenis.scrollTo(0,{immediate:true,force:true});else w.scrollTo({top:0,left:0,behavior:'instant'});
+    d.querySelector('.calc-workspace').style.visibility='hidden';
+    await calcWaitFor(w,function(){return Math.abs(w.scrollY)<1;},'the site background at the top');await calcSettle(w,'background capture placement');
+  }
+  var result={kind:mode,theme:d.querySelector('[data-cm]').dataset.calcTheme,background:background,viewport:{width:w.innerWidth,height:w.innerHeight},devicePixelRatio:w.devicePixelRatio};
+  return Object.assign(result,mode==='employer'?{state:api.employerState(),quote:api.employerQuote()}:{object:object.id,state:goal.alfaGoal.state(),net:d.querySelector('#ag-home').textContent,days:d.querySelector('#ag-days').textContent});
 }
 
 /* Integration checks against the real page, current controls and live rates. */
@@ -133,7 +162,7 @@ async function calcViewsRegression(w) {
     check($('#ag-conditions').open&&$('#ag-condition-title').textContent.includes('Софьино')&&$('#ag-condition-list').textContent.includes('Жильё'),'Object conditions open from the Goal result action with actual catalog details');
     click('#ag-conditions > summary');check(!$('#ag-conditions').open,'The object conditions can be collapsed again');
     click('[data-cm-tab="biz"]');await calcSettle(w,'employer view');
-    check(!$('[data-cm-pane="biz"]').hidden&&root.hidden&&$('[data-cv]').hidden&&$('[data-cm-bout]').textContent.trim().length>0,'Employer calculation opens with its computed result and hides candidate content');
+    check(!$('[data-cm-pane="biz"]').hidden&&root.hidden&&$('[data-cv]').hidden&&Number($('#ec-total').textContent.replace(/\D/g,''))>0,'Employer calculation opens with its computed result and hides candidate content');
     check(!themes.closest('[hidden]'),'Theme controls remain available to the employer calculator');
     click('[data-cv-theme="dark"]');
     check(modal.dataset.calcTheme==='dark'&&w.getComputedStyle(panel).colorScheme==='dark','Employer calculation shares the dark theme');
@@ -150,8 +179,100 @@ async function calcViewsRegression(w) {
   return {pass:!errors.length,checks:checks,errors:errors};
 }
 
-/* Contact handoff and the employer popup keyboard contract. Keyboard events
-   here exercise the real handlers; native OS tabbing remains a manual check. */
+/* Real employer controls, independent candidate state, and request transfer. */
+async function calcEmployerRegression(w) {
+  var d=w.document,api=w.AS.CalcModal,modal=d.querySelector('[data-cm]'),root=d.querySelector('#alfa-employer'),goal=d.querySelector('#alfa-goal'),panel=d.querySelector('.cm__panel'),form=d.querySelector('[data-form]');
+  var saved=api.employerState(),candidate=goal.alfaGoal.state(),savedTab=modal.dataset.tab,savedTheme=modal.dataset.calcTheme,wasHidden=modal.hidden||!modal.classList.contains('is-open');
+  var savedDetails=d.querySelector('#ec-calculation').open,savedMode=form.dataset.mode,savedScroll={x:w.scrollX,y:w.scrollY};
+  var fields=Array.from(form.querySelectorAll('input,textarea,select')).map(function(el){return {el:el,value:el.value,checked:el.checked};});
+  var checks=[],errors=[],samples=[],submits=0,notifications=0,unsubscribe=api.employerSubscribe(function(){notifications++;});
+  function check(ok,name,detail){(ok?checks:errors).push(name+(ok?'':' '+JSON.stringify(detail)));}
+  function $(selector){var el=d.querySelector(selector);if(!el)throw Error('Missing employer fixture: '+selector);return el;}
+  function field(id,value){var el=$('#ec-'+id);el.value=String(value);el.dispatchEvent(new w.Event(el.tagName==='SELECT'?'change':'input',{bubbles:true}));}
+  function keyboard(el,key,shift){var event=new w.KeyboardEvent('keydown',{key:key,shiftKey:!!shift,bubbles:true,cancelable:true});el.dispatchEvent(event);return event;}
+  function parts(base,reserve,total,label){var actual=['base','reserve-count','total'].map(function(id){return Number($('#ec-'+id).textContent.replace(/\D/g,''));});check(JSON.stringify(actual)===JSON.stringify([base,reserve,total]),label,{actual:actual,expected:[base,reserve,total]});}
+  function onSubmit(){submits++;}
+  form.addEventListener('submit',onSubmit);
+  try {
+    await calcOpenCandidate(w);$('[data-cm-tab="biz"]').click();
+    api.employerSet({prof:'Комплектовщик',region:'Москва и МО',posts:20,daily:1,opdays:7,sched:'2/2',reservePct:8,stay:false});await calcSettle(w,'default employer calculation');
+    check(!root.hidden&&goal.hidden&&modal.dataset.calcView==='biz','The new employer form is the visible business view');
+    check(!d.querySelector('[data-cm-pop]')&&!d.querySelector('[data-cm-k]')&&!d.querySelector('[data-cm-bar]'),'Legacy employer popups and floating result bar are absent');
+    parts(40,4,44,'20 posts on 2/2 produce 40 base people plus an explicit 8 percent reserve of 4');
+    check($('#ec-coverage').textContent.includes('20')&&$('#ec-summary').textContent.includes('2/2'),'The result states posts per shift and the employee schedule');
+    check($('#ec-target-range').min==='1'&&$('#ec-target-range').max==='200'&&$('#ec-target-range').step==='1','The employer ruler uses integer people from 1 to 200');
+    field('target',25);await calcSettle(w,'typed staff count');parts(50,4,54,'Typing 25 people updates the actual team estimate');
+    field('target-range',30);await calcSettle(w,'native staff range');parts(60,5,65,'The native staff range publishes 30 people without thousand-unit conversion');
+    check($('#ec-target').value==='30'&&api.employerState().posts===30,'The employer input and native range share person units');
+    field('daily',2);parts(120,10,130,'Two daily shifts double weekly staffing before reserve rounding');
+    field('opdays',5);parts(120,10,130,'Five operating days retain two alternating 2/2 teams for every daily post');
+    $('[data-ec-sched="5/2"]').click();parts(60,5,65,'The 5/2 employee schedule uses five shifts per person per week');
+    $('#ec-calculation').open=true;field('reserve',0);parts(60,0,60,'Disabling reserve leaves only the base staffing requirement');
+    check($('#ec-reserve-note').textContent.includes('выключен'),'A zero reserve is explained explicitly');
+    field('reserve',15);parts(60,9,69,'The chosen 15 percent reserve is rounded and stated separately');
+    check($('#ec-reserve-note').textContent.includes('не статистика')&&$('#ec-breakdown').children.length===5,'The breakdown describes chosen reserve rather than claiming absence statistics');
+    field('role','Упаковщик');field('region','Татарстан');$('#ec-stay').checked=true;$('#ec-stay').dispatchEvent(new w.Event('change',{bubbles:true}));
+    check(api.employerState().prof==='Упаковщик'&&api.employerState().region==='Татарстан'&&api.employerState().stay,'Role, region and accommodation are captured in the employer brief');
+    check(notifications>0,'The real employer controls notify shared-model subscribers');
+    for(var invalid of ['0','201','20.5']){
+      var target=$('#ec-target');target.focus({preventScroll:true});field('target',invalid);
+      check(api.employerState().posts===30&&target.value===invalid&&target.getAttribute('aria-invalid')==='true'&&!$('#ec-target-error').hidden,'Invalid staff input '+invalid+' preserves the last valid estimate and exposes validation');
+      target.blur();check(target.value==='30'&&$('#ec-target-error').hidden,'Blurring invalid staff input '+invalid+' restores the valid count');
+    }
+    var range=$('#ec-target-range');range.focus({preventScroll:true});keyboard(range,'End');
+    check(api.employerState().posts===200&&range.value==='200','End selects the real 200-person maximum');
+    keyboard(range,'Home');check(api.employerState().posts===1&&range.value==='1','Home selects one person rather than zero');
+    keyboard(range,'ArrowUp');check(api.employerState().posts===2,'ArrowUp changes employer count by one person');
+    field('target-range',30);
+    for(var theme of ['light','dark']){
+      $('[data-cv-theme="'+theme+'"]').click();await calcSettle(w,'employer theme '+theme);
+      check(w.getComputedStyle(root).colorScheme===theme&&modal.dataset.calcTheme===theme,'The employer form uses its '+theme+' theme');parts(60,9,69,theme+' theme preserves the same staffing estimate');
+      var card=root.getBoundingClientRect();
+      check(panel.scrollWidth<=panel.clientWidth+1&&panel.getBoundingClientRect().bottom<=w.innerHeight+1,theme+' employer card fits the viewport horizontally and vertically');
+      root.querySelectorAll('input,select,button').forEach(function(el){var r=el.getBoundingClientRect();if(!r.width)return;check(r.left>=card.left-1&&r.right<=card.right+1,theme+' employer control '+(el.id||el.dataset.ecSched)+' stays inside the card');});
+      root.querySelectorAll('[data-ec-sched]').forEach(function(el){var r=el.getBoundingClientRect();check(r.width>=43.9&&r.height>=43.9,theme+' employee schedule '+el.dataset.ecSched+' retains a 44px target');});
+      var knob=root.querySelector('.ag-money-knob').getBoundingClientRect(),amount=$('#ec-target').getBoundingClientRect();
+      check(Math.abs(knob.top+knob.height/2-amount.top-amount.height/2)<=1,theme+' employer number stays aligned with the shared moving knob');
+      check($('#ec-target').scrollWidth<=$('#ec-target').clientWidth+1,theme+' employer count is not clipped');
+      var textRange=d.createRange();textRange.selectNodeContents($('#ec-total'));var textBox=textRange.getBoundingClientRect(),team=root.querySelector('.ec-team').getBoundingClientRect();
+      check(textBox.left>=team.left&&textBox.right<=team.right,theme+' staffing total fits the red result card');
+      samples.push({theme:theme,viewport:[w.innerWidth,w.innerHeight],quote:api.employerQuote(),cardWidth:card.width});
+    }
+    var ids=Array.from(d.querySelectorAll('[id]')).map(function(el){return el.id;});
+    check(ids.length===new Set(ids).size,'Candidate and employer sliders do not introduce duplicate SVG or control IDs');
+    check(!/₽|Налог|Стоимость найма|Фонд оплаты/.test($('#ec-breakdown').textContent),'The staffing estimate does not invent a price or payroll calculation');
+    var businessDraft=JSON.stringify(api.employerState());$('[data-cm-tab="job"]').click();
+    check(JSON.stringify(goal.alfaGoal.state())===JSON.stringify(candidate),'Employer edits do not change the candidate draft');
+    $('[data-cm-tab="biz"]').click();check(JSON.stringify(api.employerState())===businessDraft,'Returning to employer mode preserves all staffing settings');
+    var workspace=$('.calc-workspace'),focusable=Array.from(workspace.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),summary,[tabindex="0"]')).filter(function(el){var closed=el.closest('details:not([open])');return el.offsetParent!==null&&!el.closest('[inert]')&&(!closed||closed.querySelector('summary').contains(el));});
+    var first=focusable[0],last=focusable[focusable.length-1];last.focus({preventScroll:true});var tab=keyboard(last,'Tab');
+    check(tab.defaultPrevented&&d.activeElement===first,'Tab at the last employer control wraps inside the modal');
+    var back=keyboard(first,'Tab',true);check(back.defaultPrevented&&d.activeElement===last,'Shift+Tab at the first employer control wraps to the last control');
+    var message=form.querySelector('textarea[name="message"]');message.value='Нужен запуск в понедельник.\nИз калькулятора персонала: прежний расчёт';
+    $('#ec-request').click();await calcWaitFor(w,function(){return modal.hidden;},'employer request closing the modal');
+    check(!modal.classList.contains('is-open')&&!d.documentElement.classList.contains('cm-lock'),'Requesting the price closes the staffing calculator');
+    check(form.dataset.mode==='business'&&form.querySelector('input[name="headcount"]:checked').value==='50–100','The request opens the business contact form with the 69-person headcount bucket');
+    var lines=message.value.split('\n').filter(function(line){return /^\s*Из калькулятора персонала:/.test(line);});
+    check(message.value.startsWith('Нужен запуск в понедельник.\n\n')&&lines.length===1&&!message.value.includes('прежний расчёт'),'The business brief preserves the personal comment and replaces the old generated line');
+    check(lines.length===1&&['Упаковщик','Татарстан','30 чел. на смене','смен в сутки: 2','рабочих дней в неделю: 5','5/2','60 чел. + резерв 9 чел. (15 %) = 69','проживание нужно'].every(function(text){return lines[0].includes(text);}), 'The request carries role, region, shifts, employee schedule, staffing, reserve and accommodation');
+    check(submits===0&&!/₽|стоимость|Цена/.test(lines[0]||''),'Requesting the price prepares a brief without sending it or inventing a price');
+    var contact=d.getElementById('contact')||form;
+    await calcWaitFor(w,function(){var max=Math.max(0,d.documentElement.scrollHeight-w.innerHeight),expected=Math.min(max,Math.max(0,contact.getBoundingClientRect().top+w.scrollY));return Math.abs(w.scrollY-expected)<=2;},'business contact scroll destination');
+    check(true,'The request scrolls to the real contact form');
+  }catch(error){errors.push('Unexpected employer fixture error: '+(error.stack||error.message));}
+  finally {
+    unsubscribe();form.removeEventListener('submit',onSubmit);
+    form.querySelector('[data-tab-btn="'+(savedMode||'job')+'"]').click();fields.forEach(function(item){item.el.value=item.value;if(typeof item.checked==='boolean')item.el.checked=item.checked;});
+    if(!modal.hidden)await calcCloseModal(w);
+    if(w.AS.lenis)w.AS.lenis.scrollTo(savedScroll.y,{immediate:true,force:true});else w.scrollTo({left:savedScroll.x,top:savedScroll.y,behavior:'instant'});
+    api.employerSet(saved);$('#ec-calculation').open=savedDetails;
+    if(savedTheme)$('[data-cv-theme="'+savedTheme+'"]').click();
+    if(!wasHidden)await calcOpenCandidate(w);if(savedTab)$('[data-cm-tab="'+savedTab+'"]').click();
+  }
+  return {pass:!errors.length,checked:checks.length,checks:checks,errors:errors,samples:samples};
+}
+
+/* Candidate contact handoff remains available beside the employer form. */
 async function calcHandoffRegression(w) {
   var d=w.document,api=w.AS.CalcModal,goal=d.querySelector('#alfa-goal'),modal=d.querySelector('[data-cm]'),form=d.querySelector('[data-form]');
   var saved=api.state().job,savedGoal=goal.alfaGoal.state(),savedTab=modal.dataset.tab,savedTheme=modal.dataset.calcTheme;
@@ -169,34 +290,9 @@ async function calcHandoffRegression(w) {
     goal.alfaGoal.setState({region:'Москва и МО',prof:'Комплектовщик',pick:'ym-sofyino',sex:'',age:0,shifts:30,sched:'6/1',road:12000,food:500,v:'100',auto:false,target:250000});
     var candidateDraft=JSON.stringify(goal.alfaGoal.state());
     $('[data-cm-tab="biz"]').click();await calcSettle(w,'employer keyboard fixture');
-    var pop=$('[data-cm-pop]'),profession=$('[data-cm-k="bjob"]');
-    profession.focus({preventScroll:true});var openingKey=key(profession,'Enter');
-    await calcWaitFor(w,function(){return !pop.hidden&&pop.classList.contains('is-on');},'employer profession popup');
-    check(openingKey.defaultPrevented&&profession.getAttribute('aria-expanded')==='true'&&pop.contains(d.activeElement),'Enter opens the employer profession popup and moves focus into it');
-    var options=Array.from(pop.querySelectorAll('button[role="option"]'));
-    check(options.length>1&&d.activeElement.getAttribute('aria-selected')==='true','The profession popup initially focuses its selected real option');
-    if(options.length>1){
-      options[0].focus();var backTab=key(options[0],'Tab',true);
-      check(backTab.defaultPrevented&&d.activeElement===options[options.length-1],'Shift+Tab at the first popup option wraps to the last option');
-      var forwardTab=key(options[options.length-1],'Tab');
-      check(forwardTab.defaultPrevented&&d.activeElement===options[0],'Tab at the last popup option wraps to the first option');
-      key(options[0],'ArrowDown');
-      check(d.activeElement===options[1],'ArrowDown moves focus to the next employer option');
-      key(d.activeElement,'End');check(d.activeElement===options[options.length-1],'End focuses the last employer option');
-      key(d.activeElement,'Home');check(d.activeElement===options[0],'Home focuses the first employer option');
-    }
-    var escape=key(d.activeElement,'Escape');
-    await calcWaitFor(w,function(){return pop.hidden;},'employer popup Escape transition');
-    check(escape.defaultPrevented&&d.activeElement===profession&&profession.getAttribute('aria-expanded')==='false','Escape closes the profession popup and restores focus to its trigger');
-    check(!modal.hidden&&modal.classList.contains('is-open'),'Popup Escape leaves the calculator dialog open');
-    var posts=$('[data-cm-k="posts"]');posts.focus({preventScroll:true});key(posts,'ArrowDown');
-    await calcWaitFor(w,function(){return !pop.hidden&&pop.dataset.k==='posts';},'employer number popup');
-    var numberInput=pop.querySelector('[data-cm-nv]');
-    check(!!numberInput&&d.activeElement===numberInput,'ArrowDown opens the employer count popup and focuses its number input');
-    key(numberInput,'Escape');await calcWaitFor(w,function(){return pop.hidden;},'employer count popup Escape');
-    check(d.activeElement===posts&&!modal.hidden,'Escaping the count popup restores its trigger without closing the calculator');
+    check(!$('#alfa-employer').hidden&&!d.querySelector('[data-cm-pop]')&&!d.querySelector('[data-cm-k]'),'Employer uses the new form without legacy popups');
     $('[data-cm-tab="job"]').click();
-    check(JSON.stringify(goal.alfaGoal.state())===candidateDraft,'Employer popup keyboard interaction preserves the candidate calculation');
+    check(JSON.stringify(goal.alfaGoal.state())===candidateDraft,'Employer round-trip preserves the candidate calculation');
     await calcSettle(w,'candidate handoff fixture');
     form.querySelector('[data-tab-btn="business"]').click();
     message.value='Личный комментарий\nИз калькулятора: прежний расчёт';
@@ -287,8 +383,15 @@ async function calcGeometryRegression(w) {
           check(box.left>=durationContent.left-1&&box.right<=durationContent.right+1&&box.top>=durationContent.top-1&&box.bottom<=durationContent.bottom+1,key+' duration '+cluster.name+' cluster stays inside its content column',{cluster:cluster.name,left:box.left,right:box.right,top:box.top,bottom:box.bottom,content:durationContent.toJSON()});
         });
         var firstClusterGap=calendarCluster.top-summaryCluster.bottom,secondClusterGap=schedule.top-calendarCluster.bottom;
-        check(firstClusterGap>=19&&secondClusterGap>=19&&Math.abs(firstClusterGap-secondClusterGap)<=1,key+' duration summary, calendar and schedule have equal vertical gaps of at least 20px',{summaryToCalendar:firstClusterGap,calendarToSchedule:secondClusterGap});
-        var durationInset=region.querySelector('.ag-duration').getBoundingClientRect().top-region.querySelector('.ag-goal').getBoundingClientRect().top<1?18:0;
+        var durationInset=Math.abs(region.querySelector('.ag-duration').getBoundingClientRect().top-region.querySelector('.ag-goal').getBoundingClientRect().top)<1?18:0;
+        if(durationInset){
+          var calendarLine=region.querySelector('.ag-days'),calendarLineBox=calendarLine.getBoundingClientRect(),arrowBox=region.querySelector('.ag-link-arrow').getBoundingClientRect();
+          var firstLineCenter=calendarLineBox.top+parseFloat(w.getComputedStyle(calendarLine).lineHeight)/2,arrowCenter=arrowBox.top+arrowBox.height/2;
+          check(Math.abs(firstLineCenter-arrowCenter)<1,key+' the first calendar line is centered on the connecting arrow',{calendarFirstLineCenter:firstLineCenter,arrowCenter:arrowCenter});
+          check(firstClusterGap>=0&&secondClusterGap>=0,key+' the centered calendar does not collide with the summary or schedule',{summaryToCalendar:firstClusterGap,calendarToSchedule:secondClusterGap});
+        }else{
+          check(firstClusterGap>=19&&secondClusterGap>=19&&Math.abs(firstClusterGap-secondClusterGap)<=1,key+' stacked duration clusters retain equal vertical gaps of at least 20px',{summaryToCalendar:firstClusterGap,calendarToSchedule:secondClusterGap});
+        }
         check(Math.abs(summaryCluster.top-durationContent.top-durationInset)<=1&&Math.abs(durationContent.bottom-schedule.bottom-durationInset)<=1,key+' duration clusters are inset in two columns without stretching the stacked card',{topInset:summaryCluster.top-durationContent.top,bottomInset:durationContent.bottom-schedule.bottom});
         var sound=region.querySelector('#ag-sound-toggle').getBoundingClientRect(),card=region.getBoundingClientRect();
         check(sound.width>=43.9&&sound.height>=43.9&&sound.left>=card.left-1&&sound.right<=card.right+1&&sound.top>=card.top-1&&sound.bottom<=card.bottom+1,key+' sound toggle stays inside the card with a 44px touch target',{width:sound.width,height:sound.height,left:sound.left,right:sound.right,cardLeft:card.left,cardRight:card.right});

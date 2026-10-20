@@ -17,8 +17,8 @@ const between = (start, end) => source.slice(source.indexOf(start), source.index
 vm.runInContext([
   'var AS=window.AS,O=AS.CALC.objects,TAX=.06,ROAD_COMP=10000,ROAD_COMP_FROM=30;',
   "var money=function(n){return String(Math.round(n));},rub=function(n){return money(n)+' ₽';};",
-  between('  var WEEK =', '  var CHEV ='),
-  between('  function parseNum(', '  function num('),
+  between('  var WEEK =', '  function rub('),
+  between('  function parseNum(', '  var MON ='),
   between('  function terms(', '  // пол и возраст'),
   "var job={region:'',prof:'',shifts:30,sched:'6/1',sex:'',age:0,sort:'home',view:'calc',v:'100',auto:false,road:12000,food:500,start:new Date(2026,9,22),pick:'ym-sofyino'};",
   'var lastCur=null,modelListeners=[],modelUpdate=null;',

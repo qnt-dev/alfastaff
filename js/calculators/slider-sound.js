@@ -2,6 +2,7 @@
    move(); audio is unlocked only by a trusted activation, with no replay queue. */
 (function () {
   'use strict';
+  var controls = [];
   window.AlfaSliderSound = function (button) {
     var AudioContext = window.AudioContext || window.webkitAudioContext;
     var storageKey = 'alfa-calculator-sound-muted';
@@ -98,12 +99,16 @@
         return false;
       }
     }
+    controls.push(function (nextMuted) {
+      muted = nextMuted;
+      if (muted) stopActive();
+      updateButton();
+    });
     if (button) button.addEventListener('click', function (event) {
       if (unavailable) return;
       muted = !muted;
       try { window.localStorage.setItem(storageKey, muted ? '1' : '0'); } catch (_) {}
-      if (muted) stopActive();
-      updateButton();
+      controls.forEach(function (apply) { apply(muted); });
       if (!muted) unlock(event);
     });
     updateButton();

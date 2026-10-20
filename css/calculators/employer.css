@@ -1,0 +1,52 @@
+/* The employer calculator shares the approved Goal palette and controls. */
+#alfa-employer .ec-context { grid-template-columns:1fr 1fr; }
+#alfa-employer .ec-context label:last-child { grid-column:auto; }
+#alfa-employer .ec-operation { display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 0 22px; }
+#alfa-employer .ec-operation label { display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--ag-muted);font-size:12px; }
+#alfa-employer .ec-operation select { border:0;border-bottom:1px solid var(--ag-line);background:transparent;padding:8px 20px 8px 8px;font-size:14px; }
+#alfa-employer .ec-instruments { align-items:stretch; }
+#alfa-employer .ec-team { display:flex;flex-direction:column;justify-content:space-between;gap:30px;padding:30px 24px;min-height:340px; }
+#alfa-employer .ec-team .ag-shift-number { flex-wrap:wrap;gap:5px 10px; }
+#alfa-employer .ec-team .ag-shift-number output { font-size:84px;letter-spacing:-4px; }
+#alfa-employer .ec-team .ag-shift-number span { font-size:20px; }
+#alfa-employer .ec-team .ag-instrument-label { display:block;max-width:190px;line-height:1.4; }
+#alfa-employer .ec-staff-parts { display:flex;gap:23px;align-items:start;color:#fff; }
+#alfa-employer .ec-staff-parts div { display:flex;flex-direction:column;gap:3px; }
+#alfa-employer .ec-staff-parts b { font-size:25px;font-weight:600;line-height:1; }
+#alfa-employer .ec-staff-parts span { font-size:11px;max-width:130px;line-height:1.4; }
+#alfa-employer .ec-staff-parts #ec-reserve-count { font:inherit; }
+#alfa-employer .ec-team .ag-schedule { display:flex;flex-direction:column;align-items:start;gap:8px; }
+#alfa-employer .ec-team .ag-segments { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%; }
+#alfa-employer .ec-team .ag-segments button { padding:0 6px;min-width:0;font-size:12px; }
+#alfa-employer .ec-team .ag-schedule>span { font-size:10px;letter-spacing:.4px; }
+#alfa-employer .ec-instruments .ag-link-arrow { top:50%;transform:translateY(-50%); }
+#alfa-employer .ec-result .ag-result-label { font-size:16px;font-weight:600; }
+#alfa-employer .ec-result .ag-result-delta { display:block;margin-top:6px;max-width:360px;font-size:12px;line-height:1.45; }
+#alfa-employer .ec-settings { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:4px 0 12px; }
+#alfa-employer .ec-settings label { font-size:12px;color:var(--ag-muted); }
+#alfa-employer .ec-settings select { display:block;margin-top:6px;padding:10px 12px;min-height:44px;width:100%;background:var(--ag-control-bg);border:1px solid var(--ag-line);border-radius:8px; }
+#alfa-employer .ec-stay { display:flex;gap:9px;align-items:center;margin:4px 0 18px;font-size:13px; }
+#alfa-employer .ec-stay input { width:18px;height:18px;accent-color:var(--ag-coral);flex:none; }
+#alfa-employer .ec-small { font-size:11px;line-height:1.5;color:var(--ag-muted);margin:12px 0; }
+#alfa-employer .ag-footer { color:var(--ag-muted);font-size:11px;line-height:1.5; }
+#alfa-employer #ec-calculation>summary:is(:hover,:focus-visible) .ag-click-hint { visibility:visible; }
+#alfa-employer .ag-money-line-lit,#alfa-employer .ag-money-line-near { stroke:url(#ec-money-light); }
+#alfa-employer .ag-money-line-glow { stroke:url(#ec-money-bloom); }
+#alfa-employer .ag-money-help:has(.ag-error:not([hidden])) #ec-goal-hint { visibility:hidden; }
+@supports (appearance:base-select) {
+  #alfa-employer :is(.ec-operation,.ec-settings) select { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+  #alfa-employer :is(.ec-operation,.ec-settings) option { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px;border-radius:6px;background:var(--picker-paper);color:var(--picker-ink); }
+  #alfa-employer :is(.ec-operation,.ec-settings) option:is(:hover,:focus) { background:var(--picker-hover);outline:none; }
+  #alfa-employer :is(.ec-operation,.ec-settings) option:checked { background:var(--picker-selected);color:var(--picker-accent); }
+}
+@container calc-card (max-width:630px) {
+  #alfa-employer .ec-context { grid-template-columns:1fr; }
+  #alfa-employer .ec-context label { grid-template-columns:78px minmax(0,1fr); }
+  #alfa-employer .ec-operation { grid-template-columns:1fr;gap:8px; }
+  #alfa-employer .ec-instruments { grid-template-columns:1fr;gap:13px; }
+  #alfa-employer .ec-team { min-height:300px;gap:22px;padding:24px; }
+  #alfa-employer .ec-team .ag-instrument-label { max-width:none; }
+  #alfa-employer .ec-team .ag-shift-number output { font-size:76px; }
+  #alfa-employer .ec-instruments .ag-link-arrow { top:auto;bottom:-25px;transform:rotate(90deg); }
+  #alfa-employer .ec-settings { grid-template-columns:1fr; }
+}
