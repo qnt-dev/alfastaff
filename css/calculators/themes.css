@@ -26,32 +26,33 @@
 }
 
 
-/* Replacement branding occupies the original header's mark/wordmark slot. */
+/* Original brandbook paths for both the mark and lettering; no web-font or
+   bitmap resizing is involved. Even icon dimensions keep its resting box
+   aligned with the header's pixel grid. */
 :is(#alfa-goal,#alfa-employer) .calc-source-brand {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
   color: inherit;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -.6px;
   line-height: 1;
   white-space: nowrap;
 }
 
-:is(#alfa-goal,#alfa-employer) .calc-source-brand > span {
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
+:is(#alfa-goal,#alfa-employer) .calc-source-brand > svg {
+  display: block;
+  flex: none;
 }
 
-:is(#alfa-goal,#alfa-employer) .calc-source-brand > img {
-  display: block;
-  width: 25px;
-  height: 25px;
-  flex: none;
-  object-fit: contain;
+:is(#alfa-goal,#alfa-employer) .calc-source-mark {
+  width: 28px;
+  height: 28px;
+}
+
+:is(#alfa-goal,#alfa-employer) .calc-source-wordmark {
+  width: 120px;
+  height: 12px;
+  fill: currentColor;
 }
 
 
@@ -151,9 +152,16 @@
 
 @media (max-width: 380px) {
   :is(#alfa-goal,#alfa-employer) .calc-source-brand {
-    font-size: 13px;
-    letter-spacing: -.45px;
     gap: 7px;
+  }
+
+  :is(#alfa-goal,#alfa-employer) .calc-source-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  :is(#alfa-goal,#alfa-employer) .calc-source-wordmark {
+    width: 112px;
   }
 }
 

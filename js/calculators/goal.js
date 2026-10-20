@@ -2,10 +2,12 @@
   'use strict';
   var root=document.getElementById('alfa-goal'),E=window.AlfaDesign,F=window.AlfaGoalFeasibility;if(!root||!E||!F)return;
   var $=function(id){return root.querySelector('#'+id);},rub=function(n){return E.money(n)+' ₽';};
+  // Goals use whole thousands; quotes and expense calculations retain exact rubles.
+  function wholeThousands(n){return Math.floor(Math.max(0,Number(n)||0)/1000)*1000;}
   var state=E.initial(),initialQuote=E.current(state);if(initialQuote)state.pick=initialQuote.o.id;
-  var high=state.v==='hi',goal=initialQuote?(high&&initialQuote.hi?initialQuote.hi.home:initialQuote.home):180000,selected=null,offers=[],trials=[],lastDurationKey='',lastScheduleKey='',lastObjectName=initialQuote?initialQuote.o.short:'Выбранный объект';
+  var high=state.v==='hi',goal=initialQuote?wholeThousands(high&&initialQuote.hi?initialQuote.hi.home:initialQuote.home):180000,selected=null,offers=[],trials=[],lastDurationKey='',lastScheduleKey='',lastObjectName=initialQuote?initialQuote.o.short:'Выбранный объект';
   var quoteCache=null,quoteCacheKey='',feasibility=null,alternativeOffers=[],alternativesOpen=false,alternativesKey='';
-  var moneySlider=window.AlfaMoneySlider(root,function(value){goal=value;render(false);});
+  var moneySlider=window.AlfaMoneySlider(root,function(value){goal=wholeThousands(value);render(false);},{integer:true,step:1000});
   function snapshot(){var copy=Object.assign({},state,{target:goal,high:high,v:high?'hi':'100',auto:false});if(copy.start&&typeof copy.start.getTime==='function')copy.start=new Date(copy.start.getTime());return copy;}
   function changed(){root.dispatchEvent(new CustomEvent('alfa:change',{bubbles:true,detail:{state:snapshot()}}));}
   var text=function(id,value){$(id).textContent=value;};
@@ -92,7 +94,7 @@
     selected=feasibility.selected?feasibility.selected.quote:null;
     var c=selected;if(!c){changed();return;}state.shifts=feasibility.selected.shifts;
     var reachable=feasibility.reachable,actual=feasibility.actual,valid=goal>0;
-    moneySlider.sync(goal,feasibility.maximum,{baseMax:feasibility.baseMax,highMax:feasibility.highMax});
+    moneySlider.sync(goal,wholeThousands(feasibility.maximum),{baseMax:feasibility.baseMax,highMax:feasibility.highMax});
     $('ag-target-error').hidden=valid;$('ag-target').setAttribute('aria-invalid',String(!valid));
     text('ag-shifts',state.shifts);text('ag-days',c.days);text('ag-duration-label',reachable?'Для этого нужно':'По этим условиям');text('ag-duration-note',reachable?'Минимальная подходящая вахта':'Доступные сроки — до '+feasibility.maxShifts+' смен');
     text('ag-home',E.money(actual));text('ag-delta',reachable?(actual===goal?'Цель совпадает с расчётом':'На '+rub(actual-goal)+' больше цели'):'Цель выше дохода за доступную вахту');
@@ -110,7 +112,7 @@
     text('ag-condition-note',(c.o.note?c.o.note+'. ':'')+'Условия и дату заезда нужно подтвердить перед поездкой.');
     changed();
   }
-  root.addEventListener('click',function(event){var b=event.target.closest('button');if(!b||!root.contains(b))return;if(b.dataset.shifts){var c=exact(+b.dataset.shifts);if(c){goal=Math.max(0,amount(c));render(true);}}else if(b.dataset.sched){state.sched=b.dataset.sched;render(true);}else if(b.dataset.agYield){high=b.dataset.agYield==='hi';render(true);}else if(b.id==='ag-try-high'&&feasibility&&feasibility.canReachHigh){high=true;render(true);root.querySelector('[data-ag-yield="hi"]').focus({preventScroll:true});}else if(b.id==='ag-alternatives-toggle'&&alternativeOffers.length){alternativesOpen=!alternativesOpen;feasibilityControls(selected);}else if(b.dataset.agAlternative&&alternativeOffers.some(function(item){return item.id===b.dataset.agAlternative;})){state.pick=b.dataset.agAlternative;$('ag-object').value=state.pick;render(true);$('ag-object').focus({preventScroll:true});}else if(b.id==='ag-conditions-open'){$('ag-conditions').open=true;}});
+  root.addEventListener('click',function(event){var b=event.target.closest('button');if(!b||!root.contains(b))return;if(b.dataset.shifts){var c=exact(+b.dataset.shifts);if(c){goal=wholeThousands(amount(c));render(true);}}else if(b.dataset.sched){state.sched=b.dataset.sched;render(true);}else if(b.dataset.agYield){high=b.dataset.agYield==='hi';render(true);}else if(b.id==='ag-try-high'&&feasibility&&feasibility.canReachHigh){high=true;render(true);root.querySelector('[data-ag-yield="hi"]').focus({preventScroll:true});}else if(b.id==='ag-alternatives-toggle'&&alternativeOffers.length){alternativesOpen=!alternativesOpen;feasibilityControls(selected);}else if(b.dataset.agAlternative&&alternativeOffers.some(function(item){return item.id===b.dataset.agAlternative;})){state.pick=b.dataset.agAlternative;$('ag-object').value=state.pick;render(true);$('ag-object').focus({preventScroll:true});}else if(b.id==='ag-conditions-open'){$('ag-conditions').open=true;}});
   $('ag-region').addEventListener('change',function(){state.region=this.value;refreshOffers();render(true);});
   $('ag-role').addEventListener('change',function(){state.prof=this.value;refreshOffers();render(true);});
   $('ag-object').addEventListener('change',function(){state.pick=this.value;render(true);});
@@ -120,7 +122,7 @@
     next=next||{};var previous=snapshot(),external=['region','prof','pick','shifts','sched','sex','age','v','food','road'].some(function(key){return Object.prototype.hasOwnProperty.call(next,key)&&next[key]!==previous[key];});
     state=Object.assign({},state,next);high=Object.prototype.hasOwnProperty.call(next,'v')?next.v==='hi':Object.prototype.hasOwnProperty.call(next,'high')?!!next.high:high;
     var quote=E.current(state);if(quote)state.pick=quote.o.id;
-    if(Object.prototype.hasOwnProperty.call(next,'target'))goal=E.parseMoney(next.target);else if(external&&quote)goal=Math.max(0,amount(quote));
+    if(Object.prototype.hasOwnProperty.call(next,'target'))goal=wholeThousands(E.parseMoney(next.target));else if(external&&quote)goal=wholeThousands(amount(quote));
     syncInputs();refreshOffers();render(true);return snapshot();
   }};
   syncInputs();refreshOffers();render(true);

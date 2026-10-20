@@ -1,5 +1,6 @@
 /* Theme and audience controls stay outside the primary calculator. */
 .calc-workspace { position:relative; z-index:1; display:grid; grid-template-columns:168px minmax(0,1fr); gap:28px; width:min(calc(64rem + 196px),100%); height:auto; max-height:calc(100svh - 48px); min-height:0; }
+.cm.is-preparing .calc-workspace { visibility:hidden; }
 .calc-workspace .cm__panel { width:100%; height:auto; max-height:calc(100svh - 48px); min-height:0; container:calc-employer / inline-size; }
 .calc-sidebar { display:flex; flex-direction:column; gap:28px; min-width:0; padding-top:8px; color:#fff; font-family:var(--f-text); align-self:start; }
 .calc-sidebar__head { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:650; }

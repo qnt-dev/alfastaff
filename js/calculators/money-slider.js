@@ -45,9 +45,7 @@
     var joinX = knobX - notchRadius * (knobX - shoulderX) / (notchRadius + shoulderRadius);
     var raster = { x: 1, y: 1, left: 0, top: 0, shift: 0, minor: 1, major: 1, rail: 1 };
 
-    // Exact limits need to remain reachable even when they are not multiples of 1000.
-    // The interaction handlers below retain the thousand-ruble increment.
-    range.step = '1'; range.min = minimum;
+    range.step = options.step || 1; range.min = minimum;
 
     function format(n) { return fmt.format(n / divisor); }
     function parse(s) {
@@ -76,7 +74,9 @@
       if (lastTickKey === key) return;
       lastTickKey = key; ticks = []; labels = [];
       tickGroup.replaceChildren(); labelGroup.replaceChildren();
-      var major = Math.max(1, niceStep(maximum / 6)), minor = Math.max(1, major / 5);
+      var major = Math.max(1, niceStep(maximum / 6));
+      if (options.integer) major = Math.max(divisor, Math.ceil(major / divisor) * divisor);
+      var minor = Math.max(1, major / 5);
       function tickAt(n, strong) {
         var tick = node('path', { 'class': strong ? 'ag-money-tick ag-money-tick--major' : 'ag-money-tick',
           'data-value': n });
@@ -105,12 +105,13 @@
       if (available <= 0) return;
       metrics.textContent = input.value || '0';
       metrics.style.fontSize = '52px';
-      var at52 = metrics.getBoundingClientRect().width;
+      // Both measurements must use layout pixels, unaffected by modal entrance scaling.
+      var at52 = metrics.offsetWidth;
       if (!at52) return;
       var size = Math.max(18, Math.min(52, (available - 3) / at52 * 52));
       metrics.style.fontSize = size + 'px';
       input.style.fontSize = size + 'px';
-      input.style.width = Math.min(available, Math.ceil(metrics.getBoundingClientRect().width + 3)) + 'px';
+      input.style.width = Math.min(available, metrics.offsetWidth + 3) + 'px';
     }
     function yFor(p) { return 30 + (height - 60) * (1 - p); }
     function fraction(n) { return maximum > 0 ? Math.max(0, Math.min(1, n / maximum)) : 0; }

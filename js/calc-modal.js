@@ -34,21 +34,42 @@
   function day(d) { return d.getDate() + '\u00a0' + MON[d.getMonth()]; }
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   /* ---------- окно ---------- */
-  var opener = null;
+  var opener = null, opening = 0, closeTimer = 0;
   function open(e) {
+    if (!cm.hidden && cm.classList.contains('is-open')) return;
+    var version = ++opening;
+    clearTimeout(closeTimer); closeTimer = 0;
     opener = e && e.currentTarget || document.activeElement;
+    cm.classList.add('is-preparing');
     cm.hidden = false;
     if (AS.lenis) AS.lenis.stop();
     document.documentElement.classList.add('cm-lock');
-    requestAnimationFrame(function () { requestAnimationFrame(function () { cm.classList.add('is-open'); }); });
-    setTimeout(function () { var c = $('.cm__close', cm); if (c) c.focus({ preventScroll: true }); }, 60);
+    // Hidden calculators have not requested their fonts or measured their
+    // controls yet. Lay out the active view, then reveal its settled geometry.
+    void cm.offsetWidth;
+    function reveal() {
+      if (version !== opening) return;
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        if (version !== opening) return;
+        cm.classList.remove('is-preparing');
+        cm.classList.add('is-open');
+        var c = $('.cm__close', cm); if (c) c.focus({ preventScroll: true });
+      }); });
+    }
+    if (document.fonts) document.fonts.ready.then(reveal, reveal);
+    else reveal();
   }
   function close() {
     if (cm.hidden) return;
+    ++opening;
+    clearTimeout(closeTimer);
+    var preparing = cm.classList.contains('is-preparing');
+    cm.classList.remove('is-preparing');
     cm.classList.remove('is-open');
     document.documentElement.classList.remove('cm-lock');
     if (AS.lenis) AS.lenis.start();
-    setTimeout(function () { cm.hidden = true; }, reduce ? 0 : 420);
+    if (preparing || reduce) { cm.hidden = true; closeTimer = 0; }
+    else closeTimer = setTimeout(function () { cm.hidden = true; closeTimer = 0; }, 420);
     if (opener && opener.focus) opener.focus({ preventScroll: true });
   }
   $$('[data-calc-open]').forEach(function (b) { b.addEventListener('click', open); });

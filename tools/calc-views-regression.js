@@ -113,14 +113,14 @@ async function calcViewsRegression(w) {
     check(range.height>100&&range.height>range.width,'Goal retains the reference vertical money scale');
     check($('#ag-target').scrollWidth<=$('#ag-target').clientWidth+1,'The full target amount is visible at the card width');
     check(panel.scrollWidth<=panel.clientWidth+1,'Goal has no horizontal overflow');
-    check($('#ag-target-range').step==='1','The native money range can represent an exact ruble ceiling');
+    check($('#ag-target-range').step==='1000','The native money range uses whole-thousand goals');
     check(!root.querySelector('[data-goal]'),'Goal has no amount preset buttons');
     input('#ag-target','300');
     check(root.alfaGoal.state().target===300000,'Entering 300 thousand publishes a 300000-ruble target');
     await calcSettle(w,'300-thousand target motion');
     var higherTargetTop=$('#ag-target').getBoundingClientRect().top;
     input('#ag-target','300,5');
-    check(root.alfaGoal.state().target===300500&&$('#ag-target').value==='300,5','A decimal thousand amount preserves 300500 rubles and its editing text');
+    check(root.alfaGoal.state().target===300000&&$('#ag-target').getAttribute('aria-invalid')==='true','A fractional draft is invalid and preserves the last whole-thousand goal');
     input('#ag-target-range','300000');await calcSettle(w,'native range motion');
     check(root.alfaGoal.state().target===300000&&$('#ag-target').value==='300','The native range keeps ruble units while the editable label uses thousands');
     input('#ag-target','180');await calcSettle(w,'180-thousand target motion');
@@ -527,11 +527,11 @@ async function calcMoneySliderRegression(w) {
       var blurred=Array.from(root.querySelectorAll('.ag-money-contour [filter]')).filter(function(el){return el!==core&&w.getComputedStyle(el).filter!=='none';}),coreAA=root.querySelector('#ag-money-edge-aa feGaussianBlur');
       check(!!field&&w.getComputedStyle(field).clipPath.includes('ag-money-left-clip')&&!!clipUse&&clipUse.getAttribute('href')==='#ag-money-left-shape'&&blurred.length>0&&blurred.every(function(el){return field.contains(el);}),theme+' all broad light layers remain clipped together by the left contour');
       check(!!field&&!!core&&!field.contains(core)&&w.getComputedStyle(core).filter.includes('ag-money-edge-aa')&&!!coreAA&&Number(coreAA.getAttribute('stdDeviation'))===.25&&core.getAttribute('mask')===field.getAttribute('mask'),theme+' the separate contour core uses only 0.25px antialiasing and the shared fade mask');
-      enter('111,111',false);
-      check(d.activeElement===input,theme+' the long decimal amount starts editing in the original input');
+      enter('111111',false);
+      check(d.activeElement===input,theme+' the long whole-thousand amount starts editing in the original input');
       await calcSettle(w,'rendered calculator motion');
-      check(root.alfaGoal.state().target===111111&&input.value==='111,111',theme+' the long decimal amount preserves all six significant digits as 111111 rubles');
-      check(input.clientWidth>0&&input.scrollWidth<=input.clientWidth+1,theme+' all tabular digits of 111,111 fit without horizontal input scrolling',{clientWidth:input.clientWidth,scrollWidth:input.scrollWidth});
+      check(root.alfaGoal.state().target===111111000&&input.value==='111111',theme+' the long whole-thousand amount preserves all six significant digits as 111111000 rubles');
+      check(input.clientWidth>0&&input.scrollWidth<=input.clientWidth+1,theme+' all tabular digits of 111111 fit without horizontal input scrolling',{clientWidth:input.clientWidth,scrollWidth:input.scrollWidth});
       check(d.activeElement===input&&input.selectionStart===input.value.length&&input.selectionEnd===input.value.length,theme+' fitting and animation preserve input focus and the collapsed editing caret');
       input.blur();await wait(180);
     }
@@ -539,12 +539,12 @@ async function calcMoneySliderRegression(w) {
     var restingOpacity=opacity();
     input.focus();await wait(200);
     check(readout.dataset.typing==='true'&&opacity()<=.01,'Focusing the amount hides its decorative unit');
-    enter('300,5',false);input.setSelectionRange(input.value.length,input.value.length);input.dispatchEvent(new w.Event('select',{bubbles:true}));await wait(200);
+    enter('300',false);input.setSelectionRange(input.value.length,input.value.length);input.dispatchEvent(new w.Event('select',{bubbles:true}));await wait(200);
     check(readout.dataset.typing==='true'&&opacity()<=.01,'Typing keeps the unit hidden during editing');
     await wait(800);
     check(readout.dataset.typing!=='true'&&opacity()>.01,'A collapsed-caret select event does not cancel the unit return within 1000ms of valid input');
     await wait(180);
-    check(restingOpacity>.01&&opacity()>=restingOpacity-.01&&root.alfaGoal.state().target===300500&&input.value==='300,5','The returned unit preserves the exact decimal amount and 300500-ruble target');
+    check(restingOpacity>.01&&opacity()>=restingOpacity-.01&&root.alfaGoal.state().target===300000&&input.value==='300','The returned unit preserves the whole-thousand amount and 300000-ruble target');
     enter('450',false);await wait(200);input.blur();
     check(readout.dataset.typing!=='true','Blur clears typing state immediately');await wait(180);
     check(opacity()>=restingOpacity-.01,'Blur restores the unit without waiting for the idle timeout');
@@ -643,7 +643,7 @@ async function calcApprovedRegression(w) {
     click('[data-cm-tab="job"]');
     setJob({},600000);await calcSettle(w,'rendered calculator motion');
     check(root.alfaGoal.state().target===600000&&target.value==='600','A typed 600-thousand goal survives the below-goal scale maximum');
-    check(Number(range.max)===583627,'Sofyino scale stops at the actual high-output maximum of 583627 rubles',{max:range.max});
+    check(Number(range.max)===583000,'Sofyino scale stops at the last whole thousand below its actual 583627-ruble maximum',{max:range.max});
     check(hasMoney($('#ag-base-limit'),392807)&&hasMoney($('#ag-high-limit'),583627),'Both actual net limits are stated explicitly: 392807 base and 583627 high');
     check(api.state().job.v==='100'&&root.alfaGoal.state().high===false&&$('#ag-shifts').textContent==='60'&&hasMoney($('#ag-home'),392807),'An unreachable 600000-ruble goal retains explicit base output and its 60-shift 392807-ruble result');
     check(visible($('#ag-feasibility'))&&normalized($('#ag-feasibility-text').textContent).length>20,'An unattainable target has a visible explanatory feasibility message');
@@ -671,11 +671,11 @@ async function calcApprovedRegression(w) {
     check(d.activeElement===$('#ag-object'),'Selecting an alternative moves focus from the removed button to the object field');
 
     setJob({road:12000,food:500},600000);await calcSettle(w,'rendered calculator motion');
-    check(Number(range.max)===560327&&hasMoney($('#ag-base-limit'),369507)&&hasMoney($('#ag-high-limit'),560327),'Food, road and reimbursement reduce both limits and the scale maximum by their actual costs');
+    check(Number(range.max)===560000&&hasMoney($('#ag-base-limit'),369507)&&hasMoney($('#ag-high-limit'),560327),'Food, road and reimbursement reduce both limits and the scale maximum by their actual costs');
     check(root.alfaGoal.state().target===600000&&target.value==='600'&&api.state().job.v==='100','Expense changes preserve an unreachable typed target without changing performance');
     setJob({region:'Владимир',prof:'Упаковщик',pick:'starodvorskie',sex:'f',shifts:30},600000);await calcSettle(w,'rendered calculator motion');
     check(api.state().job.pick==='starodvorskie'&&root.alfaGoal.current().o.id==='starodvorskie','The fixed-rate fixture uses the requested 30-shift object');
-    check(Number(range.max)===107160&&hasMoney($('#ag-base-limit'),107160)&&hasMoney($('#ag-home'),107160),'The fixed-rate object shrinks the scale to its actual 30-shift net maximum of 107160 rubles');
+    check(Number(range.max)===107000&&hasMoney($('#ag-base-limit'),107160)&&hasMoney($('#ag-home'),107160),'The fixed-rate object keeps a whole-thousand scale ceiling below its exact 107160-ruble result');
     check(!visible($('#ag-high-limit'))&&!visible($('#ag-try-high'))&&!visible($('#ag-high-wrap')),'A fixed-rate object exposes no fictitious high-output limit or action');
     check($('#ag-shifts').textContent==='30'&&Array.from($('#ag-duration-track').querySelectorAll('[data-shifts]')).every(function(el){return Number(el.dataset.shifts)<=30;}),'The fixed-rate object never invents a 45- or 60-shift contract');
     durationGeometry('fixed-rate/30-shift-cap');

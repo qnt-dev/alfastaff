@@ -4,7 +4,7 @@
 :is(#alfa-goal,#alfa-employer) .ag-money-heading{display:grid;grid-template-columns:116px minmax(0,1fr);align-items:center;gap:0;margin-bottom:10px;min-height:20px}
 :is(#alfa-goal,#alfa-employer) .ag-money-heading>.ag-endpoint{padding-left:8px;font-size:11px}
 :is(#alfa-goal,#alfa-employer) .ag-money-heading label{font-size:14px;font-weight:500}
-:is(#alfa-goal,#alfa-employer) .ag-money-scale{--ag-slider-y:150px;--ag-slider-accent:#c41718;--ag-slider-glow:.42;--ag-light-core:#d52121;--ag-light-edge:#d84236;--ag-light-bloom:#dd342d;--ag-knob:#f5f6f8;--ag-knob-edge:#e6e8ec;position:relative;width:100%;height:250px;flex:none}
+:is(#alfa-goal,#alfa-employer) .ag-money-scale{--ag-slider-y:150px;--ag-slider-accent:#c41718;--ag-slider-glow:.65;--ag-light-core:#d52121;--ag-light-edge:#d84236;--ag-light-bloom:#dd342d;--ag-knob:#f5f6f8;--ag-knob-edge:#e6e8ec;position:relative;width:100%;height:250px;flex:none}
 :is(#alfa-goal,#alfa-employer) .ag-money-scale .ag-money-contour{position:absolute;inset:0 auto 0 0;width:120px;height:100%;overflow:visible;pointer-events:none;fill:none;stroke-linecap:round}
 :is(#alfa-goal,#alfa-employer) .ag-money-line-base{stroke:var(--ag-line);stroke-width:var(--ag-rail-stroke,1)}
 :is(#alfa-goal,#alfa-employer) .ag-money-line-lit{stroke:url(#ag-money-light);stroke-width:1.3}
