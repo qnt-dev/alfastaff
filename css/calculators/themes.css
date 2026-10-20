@@ -1,0 +1,275 @@
+/* The reviewed geometry and type live unchanged in goal.css.
+   This layer supplies the company mark, brand red, and explicit theme pairs. */
+#alfa-goal {
+  letter-spacing: normal;
+}
+
+#alfa-goal h2,
+#alfa-goal h3 {
+  font-family: inherit;
+}
+
+#alfa-goal {
+  --ag-paper: #fff;
+  --ag-ink: #20252d;
+  --ag-muted: #596473;
+  --ag-line: #d9dfe7;
+  --ag-control-bg: #f4f6f9;
+  --ag-white: #fff;
+  --ag-error: #a51112;
+  --ag-coral: #c41718;
+  --ag-result-bg: #20252d;
+  --ag-result-text: #fff;
+  --ag-result-muted: #d9dfe7;
+  --ag-result-button: #fff;
+  --ag-result-button-text: #20252d;
+}
+
+
+/* Replacement branding occupies the original header's mark/wordmark slot. */
+#alfa-goal .calc-source-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.6px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#alfa-goal .calc-source-brand > span {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+#alfa-goal .calc-source-brand > img {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: none;
+  object-fit: contain;
+}
+
+
+
+/* The source's coral panel used dark type; company red needs light type. */
+#alfa-goal .ag-duration,
+#alfa-goal .ag-duration .ag-instrument-label,
+#alfa-goal .ag-duration .ag-endpoint,
+#alfa-goal .ag-duration-track button {
+  color: #fff;
+}
+
+#alfa-goal .ag-duration-track::before {
+  background: repeating-linear-gradient(to top, transparent 0 10px, rgba(255,255,255,.38) 10px 11px);
+}
+
+#alfa-goal .ag-duration-track button[aria-pressed="true"] {
+  background: #fff;
+  border-color: #fff;
+  color: #a51112;
+}
+
+#alfa-goal .ag-result {
+  background: var(--ag-result-bg);
+  color: var(--ag-result-text);
+}
+
+#alfa-goal .ag-result-label,
+#alfa-goal .ag-result-delta,
+#alfa-goal .ag-result-action > span {
+  color: var(--ag-result-muted);
+}
+
+#alfa-goal .ag-result-action button {
+  background: var(--ag-result-button);
+  color: var(--ag-result-button-text);
+}
+
+
+
+
+#alfa-goal :is(button, select, summary) {
+  cursor: pointer;
+}
+
+#alfa-goal :disabled {
+  cursor: default;
+}
+
+#alfa-goal :is(button, input, select, summary):focus-visible {
+  outline: 2px solid #c41718;
+  outline-offset: 3px;
+}
+
+#alfa-goal .ag-duration button:focus-visible {
+  outline-color: #fff;
+}
+
+[data-cm][data-calc-theme="dark"] #alfa-goal {
+  --ag-paper: #191919;
+  --ag-ink: #f7f8fa;
+  --ag-muted: #b7bec8;
+  --ag-line: #42464c;
+  --ag-control-bg: #27292d;
+  --ag-white: #27292d;
+  --ag-error: #ff9696;
+  --ag-result-bg: #fff;
+  --ag-result-text: #20252d;
+  --ag-result-muted: #596473;
+  --ag-result-button: #c41718;
+  --ag-result-button-text: #fff;
+  color-scheme: dark;
+}
+
+[data-cm][data-calc-theme="dark"] #alfa-goal :is(#ag-target, #ag-target-range, select, option) {
+  color-scheme: dark;
+}
+
+/* The target follows the card's theme; only the result uses its inverse. */
+#alfa-goal .ag-goal {
+  background: var(--ag-paper);
+}
+
+[data-cm][data-calc-theme="dark"] #alfa-goal .ag-result button:focus-visible {
+  outline-color: #c41718;
+}
+
+
+
+[data-cm][data-calc-theme="dark"] #alfa-goal :is(button, input, select, summary):focus-visible {
+  outline-color: #ff9696;
+}
+
+[data-cm][data-calc-theme="dark"] #alfa-goal .ag-duration button:focus-visible {
+  outline-color: #fff;
+}
+
+@media (max-width: 380px) {
+  #alfa-goal .calc-source-brand {
+    font-size: 13px;
+    letter-spacing: -.45px;
+    gap: 7px;
+  }
+}
+
+/* Native, keyboard-accessible pickers with a shared field/menu geometry.
+   Unsupported browsers keep their regular select control. */
+@supports (appearance: base-select) {
+  #alfa-goal select {
+    --picker-paper: var(--ag-paper);
+    --picker-ink: var(--ag-ink);
+    --picker-line: var(--ag-line);
+    --picker-hover: var(--ag-control-bg);
+    --picker-selected: #fff0f0;
+    --picker-accent: #a51112;
+  }
+
+
+  [data-cm][data-calc-theme="dark"] #alfa-goal select {
+    --picker-selected: #3b2023;
+    --picker-accent: #ff9696;
+  }
+
+  #alfa-goal select,
+  #alfa-goal select::picker(select) {
+    appearance: base-select;
+  }
+
+  #alfa-goal .ag-context select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--picker-line);
+    border-radius: 8px;
+    padding: 9px 10px;
+    background: var(--picker-paper);
+  }
+
+  #alfa-goal select:focus-visible {
+    outline-offset: -2px;
+  }
+
+  #alfa-goal .ag-context select {
+    border-color: transparent;
+    border-bottom-color: var(--picker-line);
+    border-radius: 0;
+  }
+
+  #alfa-goal .ag-context select:is(:open, :focus-visible) {
+    border-color: var(--picker-accent);
+    border-radius: 8px;
+  }
+
+  #alfa-goal select:open {
+    border-color: var(--picker-accent);
+  }
+
+  #alfa-goal select::picker-icon {
+    flex: none;
+    color: var(--picker-ink);
+  }
+
+  #alfa-goal select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  #alfa-goal select::picker(select) {
+    box-sizing: border-box;
+    inset: auto;
+    top: calc(anchor(bottom) + 8px);
+    left: anchor(left);
+    width: anchor-size(width);
+    min-width: anchor-size(width);
+    max-width: anchor-size(width);
+    max-height: min(320px, calc(50dvh - 32px));
+    margin: 0;
+    padding: 4px;
+    border: 1px solid var(--picker-line);
+    border-radius: 10px;
+    background: var(--picker-paper);
+    color: var(--picker-ink);
+    box-shadow: 0 12px 32px #0003;
+    overflow: auto;
+    overscroll-behavior: contain;
+    position-try-fallbacks: flip-block;
+  }
+
+  #alfa-goal .ag-context option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    min-width: 0;
+    padding: 10px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--picker-paper);
+    color: var(--picker-ink);
+    font: inherit;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  #alfa-goal .ag-context option:is(:hover, :focus) {
+    background: var(--picker-hover);
+    outline: none;
+  }
+
+  #alfa-goal .ag-context option:checked {
+    background: var(--picker-selected);
+    color: var(--picker-accent);
+  }
+
+  #alfa-goal option::checkmark {
+    order: 1;
+    margin-left: auto;
+    flex: none;
+  }
+}

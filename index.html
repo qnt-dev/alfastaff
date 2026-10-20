@@ -12,8 +12,14 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brandbook/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
-  <link rel="stylesheet" href="css/style-company.css?v=20261018t">
+  <link rel="stylesheet" href="css/style-company.css?v=20261019a">
   <link rel="stylesheet" href="css/company.css?v=20261013a">
+  <link rel="stylesheet" href="css/calculators/ui-base.css?v=20261020primary29">
+<link rel="stylesheet" href="css/calc-views.css?v=20261020primary29">
+<link rel="stylesheet" href="css/calculators/goal.css?v=20261020spacing28">
+<link rel="stylesheet" href="css/calculators/money-slider.css?v=20261020stable23">
+<link rel="stylesheet" href="css/calculators/themes.css?v=20261020primary29">
+<link rel="stylesheet" href="css/calculators/employer-light.css?v=20261020primary29">
 </head>
 <body>
   <a class="skip" href="#main">К содержанию</a>
@@ -686,12 +692,12 @@
         <li><span class="timeline__when mono">2015</span><span class="timeline__what">Старт</span><p>Основана группа компаний «Альфа-Стафф». Головной офис — в Москве.</p></li>
         <li><span class="timeline__when mono">Маркетплейсы</span><span class="timeline__what">Склады А++</span><p>Подбор вахтовиков на логистические склады крупнейших маркетплейсов Москвы и области.</p></li>
         <li><span class="timeline__when mono">Регионы</span><span class="timeline__what">Свои офисы</span><p>Офисы и хостелы в Казани, Дзержинске, Нижнем Новгороде, Владимире и Кинеле, пункт отправки — в Уфе.</p></li>
-        <li><span class="timeline__when mono">Сегодня</span><span class="timeline__what"><span data-objects-count>14 объектов</span></span><p>Склады и производства в <span data-stat="regions">5 регионах</span>: Москва и МО, Татарстан, Нижегородская и Самарская области, Владимир.</p></li>
+        <li><span class="timeline__when mono">Сегодня</span><span class="timeline__what"><span data-objects-count>14 объектов</span></span><p>Склады и производства <span data-regions-in>в 6 регионах: Москва и МО, Татарстан, Нижегородская обл., Самарская обл., Владимир, Рязанская обл.</span></p></li>
       </ol>
 
       <div class="geo">
         <div class="geo__nav" data-geo-nav aria-label="Регион на карте"></div>
-        <canvas class="geo__canvas" aria-label="Карта: объекты Альфа-Стафф в Москве и МО, Татарстане, Нижегородской и Самарской областях и во Владимире; офисы и пункт отправки в Уфе" role="img"></canvas>
+        <canvas class="geo__canvas" aria-label="Карта: объекты Альфа-Стафф в Москве и области, в Татарстане, в Нижегородской области, в Самарской области, во Владимире, в Рязанской области; офисы и пункт отправки в Уфе" role="img"></canvas>
         <div class="geo__legend mono"><span><i class="hq"></i>Головной офис</span><span><i class="of"></i>Офисы и заселение</span><span><i class="br"></i>Пункт отправки</span><span><i class="ro"></i>Едут к нам из регионов</span></div>
       </div>
 
@@ -717,7 +723,7 @@
         <aside class="calc__aside reveal">
           <svg class="quote-mark quote-mark--sm" viewBox="0 0 54 36" aria-hidden="true"><path d="M2 34V20C2 10 7 3.5 16 2l1.6 3.4C12 7.4 9.6 11 9.4 15.8H17V34H2zm30 0V20C32 10 37 3.5 46 2l1.6 3.4C42 7.4 39.6 11 39.4 15.8H47V34H32z" /></svg>
           <p class="calc__aside-text">На многих объектах оплата сдельная — по ТСД-сканеру: чем увереннее работаете, тем выше выработка, и опытные сотрудники зарабатывают больше среднего.</p>
-          <div class="sign sign--sm"><svg class="sign__mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg><div><span class="mono">Как считаем</span><span class="mono mono--dim">Смены × ставка + авансы</span></div></div>
+          <div class="sign sign--sm"><svg class="sign__mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg><div><span class="mono">Как считаем</span><span class="mono mono--dim">Смены × ставка, до налога</span></div></div>
         </aside>
 
         <div class="calc__card">
@@ -833,7 +839,7 @@
 
         <fieldset class="form__group" data-for="job">
           <legend class="mono">Профессия</legend>
-          <div class="pick" data-pick="multi">
+          <div class="pick" data-pick="multi" data-prof-pick>
             <label><input type="checkbox" name="prof" value="Комплектовщик"><span>Комплектовщик</span></label>
             <label><input type="checkbox" name="prof" value="Упаковщик"><span>Упаковщик</span></label>
             <label><input type="checkbox" name="prof" value="Сортировщик"><span>Сортировщик</span></label>
@@ -930,40 +936,113 @@
   </main>
 
   <!-- ============ КАЛЬКУЛЯТОР — окно (js/calc-modal.js); открывается кнопкой в кармашке первого экрана.
-       Условия — одной фразой: подчёркнутые слова — выбор, по нажатию рядом выезжает плашка с вариантами ============ -->
-  <div class="cm" data-cm hidden>
+       Основной расчёт — от желаемой суммы к сроку; светлая и тёмная темы ============ -->
+  <div class="cm" data-cm data-calc-view="goal" data-calc-theme="light" hidden>
     <div class="cm__backdrop" data-cm-close></div>
-    <div class="cm__panel" role="dialog" aria-modal="true" aria-labelledby="cm-title" data-lenis-prevent>
+    <div class="calc-workspace" role="dialog" aria-modal="true" aria-labelledby="cm-title">
+      <aside class="calc-sidebar" aria-label="Настройки представления калькулятора">
+        <div class="calc-sidebar__head"><span>Калькулятор</span><button type="button" class="cm__close" data-cm-close aria-label="Закрыть калькулятор"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg></button></div>
+
+        <div class="calc-theme-switch" role="group" aria-label="Тема калькулятора">
+          <span class="calc-sidebar__label">Оформление</span>
+          <div><button type="button" data-cv-theme="light" aria-pressed="true">Светлое</button><button type="button" data-cv-theme="dark" aria-pressed="false">Тёмное</button></div>
+        </div>
+        <div class="calc-audience"><span class="calc-sidebar__label">Для кого</span><div class="cm__tabs" role="tablist" aria-label="Кто считает">
+          <button type="button" role="tab" aria-selected="true" data-cm-tab="job">Ищу работу</button>
+          <button type="button" role="tab" aria-selected="false" data-cm-tab="biz">Нужен персонал</button>
+          <span class="cm__tab-thumb" aria-hidden="true"></span>
+        </div></div>
+      </aside>
+    <div class="cm__panel" data-lenis-prevent>
       <div class="cm__head">
         <div class="cm__head-t">
           <span class="mono mono--dim">(АС®&nbsp;— Калькулятор)</span>
           <h2 class="cm__title" id="cm-title">Калькулятор вахты</h2>
         </div>
-        <div class="cm__tabs" role="tablist" aria-label="Кто считает">
-          <button type="button" role="tab" aria-selected="true" data-cm-tab="job">Ищу работу</button>
-          <button type="button" role="tab" aria-selected="false" data-cm-tab="biz">Нужен персонал</button>
-          <span class="cm__tab-thumb" aria-hidden="true"></span>
-        </div>
-        <button type="button" class="cm__close" data-cm-close aria-label="Закрыть калькулятор"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg></button>
+
+
       </div>
 
-      <p class="visually-hidden" aria-live="polite" data-cm-live></p>
-      <div class="cm__body" data-cm-pane="job">
-        <div class="cm__ask">
-          <p class="cm-ph"><span class="cm-ph__s">Ищу <span class="cm-tk" role="button" tabindex="0" data-cm-k="prof"></span> <span class="cm-tk" role="button" tabindex="0" data-cm-k="region"></span>.</span> <span class="cm-ph__s">Вахта&nbsp;— <span class="cm-tk" role="button" tabindex="0" data-cm-k="shifts"></span> по&nbsp;графику&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sched"></span>.</span> <span class="cm-ph__s">Пол&nbsp;—&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="sex"></span>, возраст&nbsp;—&nbsp;<span class="cm-tk" role="button" tabindex="0" data-cm-k="age"></span>.</span></p>
-          <div class="cm-costs">
-            <p class="cm-costs__t">Ваши расходы <span>— по желанию, чтобы сумма была точнее</span></p>
-            <div class="cm-costs__row">
-              <label class="cm-field"><span>Билеты туда и обратно</span><span class="cm-field__box"><input type="text" inputmode="numeric" name="road" placeholder="например, 6 000" autocomplete="off" data-cm-money><em>₽</em></span></label>
-              <label class="cm-field"><span>На еду в день</span><span class="cm-field__box"><input type="text" inputmode="numeric" name="food" placeholder="например, 500" autocomplete="off" data-cm-money><em>₽</em></span></label>
-            </div>
-          </div>
-        </div>
-        <div class="cm-plan" data-cm-plan></div>
-        <div class="cm__result" data-cm-res>
-          <div data-cm-best></div>
-        </div>
+      <section class="calc-source-views" data-cv aria-label="Расчёт вашей вахты">
+<section id="alfa-goal" aria-label="Калькулятор вахты: от суммы к сроку">
+  <header class="ag-header"><span class="calc-source-brand"><img src="assets/brandbook/mark.svg" alt=""><span>АЛЬФА-СТАФФ</span></span><div class="ag-header-tools"><span class="ag-kicker">Калькулятор вахты</span><button type="button" class="ag-sound-toggle" id="ag-sound-toggle" aria-pressed="true" aria-label="Выключить звук шкалы" title="Выключить звук шкалы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="ag-sound-waves" d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/><path class="ag-sound-off" d="m16 9 6 6m0-6-6 6"/></svg><span>Звук</span></button></div></header>
+  <h2>С какой суммой<br>хотите вернуться?</h2>
+  <div class="ag-context" aria-label="Место и должность">
+    <label>Регион<select id="ag-region" data-ag="region" aria-label="Регион работы"></select></label>
+    <label>Должность<select id="ag-role" data-ag="role" aria-label="Должность"></select></label>
+    <label>Объект<select id="ag-object" data-ag="object" aria-label="Объект работы"></select></label>
+  </div>
+  <p class="ag-notice" id="ag-notice" role="status" hidden></p>
+  <div class="ag-instruments" id="ag-instruments">
+    <section class="ag-instrument ag-goal" aria-label="Желаемая сумма">
+      <div class="ag-money-heading"><span class="ag-endpoint" id="ag-money-unit">тыс. ₽</span><label for="ag-target">Хочу привезти</label></div>
+      <div class="ag-money-scale">
+        <svg class="ag-money-contour" id="ag-money-contour" viewBox="0 0 120 250" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="ag-money-light" gradientUnits="userSpaceOnUse" cx="60" cy="150" r="36"><stop offset="0" stop-color="var(--ag-light-core)"/><stop offset=".3" stop-color="var(--ag-light-edge)"/><stop offset=".65" stop-color="var(--ag-slider-accent)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-slider-accent)" stop-opacity="0"/></radialGradient>
+            <radialGradient id="ag-money-bloom" gradientUnits="userSpaceOnUse" cx="59" cy="150" r="32"><stop offset="0" stop-color="var(--ag-light-bloom)"/><stop offset=".45" stop-color="var(--ag-light-bloom)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-light-bloom)" stop-opacity="0"/></radialGradient>
+            <!-- Explicit filter bounds: the contour is only 10px wide, so
+                 objectBoundingBox percentages cut the blur into a rectangle. -->
+            <filter id="ag-money-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="7"/></filter>
+            <filter id="ag-money-tight-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2"/></filter>
+            <filter id="ag-money-edge-aa" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".25"/></filter>
+            <linearGradient id="ag-money-fade" gradientUnits="userSpaceOnUse" x1="0" y1="120" x2="0" y2="180"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".16" stop-color="white" stop-opacity=".2"/><stop offset=".35" stop-color="white" stop-opacity=".8"/><stop offset=".5" stop-color="white"/><stop offset=".65" stop-color="white" stop-opacity=".8"/><stop offset=".84" stop-color="white" stop-opacity=".2"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+            <mask id="ag-money-fade-mask" maskUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" style="mask-type:alpha"><rect x="-60" y="-80" width="240" height="410" fill="url(#ag-money-fade)"/></mask>
+            <path id="ag-money-line" d="M69 0V250"/>
+            <path id="ag-money-left-shape" d="M69 -80V330H-60V-80Z"/>
+            <clipPath id="ag-money-left-clip" clipPathUnits="userSpaceOnUse"><use href="#ag-money-left-shape"/></clipPath>
+          </defs>
+          <use href="#ag-money-line" class="ag-money-line-base"/>
+          <g class="ag-money-light-field" clip-path="url(#ag-money-left-clip)" mask="url(#ag-money-fade-mask)">
+            <use href="#ag-money-line" class="ag-money-line-glow" filter="url(#ag-money-blur)"/>
+            <use href="#ag-money-line" class="ag-money-line-near" filter="url(#ag-money-tight-blur)"/>
+          </g>
+          <g id="ag-money-ticks"></g><g id="ag-money-labels"></g>
+          <use href="#ag-money-line" class="ag-money-line-lit" filter="url(#ag-money-edge-aa)" mask="url(#ag-money-fade-mask)"/>
+        </svg>
+        <span class="ag-money-knob" aria-hidden="true"><svg viewBox="0 0 14 22"><path d="M7 2l4 7H3zM7 20l-4-7h8z"/></svg></span>
+        <input id="ag-target-range" data-ag="target-range" type="range" min="0" max="600000" step="1000" value="180000" aria-label="Желаемая сумма в рублях">
+        <div class="ag-money-readout"><input id="ag-target" data-ag="target" inputmode="decimal" type="text" value="180" autocomplete="off" aria-label="Хочу привезти, тысяч рублей" aria-describedby="ag-goal-hint ag-money-unit ag-target-error"><span class="ag-money-value-unit" aria-hidden="true">тыс. ₽</span></div>
       </div>
+      <div class="ag-money-help"><p id="ag-goal-hint">Сумма, которая останется у вас</p><p id="ag-target-error" class="ag-error" role="alert" hidden>Укажите сумму больше нуля.</p></div>
+      <div class="ag-scale-limits" id="ag-limits" aria-label="Расчётные пределы дохода"><span id="ag-base-limit"></span><span id="ag-high-limit" hidden></span></div>
+      <span class="ag-link-arrow" aria-hidden="true">→</span>
+    </section>
+    <section class="ag-instrument ag-duration" aria-label="Подходящий срок вахты">
+      <div class="ag-duration-content">
+        <div class="ag-duration-summary"><span class="ag-instrument-label" id="ag-duration-label">Для этого нужно</span><div class="ag-shift-number"><output id="ag-shifts">30</output><span>смен</span></div></div>
+        <div class="ag-duration-calendar"><p class="ag-days">≈ <output id="ag-days">37</output> <span id="ag-calendar-unit">календарных дней</span></p><p class="ag-duration-note" id="ag-duration-note">Минимальная подходящая вахта</p></div>
+        <div class="ag-schedule" id="ag-schedule" aria-label="График работы"></div>
+      </div>
+      <div class="ag-duration-rail"><span class="ag-endpoint">Смены</span><div class="ag-duration-track" id="ag-duration-track" aria-label="Доступная длительность вахты"></div></div>
+    </section>
+  </div>
+  <div class="ag-empty" id="ag-empty" hidden><b>Подберём другой объект</b><p id="ag-empty-text"></p></div>
+  <div class="ag-result" id="ag-result" aria-live="polite" aria-atomic="true">
+    <div><span class="ag-result-label">После налога и расходов</span><div class="ag-result-number"><output id="ag-home">186 527</output> <span>₽</span></div><span class="ag-result-delta" id="ag-delta">На 6 527 ₽ больше цели</span></div>
+    <div class="ag-result-action"><span id="ag-basis">При 100 % выработке</span><button type="button" id="ag-conditions-open" data-ag="conditions-open">Условия этой вахты <span aria-hidden="true">↗</span></button></div>
+  </div>
+  <section class="ag-feasibility" id="ag-feasibility" aria-label="Достижимость суммы" hidden>
+    <p id="ag-feasibility-text" aria-live="polite"></p>
+    <div class="ag-feasibility-actions"><button type="button" id="ag-try-high" hidden></button><button type="button" id="ag-alternatives-toggle" aria-expanded="false" aria-controls="ag-alternatives" hidden></button></div>
+    <div class="ag-alternatives" id="ag-alternatives" hidden></div>
+  </section>
+  <div class="ag-options" id="ag-options">
+    <div class="ag-high ag-segments" id="ag-high-wrap" role="group" aria-label="Выработка">
+      <button type="button" data-ag-yield="100" aria-pressed="true">100 % выработки</button>
+      <button type="button" data-ag-yield="hi" aria-pressed="false">При 150 % выработке</button>
+    </div>
+    <details id="ag-expenses" data-ag="expenses"><summary><span>Расходы и полный расчёт <span class="ag-click-hint" aria-hidden="true">[кликни]</span></span><span aria-hidden="true">+</span></summary><div class="ag-detail-body"><div class="ag-expense-inputs"><label>Обычный бюджет на еду, ₽ / день<input type="text" inputmode="decimal" id="ag-food" data-ag="food" value="400"></label><label>Дорога туда и обратно, ₽<input type="text" inputmode="decimal" id="ag-road" data-ag="road" value="600"></label></div><p class="ag-small" id="ag-food-note"></p><dl class="ag-breakdown" id="ag-breakdown"></dl><p class="ag-small" id="ag-training"></p></div></details>
+    <details id="ag-conditions" data-ag="conditions"><summary>Объект и условия <span aria-hidden="true">+</span></summary><div class="ag-detail-body"><h3 id="ag-condition-title"></h3><p class="ag-small" id="ag-position"></p><dl class="ag-breakdown" id="ag-condition-list"></dl><p class="ag-small" id="ag-condition-note"></p></div></details>
+  </div>
+  <footer class="ag-foot">Предварительный расчёт · условия подтвердит менеджер</footer>
+</section>
+
+
+
+      </section>
+      <p class="visually-hidden" aria-live="polite" data-cm-live></p>
+
 
       <form class="cm__body" data-cm-pane="biz" hidden novalidate>
         <div class="cm__ask">
@@ -1004,6 +1083,7 @@
         <button type="button" class="cm__bar-go" data-cm-bar-go><span class="mono" data-cm-bar-btn>Подробнее</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3.5 8.5L8 13l4.5-4.5" /></svg></button>
       </div>
     </div>
+    </div>
     <div class="cm-scrim" data-cm-scrim hidden></div>
     <div class="cm-pop" data-cm-pop role="dialog" aria-modal="false" data-lenis-prevent hidden><div class="cm-pop__in"></div></div>
   </div>
@@ -1027,7 +1107,7 @@
         </div>
         <div class="footer__col">
           <span class="mono">География</span>
-          <ul><li><span>001.</span>Москва и МО<em data-region-count="Москва и МО">15</em></li><li><span>002.</span>Татарстан<em data-region-count="Татарстан">3</em></li><li><span>003.</span>Нижегородская обл.<em data-region-count="Нижегородская обл.">3</em></li><li><span>004.</span>Самарская обл.<em data-region-count="Самарская обл.">1</em></li><li><span>005.</span>Владимир<em data-region-count="Владимир">1</em></li></ul>
+          <ul data-region-list><li><span>001.</span>Москва и МО<em data-region-count="Москва и МО">15</em></li><li><span>002.</span>Татарстан<em data-region-count="Татарстан">3</em></li><li><span>003.</span>Нижегородская обл.<em data-region-count="Нижегородская обл.">3</em></li><li><span>004.</span>Самарская обл.<em data-region-count="Самарская обл.">1</em></li><li><span>005.</span>Владимир<em data-region-count="Владимир">1</em></li><li><span>006.</span>Рязанская обл.<em data-region-count="Рязанская обл.">1</em></li></ul>
         </div>
       </div>
     </div>
@@ -1083,15 +1163,21 @@
 
   <script src="assets/vendor/lenis.min.js"></script>
   <script src="assets/vendor/three.min.js"></script>
-  <script src="js/objects.js?v=20261011a"></script>
-  <script src="js/data.js?v=20261011b"></script>
-  <script src="js/sphere-company.js?v=20261023a"></script>
+  <script src="js/objects.js?v=20261019a"></script>
+  <script src="js/data.js?v=20261019a"></script>
+  <script src="js/sphere-company.js?v=20261019a"></script>
   <script src="js/morph-company.js?v=20261023a"></script>
-  <script src="js/roads.js?v=20261011b"></script>
-  <script src="js/clay-map.js?v=20261015-worker1"></script>
-  <script src="js/geo-panel.js?v=20261023b"></script>
-  <script src="js/main.js?v=20261022a"></script>
-  <script src="js/calc-data.js?v=20261018b"></script>
-  <script src="js/calc-modal.js?v=20261018t"></script>
+  <script src="js/roads.js?v=20261019a"></script>
+  <script src="js/clay-map.js?v=20261019a"></script>
+  <script src="js/geo-panel.js?v=20261019a"></script>
+  <script src="js/main.js?v=20261019a"></script>
+  <script src="js/calc-data.js?v=20261019a"></script>
+  <script src="js/calc-modal.js?v=20261020primary29"></script>
+  <script src="js/calculators/engine-adapter.js?v=20261019controls7"></script>
+  <script src="js/calculators/slider-sound.js?v=20261020sound26"></script>
+  <script src="js/calculators/money-slider.js?v=20261020sound26"></script>
+  <script src="js/calculators/goal-feasibility.js?v=20261020stable23"></script>
+  <script src="js/calculators/goal.js?v=20261020stable23"></script>
+  <script src="js/calc-views.js?v=20261020primary29"></script>
 </body>
 </html>

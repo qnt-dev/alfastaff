@@ -12,3 +12,7 @@ desktop.ini
 
 # кэш скачанных данных OSM для tools/build_clay.py
 tools/.clay-cache/
+
+# Local design references and retired calculator variants are not published.
+archives/
+references/

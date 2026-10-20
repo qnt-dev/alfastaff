@@ -7,11 +7,26 @@
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isMobile = function () { return window.innerWidth <= 900; };
   var remK = function () { return (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16; };
+  // графика (сферы — WebGL, холсты) запускается внутри safely: если браузер не даёт WebGL (старый компьютер, выключенное
+  // аппаратное ускорение, офисная политика) или холст упал, блок остаётся без графики, а остальная страница собирается дальше
+  var safely = function (label, fn) {
+    try { return fn(); } catch (err) {
+      if (window.console && console.warn) console.warn('Альфа-Стафф: «' + label + '» без графики —', err && err.message || err);
+      return null;
+    }
+  };
   var fmt = function (n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
 
-  /* ---------- количество объектов — из каталога ---------- */
+  /* ---------- количество объектов и регионы — из каталога (список регионов — AS.REGIONS, js/data.js) ---------- */
   (function counts() {
-    var n = AS.OBJECTS.length;
+    var n = AS.OBJECTS.length, R = AS.REGIONS || [];
+    var regList = $('[data-region-list]');
+    if (regList) regList.innerHTML = R.map(function (r, i) { return '<li><span>' + String(i + 1).padStart(3, '0') + '.</span>' + r.label + '<em data-region-count="' + r.key + '"></em></li>'; }).join('');
+    $$('[data-regions-in]').forEach(function (el) {
+      el.textContent = 'в ' + R.length + '\u00a0' + AS.plural(R.length, 'регионе', 'регионах', 'регионах') + ': ' + R.map(function (r) { return r.label; }).join(', ').replace(/\.?$/, '.');   // «…Рязанская обл.» — без второй точки
+    });
+    var geoCv = $('.geo__canvas');
+    if (geoCv && R.length) geoCv.setAttribute('aria-label', 'Карта: объекты Альфа-Стафф ' + R.map(function (r) { return r.in; }).join(', ') + '; офисы и пункт отправки в Уфе');
     $$('[data-objects-count]').forEach(function (el) { el.textContent = n + ' ' + AS.plural(n, 'объект', 'объекта', 'объектов'); });
     $$('[data-objects-num]').forEach(function (el) { el.textContent = String(n); });
     $$('[data-region-count]').forEach(function (el) {
@@ -503,7 +518,7 @@
   }
   // линия под «АЛЬФА-СТАФФ» — CSS, симметрично; здесь только подгонка кегля
   function heroRule() { fitTitle(); }
-  if (AS.TextFill) $$('.hero__fill').forEach(function (c) { AS.TextFill(c); });
+  if (AS.TextFill) $$('.hero__fill').forEach(function (c) { safely('заливка заголовка', function () { AS.TextFill(c); }); });
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
     heroRule();
     requestAnimationFrame(function () { hero.classList.add('is-ready'); });
@@ -524,7 +539,7 @@
     clearTimeout(heroIndexResume);
     if (!heroPaused) heroIndexResume = setTimeout(function () { heroSphereApi.queueAutoplay(0); }, 7000);
   }
-  if (heroGeoEl && AS.HeroGeo) heroGeo = AS.HeroGeo(heroGeoEl, { onPick: heroPick });
+  if (heroGeoEl && AS.HeroGeo) heroGeo = safely('карта объекта', function () { return AS.HeroGeo(heroGeoEl, { onPick: heroPick }); });
   // пауза: сфера перестаёт перебирать объекты — можно спокойно рассмотреть карту
   if (heroPauseBtn) heroPauseBtn.addEventListener('click', function () {
     heroPaused = !heroPaused;
@@ -547,9 +562,9 @@
     // клик по строке поворачивает сферу к складу, потом автопоказ продолжается
     $$('button', heroIndexList).forEach(function (b, i) { b.addEventListener('click', function () { heroPick(i); }); });
   }
-  if (AS.Sphere) {
-    var heroSphere = $('[data-sphere="hero"]');
-    if (heroSphere) heroSphereApi = new AS.Sphere(heroSphere, {
+  var heroSphere = $('[data-sphere="hero"]');
+  if (AS.Sphere && heroSphere) {
+    heroSphereApi = safely('сфера первого экрана', function () { return new AS.Sphere(heroSphere, {
       mode: 'hero', objects: AS.OBJECTS, seed: 31, clip: $('#hero-stage'),
       // область для карточек: над сферой и левее списка (считается в heroLayout)
       clipRect: function () {
@@ -564,9 +579,26 @@
         scrollToEl(grid, -Math.max(20, (window.innerHeight - gh) / 2));
         setTimeout(function () { if (mapApi) mapApi.select(i, true); }, 500);
       },
-    });
+    }); });
     // панель справа сразу показывает объект, с которого начнёт сфера (а не первый по списку — без перескока после загрузки)
     if (heroSphereApi && heroGeo && heroSphereApi.peekObject) heroGeo.show(heroSphereApi.peekObject());
+  }
+  // без WebGL сферы нет: первый экран сам перебирает объекты на карте справа (как это делала сфера), пауза и список работают
+  if (!heroSphereApi && heroSphere) {
+    heroSphere.classList.add('is-flat');
+    heroSphereApi = (function () {
+      var n = AS.OBJECTS.length, at = 0, timer = 0, paused = false;
+      function next() { at = (at + 1) % n; markHeroIndex(at); queue(8000); }
+      function queue(d) { clearTimeout(timer); if (!paused && n > 1) timer = setTimeout(next, d == null ? 8000 : d); }
+      queue();
+      return {
+        focus: function (i) { at = i; markHeroIndex(i); clearTimeout(timer); },
+        queueAutoplay: function (d) { queue(Math.max(d || 0, 1500)); },
+        setPaused: function (on) { paused = !!on; if (on) clearTimeout(timer); else queue(1500); },
+        peekObject: function () { return at; }
+      };
+    })();
+    markHeroIndex(0);
   }
 
   /* ---------- первый экран: сфера в круглом вырезе листа ----------
@@ -592,7 +624,7 @@
       if (heroIndex) { heroIndex.hidden = true; heroIndex.style.left = heroIndex.style.right = heroIndex.style.top = heroIndex.style.width = ''; }
       heroClip = null;
     }
-    function done() { if (heroSphereApi) heroSphereApi.updateClip(); }
+    function done() { if (heroSphereApi && heroSphereApi.updateClip) heroSphereApi.updateClip(); }
     reset();
     if (isMobile()) { done(); return; }
 
@@ -821,7 +853,7 @@
       var cr = canvas.getBoundingClientRect(), k = kick.getBoundingClientRect(), tt = ttl.getBoundingClientRect(), kk = remK();
       return [k.bottom - cr.top + 22 * kk, tt.top - cr.top - 34 * kk];
     };
-    var m = canvas && AS.Morph ? new AS.Morph(canvas, MORPHS[key] || ['pick'], { count: isMobile() ? 760 : 1400, region: region }) : null;
+    var m = canvas && AS.Morph ? safely('анимация секции', function () { return new AS.Morph(canvas, MORPHS[key] || ['pick'], { count: isMobile() ? 760 : 1400, region: region }); }) : null;
     if (m && document.fonts) document.fonts.ready.then(function () { m.refit(); });
     return { sec: sec, key: key, steps: $$('.step', sec), pager: $$('.split__pager i', sec), count: $('[data-split-current]', sec), morph: m, cur: -1, n: parseInt(getComputedStyle(sec).getPropertyValue('--steps'), 10) || 1 };
   });
@@ -911,13 +943,14 @@
     if (tabsEl && AS.REGIONS.length > 1) setRegion(AS.REGIONS[0].key);
     var mapEl = $('[data-sphere="map"]');
     if (mapEl && AS.Sphere) {
-      sphere = new AS.Sphere(mapEl, {
+      sphere = safely('сфера карты объектов', function () { return new AS.Sphere(mapEl, {
         mode: 'map', objects: O, seed: 77, clip: $('.objects__stage'),
         focusX: isMobile() ? 0 : 0.16, focusY: isMobile() ? 0.42 : 0.36,
         onUserDrag: function () { paused = true; },
         onUserRelease: function () { paused = false; startT = performance.now() - DUR * 0.4; setTimeout(function () { if (current >= 0) sphere.focus(current); }, 2600); },
-      });
+      }); });
     }
+    if (mapEl && !sphere) mapEl.classList.add('is-flat');   // без WebGL: список и карточка объекта работают и без сферы
     function fill(o, i) {
       // плавно: текст гаснет, меняется уже невидимым и проявляется; высота карточки не меняется (см. fixDetailHeight)
       clearTimeout(detail._swapT);
@@ -931,10 +964,12 @@
         $('[data-d="tag"]', detail).textContent = o.region === 'Москва и МО' ? o.tag : o.region + ' · ' + o.tag;
         $('[data-d="name"]', detail).textContent = o.name;
         $('[data-d="address"]', detail).textContent = o.address;
-        $('[data-d="hostel"]', detail).textContent = o.hostel + (o.housing ? ' — ' + o.housing : '') + (o.transport ? '; ' + o.transport : '') + '.';
+        // жильё и питание — как в таблице; чего в таблице нет (новый объект), то «уточняйте», а не пустая строка
+        var cap = function (t) { return t.charAt(0).toUpperCase() + t.slice(1); };
+        $('[data-d="hostel"]', detail).textContent = [o.hostel ? o.hostel + (o.housing ? ' — ' + o.housing : '') : o.housing ? cap(o.housing) : 'Жильё — уточняйте у менеджера', o.transport].filter(Boolean).join('; ') + '.';
         $('[data-d="jobs"]', detail).textContent = o.jobsFull.join(', ') + (o.who ? ' · ' + o.who : '');
         $('[data-d="pay"]', detail).textContent = o.pay + (o.advanceText ? ' Аванс — ' + o.advanceText + '.' : '');
-        $('[data-d="meals"]', detail).textContent = o.mealsFull ? o.mealsFull.charAt(0).toUpperCase() + o.mealsFull.slice(1) : '';
+        $('[data-d="meals"]', detail).textContent = o.mealsFull ? cap(o.mealsFull) : 'Уточняйте у менеджера';
         var noteEl = $('[data-d="note"]', detail); noteEl.textContent = o.note || ''; noteEl.parentNode.hidden = !o.note;
         $('[data-d="shift"]', detail).textContent = o.shiftFull + (o.vakhta && o.vakhta.length ? '. Вахта ' + o.vakhta.join(' / ') + ' смен' : '');
       }
@@ -1076,13 +1111,13 @@
       // кнопки над картой: вся карта и регионы; нажатие на регион на карте тоже приближает его
       var chips = [{ key: '', label: 'Вся карта' }].concat(AS.REGIONS.map(function (r) { return { key: r.key, label: r.label }; }));
       if (geoNav) geoNav.innerHTML = chips.map(function (c) { return '<button type="button" data-r="' + c.key + '" aria-pressed="' + (c.key ? 'false' : 'true') + '">' + c.label + '</button>'; }).join('');
-      var geoApi = AS.GeoMap(geo, { onZoom: function (key) { if (geoNav) $$('button', geoNav).forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.r === key ? 'true' : 'false'); }); } });
-      if (geoNav) $$('button', geoNav).forEach(function (b) { b.addEventListener('click', function () { geoApi.zoom(b.dataset.r); }); });
+      var geoApi = safely('карта регионов', function () { return AS.GeoMap(geo, { onZoom: function (key) { if (geoNav) $$('button', geoNav).forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.r === key ? 'true' : 'false'); }); } }); });
+      if (geoNav && geoApi) $$('button', geoNav).forEach(function (b) { b.addEventListener('click', function () { geoApi.zoom(b.dataset.r); }); });
     }
     var wave = $('.manifesto__wave canvas');
-    if (wave && AS.DotWave) AS.DotWave(wave);
+    if (wave && AS.DotWave) safely('волна', function () { AS.DotWave(wave); });
     var earth = $('.earth__canvas');
-    if (earth && AS.Earth) AS.Earth(earth);
+    if (earth && AS.Earth) safely('Земля в подвале', function () { AS.Earth(earth); });
   })();
 
   /* ---------- калькулятор ---------- */
@@ -1146,6 +1181,11 @@
     if (!form) return;
     var sel = $('[data-object-select]', form);
     AS.OBJECTS.forEach(function (o) { var op = document.createElement('option'); op.value = o.id; op.textContent = o.short; sel.appendChild(op); });
+    // профессии в заявке — все, что есть на объектах каталога (калькулятор отмечает выбранную)
+    var profPick = $('[data-prof-pick]', form);
+    if (profPick) profPick.innerHTML = AS.PROFESSIONS.filter(function (p) { return AS.countObjectsFor(p.key); }).map(function (p) {
+      return '<label><input type="checkbox" name="prof" value="' + p.key + '"><span>' + (p.short || p.title) + '</span></label>';
+    }).join('');
     $$('[data-tab-btn]', form).forEach(function (b) { b.addEventListener('click', function () { setTab(b.dataset.tabBtn); }); });
     $$('[data-tab]').forEach(function (a) { a.addEventListener('click', function () { setTab(a.dataset.tab); }); });
     setTab('job');

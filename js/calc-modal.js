@@ -1,14 +1,6 @@
-/* Альфа-Стафф · калькулятор вахты во всплывающем окне — открывается кнопкой в кармашке первого экрана
-   (на телефоне — кнопкой «Посчитать заработок» под «Подобрать вахту»).
-   Условия задаются одной фразой: подчёркнутые слова — выбор. По нажатию от слова выезжает плашка с вариантами
-   (у каждого — сколько объектов подойдёт), на телефоне — шторка снизу. Второстепенное спрятано под «Уточнить».
-   «Ищу работу»: подбирает объекты под человека (регион, профессия, длительность, пол и возраст — требования вакансий)
-   и для каждого считает, сколько он привезёт домой: стажировка по её ставке, остальные смены — по ставке должности
-   (сдельная — при 100 % выработке), обучение не оплачивается; минус налог самозанятого, еда, где она не входит
-   в условия, и дорога, плюс компенсация дороги; даты вахты, когда приходят аванс и остаток, сравнение с зарплатой дома.
-   Ставки и условия — из AS.CALC (js/calc-data.js, собирает tools/build_calc.py из таблицы вакансий).
-   «Нужен персонал»: сколько людей нужно в штате под смены и график и сколько в месяц стоит свой штат
-   (оплата смен, взносы, найм взамен ушедших, обучение, жильё); цену «Альфа-Стафф» менеджер пришлёт по заявке. */
+/* Shared candidate model and employer calculator modal. Goal renders candidates;
+   eligibility, rates, calendar and finance remain in the shared AS.CalcModal API.
+   Employer inputs, popups, focus handling and request form stay in this module. */
 (function () {
   'use strict';
   var AS = window.AS || {};
@@ -29,13 +21,27 @@
 
   // рабочих смен в неделю при графике: 6/1 — шесть смен и выходной, 7/0 — без выходных
   var WEEK = { '6/1': 6, '7/0': 7, '5/2': 5, '2/2': 3.5 };
-  var SCHED_TXT = { '6/1': 'выходной раз в неделю', '7/0': 'без выходных', '5/2': 'пять смен и два выходных', '2/2': 'два через два' };
+  // календарь вахты: [смен подряд, выходных после них]. День заезда — первая смена; выходные — после каждых N смен;
+  // после последней смены выходного нет — человек уезжает
+  var CYCLE = { '6/1': [6, 1], '7/0': [7, 0], '5/2': [5, 2], '2/2': [2, 2] };
+  function shiftDay(n, sched) { var c = CYCLE[sched] || CYCLE['7/0']; return n > 0 ? n - 1 + c[1] * Math.floor((n - 1) / c[0]) : 0; }   // n-я смена — в какой день от заезда (0 — день заезда)
+  function daysOn(n, sched) { return n > 0 ? shiftDay(n, sched) + 1 : 0; }
   var CHEV = '<svg class="cm-tk__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 6.5L8 10l3.5-3.5" /></svg>';
-  var ARROW = function (d) { return '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="' + (d < 0 ? 'M10 3.5L5.5 8l4.5 4.5' : 'M6 3.5L10.5 8 6 12.5') + '" /></svg>'; };
   function median(a) { a = a.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : 0; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function rub(n) { return money(Math.round(n)) + ' ₽'; }
-  function num(el) { return parseInt(String(el.value).replace(/\D/g, ''), 10) || 0; }
+  // число из поля — целые рубли (штуки): копейки и доли не считаем. «600», «600,00», «600.5» — 600; «6 000», «6.000», «6 000,50» — 6000.
+  // Разделитель с одной-двумя цифрами в конце — дробная часть, с тремя — разряды
+  function parseNum(s) {
+    var d = String(s).replace(/[\s  ]/g, '').replace(/[.,]\d{0,2}$/, '').replace(/\D/g, '').slice(0, 9);
+    return parseInt(d, 10) || 0;
+  }
+  function num(el) { return parseNum(el.value); }
+  // при наборе в поле остаются только цифры, пробелы и разделители — набранное не переписываем, считаем по parseNum
+  function cleanNum(inp, max) {
+    var v = inp.value.replace(/[^\d\s .,]/g, '').slice(0, max || 14);
+    if (v !== inp.value) inp.value = v;
+  }
   var MON = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
   function day(d) { return d.getDate() + '\u00a0' + MON[d.getMonth()]; }
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
@@ -51,13 +57,10 @@
     fitInputs();
     requestAnimationFrame(function () { requestAnimationFrame(function () { cm.classList.add('is-open'); }); });
     setTimeout(function () { var c = $('.cm__close', cm); if (c) c.focus({ preventScroll: true }); }, 60);
-    clearInterval(autoTimer); autoTimer = setInterval(autoTick, 10000);
-    setTimeout(beamSel, 80);   // размеры плашек известны только у открытого окна   // автосмена сумм у сдельной — только пока окно открыто
   }
-  var autoTimer = 0;
   function close() {
     if (cm.hidden) return;
-    closePop(true); clearInterval(autoTimer);
+    closePop(true);
     cm.classList.remove('is-open');
     document.documentElement.classList.remove('cm-lock');
     if (AS.lenis) AS.lenis.start();
@@ -66,9 +69,12 @@
   }
   $$('[data-calc-open]').forEach(function (b) { b.addEventListener('click', open); });
   $$('[data-cm-close]', cm).forEach(function (b) { b.addEventListener('click', close); });
-  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]), select, textarea, [role="button"][tabindex="0"]';
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex="0"]';
   function trap(e, box) {   // фокус по Tab не уходит из окна (или из открытой плашки)
-    var f = $$(FOCUSABLE, box).filter(function (x) { return x.offsetParent !== null && !x.closest('[inert]'); });
+    var f = $$(FOCUSABLE, box).filter(function (x) {
+      var closed = x.closest('details:not([open])');
+      return x.offsetParent !== null && !x.closest('[inert]') && (!closed || closed.querySelector('summary').contains(x));
+    });
     if (!f.length) return;
     var first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -76,21 +82,24 @@
   }
   document.addEventListener('keydown', function (e) {
     if (cm.hidden) return;
+    // Let an open native picker consume Escape/Tab before the modal handles them.
+    if (e.defaultPrevented || (window.CSS && CSS.supports('selector(select:open)') && cm.querySelector('select:open'))) return;
     if (popBtn) {
       if (e.key === 'Escape') { e.preventDefault(); closePop(false, true); }
       else if (e.key === 'Tab') trap(e, pop);
       return;
     }
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }
-    if (e.key === 'Tab') trap(e, $('.cm__panel', cm));
+    if (e.key === 'Tab') trap(e, $('.calc-workspace', cm) || $('.cm__panel', cm));
   });
 
   /* ---------- вкладки, «Уточнить», поля с суммами, строка итога на телефоне ---------- */
-  var panel = $('.cm__panel', cm), barEl = $('[data-cm-bar]', cm), bar = { job: ['', '', ''], biz: ['', '', ''] }, barSeen = {};
+  var panel = $('.cm__panel', cm), barEl = $('[data-cm-bar]', cm), bar = ['', '', ''], barSeen = false;
   function drawBar() {
-    var t = cm.dataset.tab || 'job', b = bar[t];
-    $('[data-cm-bar-main]', cm).textContent = b[0]; $('[data-cm-bar-sub]', cm).textContent = b[1]; $('[data-cm-bar-btn]', cm).textContent = b[2];
-    barEl.classList.toggle('is-off', !!barSeen[t]);
+    barEl.hidden = cm.dataset.tab !== 'biz';
+    if (barEl.hidden) return;
+    $('[data-cm-bar-main]', cm).textContent = bar[0]; $('[data-cm-bar-sub]', cm).textContent = bar[1]; $('[data-cm-bar-btn]', cm).textContent = bar[2];
+    barEl.classList.toggle('is-off', barSeen);
   }
   function tab(t) {
     closePop(true);
@@ -109,7 +118,8 @@
       fitInputs();
     });
   });
-  // суммы — с пробелами между разрядами (после ввода), в поле только цифры; ширина поля — по тексту, как у слова во фразе
+  // суммы — с пробелами между разрядами (после ввода); копейки можно набрать, но в расчёт и в поле после ввода идут целые рубли;
+  // ширина поля — по тексту, как у слова во фразе
   var ruler = document.createElement('canvas').getContext('2d');
   function fitInput(inp) {
     var cs = getComputedStyle(inp);
@@ -118,19 +128,21 @@
   }
   function fitInputs() { $$('.cm-tk--in input', cm).forEach(fitInput); }
   $$('[data-cm-money], [data-cm-int]', cm).forEach(function (inp) {
-    inp.addEventListener('input', function () { var v = inp.value.split(/[.,]/)[0].replace(/\D/g, '').slice(0, 9); if (inp.value !== v) inp.value = v; fitInput(inp); });   // копейки отбрасываем: «600,00» — 600 ₽
-    if (inp.hasAttribute('data-cm-money')) inp.addEventListener('blur', function () { var v = num(inp); inp.value = v ? money(v) : ''; fitInput(inp); });
+    var max = +inp.getAttribute('maxlength') || 0;
+    if (max) inp.removeAttribute('maxlength');   // «40,5» в поле из трёх цифр тоже должно набираться — длину держит cleanNum
+    inp.addEventListener('input', function () { cleanNum(inp, max ? max + 3 : 0); fitInput(inp); });
+    inp.addEventListener('blur', function () { var v = num(inp); inp.value = v ? (inp.hasAttribute('data-cm-money') ? money(v) : String(v)) : ''; fitInput(inp); });
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitInputs);
   // на телефоне итог — ниже фразы: пока выбираешь, сумма видна в строке внизу шторки
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { barSeen[e.target.closest('[data-cm-pane]').dataset.cmPane] = e.isIntersecting; }); drawBar();
+      es.forEach(function (e) { barSeen = e.isIntersecting; }); drawBar();
     }, { root: panel, threshold: 0.2 });
-    $$('.cm__result', cm).forEach(function (r) { io.observe(r); });
+    $$('[data-cm-pane="biz"] .cm__result', cm).forEach(function (r) { io.observe(r); });
   }
   $('[data-cm-bar-go]', cm).addEventListener('click', function () {
-    var r = $('[data-cm-pane="' + (cm.dataset.tab || 'job') + '"] .cm__result', cm);
+    var r = $('[data-cm-pane="biz"] .cm__result', cm);
     if (r) panel.scrollTo({ top: r.offsetTop - 16, behavior: reduce ? 'auto' : 'smooth' });
   });
   // крупная сумма в итоге не прыгает, а докручивается до нового значения
@@ -165,7 +177,7 @@
       if (b !== popBtn) b.setAttribute('aria-expanded', 'false');
     });
   }
-  function refresh(s) { drawTokens(); if (s.pane === 'biz') drawBiz(); else drawJob(); place(); }
+  function refresh() { drawTokens(); drawBiz(); place(); }
   function openPop(btn) {
     if (popBtn === btn) { closePop(false, true); return; }
     var key0 = btn.dataset.cmK;
@@ -175,7 +187,7 @@
     popBtn = btn; btn.setAttribute('aria-expanded', 'true'); btn.classList.add('is-open');
     pop.setAttribute('aria-label', s.title);
     pop.dataset.kind = s.kind; pop.dataset.k = btn.dataset.cmK;
-    popIn.innerHTML = s.kind === 'step' ? stepHtml(s) : s.kind === 'cal' ? calHtml() : listHtml(s);
+    popIn.innerHTML = s.kind === 'step' ? stepHtml(s) : listHtml(s);
     $$('.cm-rng', popIn).forEach(fill);
     clearTimeout(popT);
     pop.hidden = false; scrim.hidden = !sheet.matches;
@@ -183,7 +195,7 @@
     place();
     void pop.offsetWidth;   // старт анимации выезда с закрытого положения
     pop.classList.add('is-on'); scrim.classList.add('is-on');
-    var f = $('[aria-selected="true"], .cm-cal__d.is-on, [data-cm-nv]', popIn) || $(FOCUSABLE, popIn);
+    var f = $('[aria-selected="true"], [data-cm-nv]', popIn) || $(FOCUSABLE, popIn);
     if (f) f.focus({ preventScroll: true });
   }
   function closePop(instant, refocus) {
@@ -261,21 +273,7 @@
     $('[data-cm-nu]', popIn).textContent = s.unit(v);
     if (nn) nn.textContent = s.count(v);
   }
-  // календарь на пять недель вперёд — дата выезда
   var today = new Date(); today.setHours(0, 0, 0, 0);
-  function calHtml() {
-    var start = addDays(today, -((today.getDay() + 6) % 7)), cells = '', i, d, last = addDays(start, 34);
-    for (i = 0; i < 35; i++) {
-      d = addDays(start, i);
-      var on = +d === +job.start, past = d < today;
-      cells += '<button type="button" class="cm-cal__d' + (on ? ' is-on' : '') + (+d === +today ? ' is-today' : '') + '" data-t="' + d.getTime() + '"' + (past ? ' disabled' : '') +
-        ' aria-pressed="' + on + '" aria-label="' + d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }) + '">' +
-        (d.getDate() === 1 ? '<em>' + d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') + '</em>' : '') + d.getDate() + '</button>';
-    }
-    var mon = function (x) { return x.toLocaleDateString('ru-RU', { month: 'long' }); };
-    return '<div class="cm-pop__h"><span class="mono">Когда выезжаете</span><span class="mono mono--dim">' + mon(start) + (start.getMonth() !== last.getMonth() ? ' — ' + mon(last) : '') + '</span></div>' +
-      '<div class="cm-cal">' + ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map(function (w) { return '<span aria-hidden="true">' + w + '</span>'; }).join('') + cells + '</div>';
-  }
   popIn.addEventListener('click', function (e) {
     var s = popBtn && SEL[popBtn.dataset.cmK]; if (!s) return;
     var o = e.target.closest('.cm-opt');
@@ -283,33 +281,29 @@
     if (o) { s.set(o.dataset.v); closePop(); refresh(s); refocus(key); return; }
     var d = e.target.closest('[data-cm-d]');
     if (d) { if (s === SEL.posts) B.mode = 'heads'; stepSet(s, s.cur() + (+d.dataset.cmD)); return; }
-    var c = e.target.closest('.cm-cal__d');
-    if (c && !c.disabled) { job.start = new Date(+c.dataset.t); closePop(); refresh(s); refocus(key); return; }
     if (e.target.closest('[data-cm-vol]')) { var n = volHeads(); if (n) { B.mode = 'volume'; stepSet(s, n); } }
-    if (e.target.closest('[data-cm-age-clear]')) { job.age = 0; job.pick = ''; closePop(); refresh(s); refocus(key); return; }
   });
   popIn.addEventListener('input', function (e) {
     var s = popBtn && SEL[popBtn.dataset.cmK]; if (!s) return;
     if (e.target.matches('[data-cm-nr]')) { if (s === SEL.posts) B.mode = 'heads'; stepSet(s, +e.target.value); }
     else if (e.target.matches('[data-cm-nv]')) {
-      var v = e.target.value.replace(/\D/g, ''); e.target.value = v;
-      if (+v >= s.min && +v <= (s.hard || s.max)) { if (s === SEL.posts) B.mode = 'heads'; stepSet(s, +v, true); }
+      cleanNum(e.target, 3); var v = num(e.target);   // «12,» — это 12
+      if (v >= s.min && v <= (s.hard || s.max)) { if (s === SEL.posts) B.mode = 'heads'; stepSet(s, v, true); }
     } else if (e.target.matches('[data-cm-vin]')) {
-      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 7);
+      cleanNum(e.target, 12);
       var n = volHeads(), go = $('[data-cm-vol]', popIn);
       go.disabled = !n; go.innerHTML = n ? 'Нужно <b>' + n + ' ' + plural(n, 'человек', 'человека', 'человек') + '</b> — взять' : 'Укажите объём и норму';
     }
   });
   popIn.addEventListener('change', function (e) {
     var s = popBtn && SEL[popBtn.dataset.cmK];
-    if (s && e.target.matches('[data-cm-nv]')) stepSet(s, +e.target.value || s.cur());
+    if (s && e.target.matches('[data-cm-nv]')) stepSet(s, num(e.target) || s.cur());
   });
   popIn.addEventListener('keydown', function (e) {
-    var items = $$('.cm-opt, .cm-cal__d:not(:disabled)', popIn), i = items.indexOf(document.activeElement);
+    var items = $$('.cm-opt', popIn), i = items.indexOf(document.activeElement);
     if (i < 0) { if (e.key === 'Enter' && e.target.matches('[data-cm-nv]')) { e.preventDefault(); closePop(false, true); } return; }
-    var cal = items[i].classList.contains('cm-cal__d'), k = e.key, step = 0;
-    if (k === 'ArrowDown') step = cal ? 7 : 1; else if (k === 'ArrowUp') step = cal ? -7 : -1;
-    else if (cal && k === 'ArrowRight') step = 1; else if (cal && k === 'ArrowLeft') step = -1;
+    var k = e.key, step = 0;
+    if (k === 'ArrowDown') step = 1; else if (k === 'ArrowUp') step = -1;
     else if (k === 'Home') { e.preventDefault(); items[0].focus(); return; } else if (k === 'End') { e.preventDefault(); items[items.length - 1].focus(); return; }
     if (step) { e.preventDefault(); items[clamp(i + step, 0, items.length - 1)].focus(); }
   });
@@ -361,7 +355,7 @@
     var gross = inN * (p.intern ? p.intern.rate : 0) + regN * r, tax = Math.round(gross * TAX);
     // график: выбранный человеком, если он есть на объекте, иначе — тот, что на объекте
     var sched = t.scheds.indexOf(I.sched) >= 0 ? I.sched : t.scheds[0], week = WEEK[sched];
-    var days = Math.ceil(worked * 7 / week), perDay = Math.round(I.food * t.foodShare) + t.foodPay, food = perDay * days;
+    var days = daysOn(worked, sched), perDay = Math.round(I.food * t.foodShare) + t.foodPay, food = perDay * days;
     var comp = I.shifts >= ROAD_COMP_FROM ? Math.min(ROAD_COMP, I.road) : 0, home = gross - tax - food - I.road + comp;
     // сдельная выше нормы: те же смены по ставке при 150 % выработке (или по верхней цифре вилки из таблицы)
     var hi = null;
@@ -374,307 +368,153 @@
 
   // пол и возраст не подставляем: пока человек их не указал, показываем все объекты, требования — в карточке объекта
   var job = { region: '', prof: '', shifts: 30, sched: '6/1', sex: '', age: 0, sort: 'home', view: 'calc', v: '100', auto: true, autoObj: '', road: 0, food: 0, start: addDays(today, 3), pick: '' };
-  var jp = $('[data-cm-pane="job"]', cm), lastOk = [], lastCur = null;
+  var lastCur = null;
+  // Другие представления пользуются тем же подбором, ставками и состоянием.
+  // В обратном расчёте проверяем реальные сроки объектов, а не делим цель на среднюю ставку.
+  var modelListeners = [], modelUpdate = null;
+  function modelState() {
+    var copy = Object.assign({}, job);
+    copy.start = new Date(job.start.getTime());
+    return { job: copy, current: lastCur, objects: O };
+  }
+  function modelNotify() {
+    modelListeners.slice().forEach(function (fn) { fn(modelState()); });
+  }
+  function modelInput(overrides) {
+    var I = Object.assign({}, job, overrides || {});
+    return ['shifts', 'road', 'food', 'age'].every(function (key) {
+      return typeof I[key] === 'number' && isFinite(I[key]) && I[key] >= 0;
+    }) && I.shifts > 0 && Math.floor(I.shifts) === I.shifts ? I : null;
+  }
+  function modelObject(id) { return O.filter(function (o) { return o.id === id; })[0] || null; }
+  function modelPreview(id, overrides) {
+    var o = modelObject(id || job.pick), I = modelInput(overrides);
+    if (!o || !I) return null;
+    var why = fits(o, I);
+    return why && !why.length ? calc(o, I) : null;
+  }
+  function modelDurations(id, I) {
+    var objects = id ? O.filter(function (o) { return o.id === id; }) : O, result = [];
+    objects.forEach(function (o) {
+      var lengths = (o.vakhta || []).slice();
+      if (!lengths.length) {
+        for (var n = Math.max(1, Math.ceil(o.minShifts || 1)); n <= 90; n++) lengths.push(n);
+      }
+      lengths.forEach(function (n) {
+        if (typeof n !== 'number' || !isFinite(n) || n <= 0 || Math.floor(n) !== n) return;
+        var why = fits(o, Object.assign({}, I, { shifts: n }));
+        if (why && !why.length && result.indexOf(n) < 0) result.push(n);
+      });
+    });
+    return result.sort(function (a, b) { return a - b; });
+  }
+  function modelSolve(target, options) {
+    options = options || {};
+    target = Number(target);
+    var I = modelInput(options), candidates = [], validTarget = isFinite(target) && target >= 0;
+    var empty = { quote: null, shifts: null, reached: false, home: null, target: validTarget ? target : null };
+    if (!I || !validTarget) return empty;
+    var objects = options.id ? O.filter(function (o) { return o.id === options.id; }) : O;
+    objects.forEach(function (o) {
+      modelDurations(o.id, I).forEach(function (shifts) {
+        var quote = calc(o, Object.assign({}, I, { shifts: shifts }));
+        var home = I.v === 'hi' && quote.hi ? quote.hi.home : quote.home;
+        candidates.push({ quote: quote, shifts: shifts, reached: home >= target, home: home, target: target });
+      });
+    });
+    var reached = candidates.filter(function (c) { return c.reached; });
+    if (reached.length) {
+      reached.sort(function (a, b) { return a.quote.days - b.quote.days || a.shifts - b.shifts || b.home - a.home; });
+      return reached[0];
+    }
+    candidates.sort(function (a, b) { return b.home - a.home || a.quote.days - b.quote.days || a.shifts - b.shifts; });
+    return candidates[0] || empty;
+  }
+  function modelSet(patch) {
+    patch = patch || {};
+    ['region', 'prof', 'pick'].forEach(function (key) { if (typeof patch[key] === 'string') job[key] = patch[key]; });
+    if (patch.sex === '' || patch.sex === 'm' || patch.sex === 'f') job.sex = patch.sex;
+    if (Object.prototype.hasOwnProperty.call(WEEK, patch.sched)) job.sched = patch.sched;
+    if (patch.sort === 'home' || patch.sort === 'days' || patch.sort === 'fixed') job.sort = patch.sort;
+    if (patch.view === 'calc' || patch.view === 'compare') job.view = patch.view;
+    ['shifts', 'road', 'food', 'age'].forEach(function (key) {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) return;
+      var n = Number(patch[key]);
+      if (isFinite(n)) job[key] = Math.max(key === 'shifts' ? 1 : 0, Math.round(n));
+    });
+    if (patch.start && typeof patch.start.getTime === 'function' && isFinite(patch.start.getTime())) job.start = new Date(patch.start.getTime());
+    modelUpdate = { auto: patch.auto === true, v: patch.v === 'hi' || patch.v === '100' ? patch.v : null };
+    job.auto = modelUpdate.auto;
+    if (modelUpdate.v) job.v = modelUpdate.v;
+    try { refreshJobModel(); } finally { modelUpdate = null; }
+    return modelState();
+  }
+  AS.CalcModal = {
+    state: modelState,
+    parseAmount: parseNum,
+    set: modelSet,
+    preview: modelPreview,
+    durations: function (id) { return modelDurations(id, job); },
+    solve: modelSolve,
+    subscribe: function (fn) {
+      if (typeof fn !== 'function') return function () {};
+      modelListeners.push(fn);
+      return function () { var i = modelListeners.indexOf(fn); if (i >= 0) modelListeners.splice(i, 1); };
+    },
+    apply: applyJob
+  };
+  function refreshJobModel() {
+    var matches = O.filter(function (o) { var why = fits(o, job); return why && !why.length; })
+      .map(function (o) { return calc(o, job); }).sort(function (a, b) {
+        if (job.sort === 'days') return a.days - b.days || b.home - a.home;
+        if (job.sort === 'fixed') return (a.p.basis !== 'fixed') - (b.p.basis !== 'fixed') || b.home - a.home;
+        return b.home - a.home;
+      });
+    lastCur = matches.filter(function (quote) { return quote.o.id === job.pick; })[0] || matches[0] || null;
+    if (lastCur) {
+      job.pick = lastCur.o.id;
+      if (job.pick !== job.autoObj) { job.autoObj = job.pick; job.auto = true; job.v = '100'; }
+      if (modelUpdate) { job.auto = modelUpdate.auto; if (modelUpdate.v) job.v = modelUpdate.v; }
+    }
+    modelNotify();
+  }
   // сумма в итоге — до тысяч: это прогноз; точные строки — в расшифровке
   function round1k(n) { return Math.round(n / 1000) * 1000; }
   var liveEl = $('[data-cm-live]', cm), liveT = 0;
   function announce(s) { clearTimeout(liveT); liveT = setTimeout(function () { if (liveEl) liveEl.textContent = s; }, 700); }   // скринридеру — итог, без лишней частоты
-  var REGS = (AS.CALC.regions || []).filter(function (r) { return O.some(function (o) { return o.region === r.key; }); });
-  // профессия во фразе «Ищу работу …» — в творительном падеже; для женщин — женская форма, где она есть
-  var PROF_AS = {
-    'Комплектовщик': ['комплектовщиком', 'комплектовщицей'], 'Упаковщик': ['упаковщиком', 'упаковщицей'], 'Сортировщик': ['сортировщиком', 'сортировщицей'],
-    'Фасовщик / стикеровщик': ['фасовщиком / стикеровщиком', 'фасовщицей / стикеровщицей'], 'Оператор приёма возвратов': ['оператором приёма возвратов'],
-    'Грузчик-разнорабочий': ['грузчиком-разнорабочим'], 'Водитель высотного штабелёра': ['водителем высотного штабелёра']
-  };
-  function profAs(p) { var f = PROF_AS[p]; return f ? (job.sex === 'f' && f[1]) || f[0] : p.toLowerCase(); }
-  function profsIn(region) {
-    var seen = {}, list = [];
-    O.forEach(function (o) { if (!region || o.region === region) (o.jobsFull || []).forEach(function (j) { if (!seen[j]) { seen[j] = 1; list.push(j); } }); });
-    return list;
+  var CHIP = { '100': 'при 100 % выработке', given: 'сделка, цифра объекта', fixed: 'фикс' };
+  // «Хочу на этот объект» — к общей заявке: объект, длительность и профессия уже выбраны.
+  // Профессия в заявке — галочка с ключом профессии из каталога (полное название → ключ: js/objects.js, jobsFull/jobKeys)
+  function profKey(full) {
+    var k = '';
+    (AS.OBJECTS || []).some(function (o) { var i = (o.jobsFull || []).indexOf(full); if (i >= 0) k = o.jobKeys[i]; return i >= 0; });
+    return k;
   }
-  // сколько объектов подойдёт, если поменять одно условие
-  function fitList(over) { var I = Object.assign({}, job, over || {}); return O.filter(function (o) { var w = fits(o, I); return w && !w.length; }); }
-  function fitN(over) { return fitList(over).length; }
-  var AGE_MIN = Math.min.apply(null, O.map(function (o) { return terms(o).ageMin; }));
-  var AGE_MAX = Math.max.apply(null, O.map(function (o) { return Math.min(terms(o).ageMax, 70); }));
-
-  SEL.sex = { pane: 'job', kind: 'list', name: 'Пол', title: 'Вы', head: 'объектов',
-    label: function () { return job.sex === 'm' ? 'мужской' : job.sex === 'f' ? 'женский' : 'не указан'; }, cur: function () { return job.sex; },
-    empty: function () { return !job.sex; },
-    opts: function () { return [{ v: 'm', label: 'Мужчина', n: fitN({ sex: 'm' }) }, { v: 'f', label: 'Женщина', n: fitN({ sex: 'f' }) }, { v: '', label: 'Не указывать', hint: 'покажем все объекты, требования — в карточке', n: fitN({ sex: '' }) }]; },
-    set: function (v) { job.sex = v; job.pick = ''; } };
-  SEL.age = { pane: 'job', kind: 'step', name: 'Возраст', title: 'Возраст', min: 18, max: 65,
-    label: function () { return job.age ? job.age + ' ' + plural(job.age, 'год', 'года', 'лет') : 'не указан'; }, cur: function () { return job.age || 30; },
-    empty: function () { return !job.age; },
-    extra: function () { return job.age ? '<div class="cm-vol"><button type="button" class="cm-vol__go" data-cm-age-clear>Не указывать возраст</button></div>' : ''; },
-    unit: function (n) { return plural(n, 'год', 'года', 'лет'); }, count: function (n) { return fitN({ age: n }); },
-    note: 'Берём с ' + AGE_MIN + ' до ' + AGE_MAX + ' лет — у каждого объекта свои рамки.',
-    set: function (v) { job.age = v; job.pick = ''; } };
-  SEL.prof = { pane: 'job', kind: 'list', name: 'Профессия', title: 'Профессия', head: 'объектов',
-    label: function () { return job.prof ? 'работу ' + profAs(job.prof) : 'любую работу'; }, cur: function () { return job.prof; },
-    opts: function () {
-      return [{ v: '', label: 'Любая профессия', n: fitN({ prof: '' }) }].concat(profsIn(job.region).map(function (j) { return { v: j, label: j, n: fitN({ prof: j }) }; }));
-    },
-    set: function (v) { job.prof = v; job.pick = ''; } };
-  SEL.region = { pane: 'job', kind: 'list', name: 'Регион', title: 'Регион', head: 'объектов',
-    label: function () { var r = REGS.filter(function (x) { return x.key === job.region; })[0]; return r ? r.in : 'в любом регионе'; }, cur: function () { return job.region; },
-    opts: function () {
-      return [{ v: '', label: 'Любой регион', n: fitN({ region: '' }) }].concat(REGS.map(function (r) {
-        return { v: r.key, label: r.label, n: fitN({ region: r.key, prof: profsIn(r.key).indexOf(job.prof) >= 0 ? job.prof : '' }) };
-      }));
-    },
-    set: function (v) { job.region = v; job.pick = ''; if (job.prof && profsIn(v).indexOf(job.prof) < 0) job.prof = ''; } };
-  SEL.shifts = { pane: 'job', kind: 'list', name: 'Вахта', title: 'Вахта', head: 'объектов',
-    label: function () { return job.shifts + ' смен'; }, cur: function () { return job.shifts; },
-    opts: function () {
-      return [15, 20, 30, 45, 60].map(function (n) {
-        var d = Math.ceil(n * 7 / WEEK[job.sched]);
-        return { v: n, label: n + ' смен', hint: '≈ ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + ' на объекте' + (n >= ROAD_COMP_FROM ? ' · компенсация дороги' : ''), n: fitN({ shifts: n }) };
-      });
-    },
-    note: 'При вахте от ' + ROAD_COMP_FROM + ' смен вернём стоимость дороги — до ' + rub(ROAD_COMP) + ' по билетам.',
-    set: function (v) { job.shifts = +v; job.pick = ''; } };
-  SEL.sched = { pane: 'job', kind: 'list', name: 'График', title: 'График', head: 'объектов',
-    label: function () { return job.sched; }, cur: function () { return job.sched; },
-    opts: function () {
-      var ok = fitList();
-      return [{ v: '6/1', label: '6/1', hint: 'шесть смен, выходной раз в неделю' }, { v: '7/0', label: '7/0', hint: 'без выходных — домой быстрее' }].map(function (x) {
-        x.n = ok.filter(function (o) { return terms(o).scheds.indexOf(x.v) >= 0; }).length; return x;
-      });
-    },
-    note: 'Где на объекте только один график, считаем по нему.',
-    set: function (v) { job.sched = v; } };
-  SEL.start = { pane: 'job', kind: 'cal', name: 'Дата заезда', title: 'Когда заезжаете на объект',
-    label: function () { return day(job.start); } };
-  function readJob() {
-    job.road = num($('input[name="road"]', jp)); job.food = num($('input[name="food"]', jp));   // пустое поле — трата не указана
-  }
-  // откуда ставка — как в условиях объекта; основание суммы — рядом с ней
-  var BASIS = { '100': 'при 100 % выработке', given: 'сделка — по условиям объекта', fixed: 'фиксированная ставка' };
-  var CHIP = { '100': 'при 100 % выработке', given: 'сделка, цифра объекта', fixed: 'фиксированная ставка' };
-  var PAY_SHORT = { '100': 'при 100 %', given: 'сделка', fixed: 'фикс' };
-  function foodShort(t) { return t.foodPay ? 'еда ' + rub(t.foodPay) + '/день' : t.foodShare === 0 ? 'еда бесплатно' : t.foodShare < 0.5 ? 'обед и ужин бесплатно' : t.foodShare < 1 ? 'обед бесплатно' : 'еда своя'; }
-  // налог — полные 6 % (есть ли у человека налоговый бонус, узнать нельзя — не учитываем и не упоминаем)
-  function rateNote(p) { return esc(p.text) + '. Небольшую плату за рабочую форму мы не считали.'; }
-  // порядок объектов: сколько останется, меньше дней вне дома или сначала фиксированная оплата
-  var SORTS = { home: 'Больше денег', days: 'Меньше дней', fixed: 'Фикс. оплата' };
-  function sortOk(a, b) {
-    if (job.sort === 'days') return a.days - b.days || b.home - a.home;
-    if (job.sort === 'fixed') return (a.p.basis !== 'fixed') - (b.p.basis !== 'fixed') || b.home - a.home;
-    return b.home - a.home;
-  }
-  function drawJob() {
-    readJob();
-    var all = O.map(function (o) { return { o: o, why: fits(o, job) }; }).filter(function (x) { return x.why; });
-    var ok = all.filter(function (x) { return !x.why.length; }).map(function (x) { return calc(x.o, job); }).sort(sortOk);
-    var best = $('[data-cm-best]', cm), plan = $('[data-cm-plan]', cm);
-    lastOk = ok;
-    if (!ok.length) {
-      // почему ничего не подошло: по порядку — пол, возраст, длительность вахты (среди объектов выбранного региона и профессии)
-      var C = all.map(function (x) { return x.o; }), why;
-      var bySex = job.sex ? C.filter(function (o) { return job.sex === 'm' ? terms(o).men : terms(o).women; }) : C;
-      var byAge = job.age ? bySex.filter(function (o) { return job.age >= terms(o).ageMin && job.age <= terms(o).ageMax; }) : bySex;
-      var lens = []; byAge.filter(function (o) { return posFor(o, job); }).forEach(function (o) { (o.vakhta || []).forEach(function (n) { if (lens.indexOf(n) < 0) lens.push(n); }); });
-      lens.sort(function (a, b) { return a - b; });
-      if (!C.length) why = 'По этой профессии в выбранном регионе вакансий нет — выберите другой регион или «любую работу».';
-      else if (!bySex.length) why = 'Здесь сейчас набирают только ' + (job.sex === 'm' ? 'женщин' : 'мужчин') + '. Выберите другой регион или профессию.';
-      else if (!byAge.length) why = 'По возрасту здесь берут от ' + Math.min.apply(null, bySex.map(function (o) { return terms(o).ageMin; })) + ' до ' + Math.max.apply(null, bySex.map(function (o) { return terms(o).ageMax; })) + ' лет.';
-      else if (!byAge.some(function (o) { return posFor(o, job); })) why = 'Эту работу здесь предлагают только ' + (job.sex === 'f' ? 'мужчинам' : 'женщинам') + '. Выберите другую профессию.';
-      else why = 'Здесь вахта — ' + lens.join(', ') + ' смен. Выберите другую длительность.';
-      best.innerHTML = '<div class="cm-empty"><span class="mono mono--dim">Не нашли</span><p class="cm-obj__name">Под эти условия объектов нет</p><p class="cm__note">' + why + '</p></div>';
-      plan.innerHTML = '';
-      shown.job = null; lastCur = null; bar.job = ['Нет объектов', 'измените условия', 'Подробнее']; drawBar(); announce('Под эти условия объектов нет.'); return;
-    }
-    var cur = ok.filter(function (c) { return c.o.id === job.pick; })[0] || ok[0];
-    job.pick = cur.o.id;
-    var c = cur, t = c.t, o = c.o, off = c.days - c.worked, extra = c.worked - job.shifts, R = round1k(c.home);
-    var richest = ok.reduce(function (a, b) { return b.home > a.home ? b : a; });
-    // другой объект — снова с суммы при 100 %, и автосмена плашек снова включена
-    if (o.id !== job.autoObj) { job.autoObj = o.id; job.auto = true; job.v = '100'; }
-    var hiOn = !!(c.hi && job.v === 'hi');   // расшифровка — для выбранной суммы: при 100 % или выше нормы
-    // строки смен и налога; у сдельной в каждой — обе цифры друг на друге, видна та, что у выбранной плашки
-    function payRows() {
-      var lead = (c.inN ? 'Дальше: ' : 'Смены: ') + c.regN + ' × ';
-      if (!c.hi) return '<li><span>' + lead + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em></span><b>' + rub(c.regN * c.rate) + '</b></li>' +
-        '<li><span>Налог самозанятого 6 %</span><b>−' + rub(c.tax) + '</b></li>';
-      var sw = function (a, b) { return '<i data-only="100" aria-hidden="' + hiOn + '">' + a + '</i><i data-only="hi" aria-hidden="' + !hiOn + '">' + b + '</i>'; };
-      return '<li class="cm-sw"><span>' + sw(lead + rub(c.rate) + '<em>' + BASIS[c.p.basis] + '</em>', lead + rub(c.hi.rate) + '<em>' + c.hi.label + '</em>') + '</span><b>' + sw(rub(c.regN * c.rate), rub(c.regN * c.hi.rate)) + '</b></li>' +
-        '<li class="cm-sw"><span>Налог самозанятого 6 %</span><b>' + sw('−' + rub(c.tax), '−' + rub(c.hi.tax)) + '</b></li>';
-    }
-    lastCur = c;
-    var rest = ok.length - 1;
-    if (job.view === 'compare' && rest) { best.innerHTML = compareHtml(ok, c); fitCmp(); }
-    else {
-      job.view = 'calc';
-      // еда: что указал человек (минус то, что даёт объект) и фиксированный вычет за питание, если он есть
-      var foodRow = c.food
-        ? '<li><span>Еда: ' + c.days + ' дн. × ' + rub(c.perDay) + '<em>' + t.foodNote + '</em></span><b>−' + rub(c.food) + '</b></li>'
-        : '<li><span>Еда<em>' + (t.foodShare === 0 ? 'бесплатно на объекте' : t.foodShare < 1 ? t.foodNote + ' · ваши траты не указаны' : 'ваши траты не указаны') + '</em></span><b>' + (t.foodShare === 0 ? 'бесплатно' : '—') + '</b></li>';
-      var roadRows = job.road
-        ? '<li><span>Билеты туда и обратно</span><b>−' + rub(job.road) + '</b></li>' +
-          (c.comp ? '<li class="is-comp"><span>Компенсация билетов<em>до ' + rub(ROAD_COMP) + ' при вахте от ' + ROAD_COMP_FROM + ' смен</em></span><b class="is-plus">+' + rub(c.comp) + '</b></li>' : '')
-        : '<li><span>Билеты туда и обратно<em>не указаны' + (job.shifts >= ROAD_COMP_FROM ? ' · вернём до ' + rub(ROAD_COMP) + ' от ' + ROAD_COMP_FROM + ' смен' : '') + '</em></span><b>—</b></li>';
-      var miss = [];
-      if (!job.road) miss.push('билетов');
-      if (!c.food && t.foodShare > 0) miss.push('еды');
-      best.innerHTML =
-        '<div class="cm-best">' +
-          '<span class="mono mono--dim">' + (!rest ? 'Подходит один объект' : c === richest ? 'Больше всего денег — здесь' : 'Выбранный объект') + '</span>' +
-          '<p class="cm-obj"><span class="cm-obj__name">' + esc(o.short) + '</span></p>' +
-          '<p class="mono mono--dim cm-best__meta">' + esc(o.region + ' · ' + o.tag + (job.sex && job.age ? '' : ' · берут: ' + o.who)) + '</p>' +
-          (c.hi
-            // сдельная: две суммы рядом — при 100 % и выше нормы; нажатие переключает расшифровку
-            ? '<div class="cm-best__sum"><span class="mono mono--dim">Привезёте домой</span>' +
-                '<div class="cm-vars" role="group" aria-label="Выработка">' +
-                  '<button type="button" class="cm-var" data-cm-var="100" aria-pressed="' + !hiOn + '"><span>при 100 % выработке</span><b><i>≈</i>' + money(R) + '<small>₽</small></b></button>' +
-                  '<button type="button" class="cm-var" data-cm-var="hi" aria-pressed="' + hiOn + '"><span>' + c.hi.label + '</span><b><i>≈</i>' + money(round1k(c.hi.home)) + '<small>₽</small></b></button>' +
-                '</div>' +
-                '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте · сдельная оплата</span></div>'
-            : '<div class="cm-best__sum"><span class="cm-best__lab"><span class="mono mono--dim">Привезёте домой</span><span class="cm-basis">' + CHIP[c.p.basis] + '</span></span>' +
-                '<span class="cm__sum"><span class="cm__approx">≈</span><span data-cm-num="' + R + '">' + money(shown.job == null ? R : shown.job) + '</span><small>₽</small></span>' +
-                '<span class="mono cm__range">за ' + job.shifts + ' смен вахты · ' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + ' на объекте</span></div>') +
-          (miss.length ? '<p class="cm-miss">Без учёта ' + miss.join(' и ') + ' — укажите их в «Ваших расходах».</p>' : '') +
-          '<ul class="cm-break" data-cm-break data-v="' + (hiOn ? 'hi' : '100') + '">' +
-            (t.unpaid ? '<li><span>Обучение: ' + (t.unpaid === 1 ? 'первая смена' : 'первые ' + t.unpaid + ' смены') + '<em>без оплаты, ' + (t.counted ? 'входит в срок вахты' : 'сверх срока вахты') + '</em></span><b>0 ₽</b></li>' : '') +
-            (c.inN ? '<li><span>Стажировка: ' + c.inN + ' × ' + rub(c.p.intern.rate) + '</span><b>' + rub(c.inN * c.p.intern.rate) + '</b></li>' : '') +
-            // у сдельной — строки для обеих сумм; видны те, что у выбранной плашки (переключение — без перерисовки)
-            payRows() +
-            foodRow + roadRows +
-            '<li><span>Жильё</span><b>' + (/бесплатно/.test(o.housing || '') ? 'бесплатно' : 'уточняется') + '</b></li>' +
-          '</ul>' +
-          '<p class="cm-src">' + rateNote(c.p) + '</p>' +
-          '<a class="btn btn--outline btn--block" href="#contact" data-cm-apply="' + esc(o.id) + '"><span>Хочу на этот объект</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>' +
-        '</div>' +
-        (rest ? '<button type="button" class="cm-cmp-go" data-cm-compare><span>Сравнить ещё ' + rest + ' ' + plural(rest, 'объект', 'объекта', 'объектов') + '</span>' + ARROW(1) + '</button>' : '');
-      tween('job', $('[data-cm-num]', best));
-      // сияние по рамке выбранной суммы идёт непрерывно: при перерисовке продолжаем с той же точки круга
-      beamSel();
-    }
-    announce('Привезёте домой около ' + money(R) + ' рублей ' + CHIP[c.p.basis] + (c.hi ? ', ' + c.hi.label + ' — около ' + money(round1k(c.hi.home)) + ' рублей' : '') + ' — ' + o.short + ', ' + job.shifts + ' смен.');
-
-    // как пройдёт вахта — по датам, простыми словами (дату заезда можно поменять прямо здесь)
-    var advAt = Math.ceil((t.advAfter + (t.counted ? 0 : t.unpaid)) * 7 / c.week), U = t.unpaid;
-    plan.innerHTML =
-      '<p class="mono mono--dim">Как пройдёт вахта</p>' +
-      '<ol class="cm-days">' +
-        '<li><span class="cm-days__d"><span class="cm-tk" role="button" tabindex="0" data-cm-k="start"></span></span><span>Заезд на объект.' + (U ? ' ' + (U === 1 ? 'Первая смена' : 'Первые ' + U + ' смены') + ' — обучение, не оплачивается.' : '') + '</span></li>' +
-        (t.weekly
-          ? '<li><span class="cm-days__d">Каждую неделю</span><span>Аванс ' + rub(o.advance) + '.</span></li>'
-          : '<li><span class="cm-days__d">≈ ' + day(addDays(job.start, advAt)) + '</span><span>Аванс ' + rub(o.advance) + ' — после ' + t.advAfter + ' смен.</span></li>') +
-        '<li><span class="cm-days__d">' + (off ? 'Раз в неделю' : 'Каждый день') + '</span><span>' +
-          (off ? 'Выходной, всего ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') + ' (график ' + c.sched + ').' : 'Работа без выходных (график ' + c.sched + ').') +
-          (o.schedTBD ? ' График на объекте ещё уточняется.' : c.own ? ' Другого графика на этом объекте нет.' : '') + '</span></li>' +
-        '<li><span class="cm-days__d">≈ ' + day(addDays(job.start, c.days - 1)) + '</span><span>Последняя смена. Остаток зарплаты — в конце вахты.</span></li>' +
-      '</ol>' +
-      '<p class="cm-days__sum">Всего <b>' + c.days + ' ' + plural(c.days, 'день', 'дня', 'дней') + '</b> на объекте: ' + job.shifts + ' смен вахты' +
-        (extra ? ', ' + extra + ' ' + plural(extra, 'смена', 'смены', 'смен') + ' обучения' : '') + (off ? ' и ' + off + ' ' + plural(off, 'выходной', 'выходных', 'выходных') : '') + '. Дорога сюда не входит.</p>' +
-      '<ul class="cm-when">' +
-        (o.note ? '<li><b>' + esc(o.note) + '</b></li>' : '') +
-        '<li>В среднем <b>' + rub(c.home / c.days) + '</b> чистыми за день на объекте</li>' +
-        (t.road ? '<li>От жилья до работы — ' + esc(t.road) + '</li>' : '') +
-      '</ul>';
-    drawTokens();
-    bar.job = [(c.hi ? '≈ ' + money(R / 1000) + '–' + money(round1k(c.hi.home) / 1000) + ' тыс. ₽' : '≈ ' + rub(R)) + ' домой', o.short + ' · ' + job.shifts + ' смен · ' + c.sched, 'Подробнее']; drawBar();
-  }
-  // сравнение объектов — на месте итога: одинаковые строки у всех, выбор порядка, по нажатию — расчёт этого объекта
-  // список сравнения заполняет карточку до низа окна и прокручивается внутри (окно не растёт); на телефоне — частью шторки
-  function fitCmp() {
-    var l = $('.cm-cmp__list', cm); if (!l) return;
-    l.style.maxHeight = '';
-    if (sheet.matches) return;
-    var pr = panel.getBoundingClientRect(), lr = l.getBoundingClientRect(), card = l.closest('.cm__result');
-    var pad = parseFloat(getComputedStyle(card).paddingBottom) + parseFloat(getComputedStyle(panel).paddingBottom);
-    l.style.maxHeight = Math.max(160, Math.floor(pr.bottom - pad - lr.top)) + 'px';
-  }
-  window.addEventListener('resize', function () { if (job.view === 'compare') fitCmp(); });
-  function compareHtml(ok, cur) {
-    return '<div class="cm-cmp">' +
-      '<div class="cm-cmp__top"><button type="button" class="cm-ask__back mono" data-cm-back>' + ARROW(-1) + 'К расчёту</button>' +
-        '<span class="mono mono--dim">' + ok.length + ' ' + plural(ok.length, 'объект', 'объекта', 'объектов') + '</span></div>' +
-      '<p class="cm-cmp__t">Объекты под ваши условия</p>' +
-      // пока еда не указана, объекты без питания выглядят выгоднее — говорим об этом прямо
-      (job.food ? '' : '<p class="cm-miss">Еда не учтена: где питание своё, на руках останется меньше. Укажите траты на еду — суммы станут сравнимыми.</p>') +
-      '<div class="cm-sort" role="group" aria-label="Порядок объектов">' + Object.keys(SORTS).map(function (k) {
-        return '<button type="button" data-cm-sort="' + k + '" aria-pressed="' + (job.sort === k) + '">' + SORTS[k] + '</button>';
-      }).join('') + '</div>' +
-      '<ul class="cm-cmp__list">' + ok.map(function (x) {
-        return '<li><button type="button" class="cm-cmp__row' + (x === cur ? ' is-on' : '') + '" data-cm-pick="' + esc(x.o.id) + '"' + (x === cur ? ' aria-current="true"' : '') + '>' +
-          '<span class="cm-cmp__name"><b>' + esc(x.o.short) + '</b><em>' + esc(x.o.region + ' · ' + x.o.tag) + '</em></span>' +
-          '<span class="cm-cmp__sum">≈ ' + rub(round1k(x.home)) + (x.hi ? '<small>до ≈ ' + rub(round1k(x.hi.home)) + '</small>' : '') + '</span>' +
-          '<span class="cm-cmp__facts">' + rub(x.rate) + ' за смену ' + PAY_SHORT[x.p.basis] + ' · ' + foodShort(x.t) + ' · ' + x.days + ' ' + plural(x.days, 'день', 'дня', 'дней') + (x.own ? ' · только ' + x.sched : '') + '</span>' +
-        '</button></li>';
-      }).join('') + '</ul></div>';
-  }
-  jp.addEventListener('input', function (e) { if (e.target.matches('.cm-field input')) drawJob(); });
-  // «Сравнить ещё N объектов» → список на месте итога; «К расчёту» и выбор объекта → обратно к расчёту
-  function focusRes(sel) {
-    var r = $('[data-cm-res]', cm), el = $(sel, r);
-    if (el) el.focus({ preventScroll: true });
-    if (r.getBoundingClientRect().top < panel.getBoundingClientRect().top) panel.scrollTo({ top: r.offsetTop - 16, behavior: reduce ? 'auto' : 'smooth' });
-  }
-  // сдельная: выбранная сумма — плашка с сиянием и строки расшифровки; переключение без перерисовки расчёта
-  function applyVar() {
-    var r = $('[data-cm-res]', cm), ul = $('[data-cm-break]', r);
-    $$('.cm-var', r).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.cmVar === job.v)); });
-    if (ul) { ul.dataset.v = job.v; $$('[data-only]', ul).forEach(function (i) { i.setAttribute('aria-hidden', String(i.dataset.only !== job.v)); }); }   // скрытую цифру не читаем вслух
-    beamSel();
-  }
-  // сияние по рамке выбранной суммы — с постоянной скоростью вдоль рамки. Градиент поворачивается по углу, а плашка вытянута:
-  // при ровном повороте хвост по длинным сторонам летит быстрее. Поэтому угол на каждом шаге — тот, под которым из центра
-  // видна точка, прошедшая по рамке равную долю пути. Фаза — от общего времени: при перерисовке хвост не прыгает в начало
-  var BEAM_MS = 7000;
-  function beam(el) {
-    var w = el.offsetWidth, h = el.offsetHeight;
-    if (!w || !h || !el.animate) return;
-    var P = 2 * (w + h), N = 64, frames = [], prev = 0, turn = 0;
-    for (var i = 0; i <= N; i++) {
-      var d = (i / N * P + w / 2) % P, x, y;   // путь от середины верха по часовой стрелке
-      if (d < w) { x = d; y = 0; } else if (d < w + h) { x = w; y = d - w; } else if (d < 2 * w + h) { x = 2 * w + h - d; y = h; } else { x = 0; y = P - d; }
-      var a = Math.atan2(x - w / 2, h / 2 - y) * 180 / Math.PI; if (a < 0) a += 360;
-      if (i && a + turn < prev - 180) turn += 360;
-      prev = a + turn;
-      frames.push({ '--beam': prev + 'deg', offset: i / N });
-    }
-    if (el._beam) el._beam.cancel();
-    el._beam = el.animate(frames, { duration: BEAM_MS, iterations: Infinity, easing: 'linear', delay: -(performance.now() % BEAM_MS) });
-  }
-  function beamSel() {
-    if (reduce) return;
-    $$('.cm-var', cm).forEach(beam);   // у обеих плашек: при смене выбора сияние не начинается заново, а проявляется уже в движении
-  }
-  window.addEventListener('resize', function () { clearTimeout(beamSel._t); beamSel._t = setTimeout(beamSel, 150); });
-  // каждые 10 секунд плашки сами сменяют друг друга (100 % ↔ выше нормы), пока человек не выбрал сам;
-  // без анимаций в системе, при закрытом окне, в другой вкладке, в сравнении и при открытом списке — стоим
-  function autoTick() {
-    if (reduce || cm.hidden || document.hidden || cm.dataset.tab !== 'job' || job.view !== 'calc' || !job.auto || popBtn || !lastCur || !lastCur.hi) return;
-    job.v = job.v === 'hi' ? '100' : 'hi'; applyVar();
-  }
-  jp.addEventListener('click', function (e) {
-    var t = e.target, pk = t.closest('[data-cm-pick]'), so = t.closest('[data-cm-sort]');
-    if (t.closest('[data-cm-compare]')) { job.view = 'compare'; drawJob(); focusRes('[data-cm-back]'); }
-    else if (t.closest('[data-cm-back]')) { job.view = 'calc'; drawJob(); focusRes('[data-cm-compare]'); }
-    else if (pk) { job.pick = pk.dataset.cmPick; job.view = 'calc'; drawJob(); focusRes('[data-cm-apply]'); }
-    else if (so) { job.sort = so.dataset.cmSort; drawJob(); focusRes('[data-cm-sort="' + job.sort + '"]'); }
-    else if (t.closest('[data-cm-var]')) { job.v = t.closest('[data-cm-var]').dataset.cmVar; job.auto = false; applyVar(); }   // выбрал сам — автосмена до смены объекта выключена
-  });
-  // «Хочу на этот объект» — к общей заявке: объект, длительность и профессия уже выбраны
-  var PROF_FORM = { 'Комплектовщик': 'Комплектовщик', 'Упаковщик': 'Упаковщик', 'Сортировщик': 'Сортировщик', 'Водитель высотного штабелёра': 'ВВШ' };
-  cm.addEventListener('click', function (e) {
-    var a = e.target.closest('[data-cm-apply]'); if (!a) return;
-    var f = $('[data-form]'); if (!f) return;
+  function applyJob() {
+    if (!lastCur) return false;
+    var f = $('[data-form]'); if (!f) return false;
+    if (job.view !== 'calc') { job.view = 'calc'; modelNotify(); }
     var tb = $('[data-tab-btn="job"]', f); if (tb) tb.click();
     var r = $('input[name="shifts"][value="' + job.shifts + '"]', f); if (r) r.checked = true;
-    $$('input[name="prof"]', f).forEach(function (c) { c.checked = !!job.prof && c.value === PROF_FORM[job.prof]; });
+    var pk = job.prof ? profKey(job.prof) : '';
+    $$('input[name="prof"]', f).forEach(function (c) { c.checked = !!pk && c.value === pk; });
     var c = lastCur, sel = $('[data-object-select]', f);
     if (sel && c) { if (!sel.querySelector('option[value="' + c.o.id + '"]')) sel.add(new Option(c.o.short, c.o.id)); sel.value = c.o.id; }
+    // строка расчёта — в комментарий: что человек написал сам, остаётся; прежняя строка калькулятора заменяется новой
     var msg = $('textarea[name="message"]', f);
-    if (msg && c && (!msg.value.trim() || /^Из калькулятора:/.test(msg.value))) {
-      msg.value = 'Из калькулятора: ' + c.o.short + ', ' + (job.prof ? job.prof.toLowerCase() : 'любая работа') + ', ' + job.shifts + ' смен по графику ' + c.sched +
-        ', заезд ' + day(job.start).replace('\u00a0', ' ') + ', ≈ ' + money(round1k(c.home)) + ' ₽ домой (' + CHIP[c.p.basis] + ')' + (c.hi ? ', ' + c.hi.label + ' — ≈ ' + money(round1k(c.hi.home)) + ' ₽' : '') + '.';
+    if (msg && c) {
+      var line = 'Из калькулятора: ' + c.o.short + ', ' + (job.prof ? job.prof.toLowerCase() : 'любая работа (расчёт для: ' + c.p.jobs[0].toLowerCase() + ')') + ', ' + job.shifts + ' смен по графику ' + c.sched +
+        ', заезд ' + day(job.start).replace(' ', ' ') + ', ≈ ' + money(round1k(c.home)) + ' ₽ домой (' + CHIP[c.p.basis] + ')' + (c.hi ? ', ' + c.hi.label + ' — ≈ ' + money(round1k(c.hi.home)) + ' ₽' : '') + '.';
+      var own = msg.value.split('\n').filter(function (l) { return !/^\s*Из калькулятора:/.test(l); }).join('\n').trim();
+      msg.value = own ? own + '\n\n' + line : line;
       msg.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    close();   // до прокрутки к заявке (main.js прокручивает по ссылке #contact, когда окно уже закрыто)
-  });
+    close();
+    var contact = document.getElementById('contact') || f;
+    if (AS.lenis) AS.lenis.scrollTo(contact);
+    else window.scrollTo({ top: contact.getBoundingClientRect().top + window.scrollY, behavior: reduce ? 'auto' : 'smooth' });
+    return true;
+  }
 
   /* ---------- «Нужен персонал»: сколько людей и сколько стоит свой штат ---------- */
   var biz = $('[data-cm-pane="biz"]', cm);
@@ -780,7 +620,7 @@
       '<p class="cm-src">Отпуска, больничные и работа отдела кадров сюда не входят — реальная цена своего штата выше.</p>';
     var brief = B.prof + ', ' + posts + ' на смене' + (B.mode === 'volume' ? ' — по объёму ' + money(B.vol) + ' ед. за смену при норме ' + money(B.norm) : '') + ', в штате ≈ ' + staff + ', ' + (B.daily === 2 ? '2 смены' : '1 смена') + ' по ' + B.hours + ' ч, ' + B.opdays + ' дн. в неделю, график ' + B.sched + ', ' + B.where + (B.stay ? ', с проживанием' : '') + '; свой штат ≈ ' + rub(total) + ' в месяц';
     $('input[name="brief"]', biz).value = brief; $('[data-cm-brief]', biz).textContent = brief;
-    bar.biz = [people(staff) + ' · ≈ ' + rub(total), 'свой штат в месяц', 'К заявке']; drawBar();
+    bar = [people(staff) + ' · ≈ ' + rub(total), 'свой штат в месяц', 'К заявке']; drawBar();
     if (cm.dataset.tab === 'biz') announce('Нужно в штате ' + people(staff) + ', свой штат — около ' + money(round1k(total)) + ' рублей в месяц.');
   }
   biz.addEventListener('input', function (e) { if (e.target.matches('.cm-tk--in input')) drawBiz(); });
@@ -822,6 +662,6 @@
   });
   $('[data-cm-again]', biz).addEventListener('click', function () { $$('.field input', biz).forEach(function (i) { i.value = ''; }); $('.cm__done', biz).hidden = true; askOn(false); });
 
-  drawJob(); drawBiz();   // фразу рисует drawJob (в ней и дата выезда на линии вахты)
+  refreshJobModel(); drawTokens(); drawBiz();
   tab('job');
 })();

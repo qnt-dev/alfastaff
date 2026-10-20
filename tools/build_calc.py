@@ -1,8 +1,10 @@
 """Данные калькулятора вахты из таблицы «Вакансии ГК Альфа-Стафф.xlsx».
 
 Запуск:  python tools/build_calc.py "путь/к/Вакансии ГК Альфа-Стафф.xlsx"
-Результат: js/calc-data.js (AS.CALC) — его читает только калькулятор (js/calc-modal.js);
-карточки, карта и сфера по-прежнему берут объекты из js/objects.js (tools/build_objects.py).
+Результат: js/calc-data.js (AS.CALC) — его читает только калькулятор (js/calc-modal.js).
+Один источник: объект, его название, регион и условия (кто нужен, график, вахта, питание, жильё, дорога, аванс, пометка
+о старте) берутся из сборки каталога tools/build_objects.py — те же, что в карточках, на карте и на сфере (js/objects.js).
+Здесь — только ставки по должностям (tools/calc.config.json) и обучение. Регионы — AS.REGIONS (js/data.js).
 
 Правила (решения заказчика):
 - только актуальные объекты — видимые листы и видимые колонки; скрытые листы не читаем; Минск и служебные листы не берём;
@@ -20,7 +22,6 @@ import xlsx_read
 import build_objects as B
 
 CFG = json.load(open(os.path.join(HERE, 'calc.config.json'), encoding='utf-8'))
-OCFG = json.load(open(os.path.join(HERE, 'objects.config.json'), encoding='utf-8'))['objects']
 
 def training(o):
     """Обучение: сколько первых смен не оплачивается и входят ли они в срок вахты."""
@@ -39,11 +40,8 @@ def nums(text):
     return {int(re.sub(r'\D', '', x)) for x in re.findall(r'\d[\d ]{2,6}\d|\d{3,}', t)}
 
 def cfg_for(name):
-    k = B.key(name)
-    if k in CFG['objects']: return k, CFG['objects'][k]
-    for ck, c in CFG['objects'].items():
-        if k.startswith(ck): return ck, c
-    return k, None
+    k = B.cfg_key(name, CFG['objects'])
+    return (k, CFG['objects'][k]) if k else (B.key(name), None)
 
 def position(p):
     """Должность для калькулятора; у сдельной — вторая ставка выше нормы (при highPct % или верхняя цифра вилки)."""
@@ -56,60 +54,52 @@ def position(p):
     return out
 
 def build(path):
-    regions = {r['sheet']: r for r in CFG['regions']}
+    cat, _, _, _ = B.build(path)
+    by = {o['_key']: o for o in cat}
     objs, warn = [], []
     for r in xlsx_read.read(path):
-        if r['sheet'] in CFG['skipSheets'] or r['sheet'] not in regions: continue
+        if r['sheet'] in B.CFG.get('skipSheets', []): continue
         if r['stop']: warn.append(f"на паузе, пропущен: {r['name']!r}"); continue
         k, c = cfg_for(r['name'])
         if not c: warn.append(f"нет ставок в calc.config.json: {r['sheet']} / {k!r} — в калькулятор не попал"); continue
-        oc = OCFG.get(k, {})
+        co = by.get(B.cfg_key(r['name'], B.CFG['objects']) or B.key(r['name']))
+        if not co: warn.append(f"{k!r} нет в каталоге (tools/objects.config.json) — в калькулятор не попал"); continue
         # сверка цифр конфига с текстом ставок в таблице
         src = ' / '.join(B.first(r, 'Вакансии', 'Ставка', 'Оплата за ВАХТУ'))
         have = nums(src)
         for p in c['positions']:
             miss = [n for n in p.get('check', []) if n not in have]
             if miss: warn.append(f"{k}: в таблице нет чисел {miss} — проверьте ставку «{p['text']}»")
-        sf, opts = B.shift_of(r)
-        meals, mealsFull = B.meals_of(r)
-        # питание: сколько раз в день и сколько за него удерживают (Форум-Авто: «3 раз в день, вычет за питание 200 р/день»)
-        mt = B.text(B.first(r, 'ПИТАНИЕ'))
-        mpay = re.search(r'вычет\w*\s*за\s*питание\D{0,5}(\d+)', mt, re.I)
-        mtimes = re.search(r'(\d)\s*раз\w*\s*в\s*день', mt, re.I)
-        mealPay, mealTimes = (int(mpay.group(1)) if mpay else 0), (int(mtimes.group(1)) if mtimes else 0)
-        if mealPay: mealsFull = (f'{mealTimes} раза в день' if mealTimes > 1 else 'питание') + f', {mealPay} ₽ в день'
-        adv, advText = B.advance_of(r)
         jobs = []
         for p in c['positions']:
             for j in p['jobs']:
                 if j not in jobs: jobs.append(j)
-        o = {
-            'id': c.get('id') or oc.get('id') or re.sub(r'[^a-z0-9]+', '-', k.encode('ascii', 'ignore').decode()).strip('-'),
-            'region': regions[r['sheet']]['key'],
-            'short': c.get('short') or oc.get('short') or r['name'].strip(),
-            'tag': c.get('tag') or oc.get('tag', ''),
-            'note': c.get('note', ''),
-            'who': B.who_of(r), 'shiftFull': sf, 'schedTBD': bool(c.get('schedTBD')),
-            'vakhta': opts, 'minShifts': opts[0] if opts else None,
-            'mealsFull': mealsFull, 'mealPay': mealPay, 'mealTimes': mealTimes, 'transport': B.transport_of(r), 'housing': B.housing_of(r),
-            'advance': adv, 'advanceText': advText,
+        # карточка и калькулятор не должны расходиться: профессии те же, ставки калькулятора — в вилке карточки
+        cj = sorted({j for p in c['positions'] for j in p['jobs']})
+        if cj != sorted(co['jobsFull']): warn.append(f"{co['id']}: профессии в карточке {sorted(co['jobsFull'])} ≠ в калькуляторе {cj}")
+        for p in c['positions']:
+            if co.get('rateMin') and not (co['rateMin'] <= p['rate'] <= co['rateTop']):
+                warn.append(f"{co['id']}: ставка калькулятора {p['rate']} вне вилки карточки {co['rateMin']}–{co['rateTop']} ({p['text']})")
+        # общее с карточкой — из каталога, как есть; своё у калькулятора — ставки, обучение, часы смены
+        o = {x: co.get(x) for x in ('id', 'region', 'short', 'tag', 'who', 'shiftFull', 'vakhta', 'minShifts',
+                                    'mealsFull', 'mealPay', 'mealTimes', 'transport', 'housing', 'advance', 'advanceText')}
+        o.update({
+            'note': co.get('start', ''), 'schedTBD': bool(c.get('schedTBD')),
             'training': training(r), 'hours': c.get('hours', 11),
             'jobsFull': jobs,
             'positions': [position(p) for p in c['positions']],
-        }
+        })
         objs.append(o)
     return objs, warn
 
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(r'~/Downloads/Вакансии ГК Альфа-Стафф.xlsx')
     objs, warn = build(path)
-    present = {o['region'] for o in objs}
-    regions = [{x: r[x] for x in ('key', 'label', 'in')} for r in CFG['regions'] if r['key'] in present]
     stamp = datetime.date.today().strftime('%d.%m.%Y')
     js = ('/* Сгенерировано tools/build_calc.py из «%s» (%s). Вручную не править — обновите таблицу\n'
           '   и запустите скрипт ещё раз; ставки по должностям — tools/calc.config.json. Читает только калькулятор. */\n'
           'window.AS = window.AS || {};\nAS.CALC = %s;\n') % (
-        os.path.basename(path), stamp, json.dumps({'date': stamp, 'regions': regions, 'objects': objs}, ensure_ascii=False, indent=1))
+        os.path.basename(path), stamp, json.dumps({'date': stamp, 'objects': objs}, ensure_ascii=False, indent=1))
     open(os.path.join(ROOT, 'js', 'calc-data.js'), 'w', encoding='utf-8', newline='\n').write(js)
     by = {}
     for o in objs: by[o['region']] = by.get(o['region'], 0) + 1

@@ -2,6 +2,8 @@
 
 Запуск:  python tools/build_objects.py "путь/к/Вакансии ГК Альфа-Стафф.xlsx"
 Результат: js/objects.js (AS.OBJECTS, AS.OFFICES) — сайт подхватит его сам.
+Калькулятор (tools/build_calc.py) берёт условия объекта (питание, жильё, график, вахта, аванс, кто нужен) из этой же
+сборки — карточки и калькулятор не могут разойтись. После обновления таблицы запускать оба скрипта.
 
 Правила (решения заказчика):
 - на сайт попадают только доступные объекты — видимые колонки видимых листов; лист «Минск» (Беларусь) не берём;
@@ -41,7 +43,7 @@ JOBS = [  # ключ (как в AS.PROFESSIONS), короткое названи
     ('Сортировщик', 'Сортировщик', 'Сортировщик', r'сортир'),
     ('Оператор возвратов', 'Оператор возвратов', 'Оператор приёма возвратов', r'возврат'),
     ('Стикеровщик', 'Фасовщик', 'Фасовщик / стикеровщик', r'стикер|маркиров|фасов'),
-    ('Грузчик', 'Грузчик', 'Грузчик-разнорабочий', r'грузчик|разнорабоч|погруз|прессов'),
+    ('Грузчик', 'Грузчик', 'Грузчик-разнорабочий', r'(?<!по)грузчик|разнорабоч|погруз(?!чик)|прессов'),   # «погрузка», «погрузочно-…» — да; «погрузчик» — техника, не профессия
 ]
 NOTES = re.compile(r'озвучив|рекомендац|как включится|принимаем на вахту|срок вахты любой|временная мера|местн|важно для|для штабелер|проверяем по базе|психиатр|набора нет|сообщу', re.I)
 TRAIN = re.compile(r'стажировк|обучени|тест-драйв', re.I)
@@ -120,13 +122,20 @@ def shift_of(o):
     return full, opts
 
 def meals_of(o):
+    """Питание: (подпись-чип, текст условия, вычет за питание ₽ в день, сколько раз в день).
+    Одна разборка для карточек и калькулятора. Форум-Авто: «3 раз в день / ВЫЧЕТ ЗА ПИТАНИЕ 200 р/день» — платное."""
     t = text(first(o, 'ПИТАНИЕ'))
-    if not t: return [], ''
-    if re.search(r'нет питания', t, re.I): return ['Нет'], 'не предоставляется' + ('; есть столовая' if re.search(r'столов', t, re.I) else '')
-    if re.search(r'3\s*раз', t): return ['3 раза'], 'трёхразовое, бесплатно'
-    if re.search(r'2\s*раз', t): return ['Обед, ужин'], 'обед и ужин — бесплатно'
-    if re.search(r'ланч', t, re.I): return ['Ланч-бокс'], 'обед (ланч-бокс) — бесплатно'
-    return ['Обед'], 'обед — бесплатно'
+    if not t: return [], '', 0, 0
+    if re.search(r'нет питания', t, re.I): return ['Нет'], 'не предоставляется' + ('; есть столовая' if re.search(r'столов', t, re.I) else ''), 0, 0
+    m = re.search(r'(\d)\s*раз', t)
+    n = int(m.group(1)) if m else 1
+    m = re.search(r'вычет\w*\s*за\s*питание\D{0,5}(\d+)', t, re.I)
+    pay = int(m.group(1)) if m else 0
+    if pay: return [(f'{n} раза' if n > 1 else 'Обед') + ' · ' + fmt(pay) + ' ₽'], (f'{n} раза в день' if n > 1 else 'обед') + f', {fmt(pay)} ₽ в день', pay, n
+    if n >= 3: return ['3 раза'], 'трёхразовое, бесплатно', 0, n
+    if n == 2: return ['Обед, ужин'], 'обед и ужин — бесплатно', 0, n
+    if re.search(r'ланч', t, re.I): return ['Ланч-бокс'], 'обед (ланч-бокс) — бесплатно', 0, 1
+    return ['Обед'], 'обед — бесплатно', 0, 1
 
 def housing_of(o):
     t = text(first(o, 'Условия проживания'))
@@ -175,19 +184,30 @@ def clean_addr(s):
     return re.sub(r'\s{2,}', ' ', s)
 
 # ---------- сборка ----------
+def cfg_key(name, table):
+    """Запись конфига для колонки таблицы: точное название или его начало («фм казань» — для
+    «ФМ Казань старт ориентировочно к 20.10…»: пометки в названии колонки меняются, объект — тот же)."""
+    k = key(name)
+    if k in table: return k
+    for ck in sorted(table, key=len, reverse=True):
+        if k.startswith(ck): return ck
+    return None
+
 def build(path):
     raw = xlsx_read.read(path)
     regions = CFG['regions']
     objs, skipped, warn = [], [], []
     for r in raw:
+        if r['sheet'] in CFG.get('skipSheets', []): continue
         if r['stop']: skipped.append(f"{r['sheet']}: {r['name']} — на паузе"); continue
-        c = CFG['objects'].get(key(r['name']), {})
+        ck = cfg_key(r['name'], CFG['objects'])
+        c = CFG['objects'][ck] if ck else {}
         if not c: warn.append(f"нет записи в objects.config.json: {r['sheet']} / {r['name']!r}")
         jobs = jobs_of(r)
         main, train, piece, at100 = rates_of(r)
         vk = per_vakhta(r)
         shiftFull, opts = shift_of(r)
-        meals, mealsFull = meals_of(r)
+        meals, mealsFull, mealPay, mealTimes = meals_of(r)
         adv, advText = advance_of(r)
         name1 = r['name'].replace('\n', ' ')
         o = {
@@ -199,11 +219,12 @@ def build(path):
             'hostel': c.get('hostel', clean_addr(text(first(r, 'Адрес общежития')))),
             'jobs': [j[1] for j in jobs], 'jobsFull': [j[2] for j in jobs], 'jobKeys': [j[0] for j in jobs],
             'shift': '12 часов', 'shiftFull': shiftFull, 'vakhta': opts, 'minShifts': opts[0] if opts else None,
-            'meals': meals or ['Уточняйте'], 'mealsFull': mealsFull,
+            'meals': meals or ['Уточняйте'], 'mealsFull': mealsFull, 'mealPay': mealPay, 'mealTimes': mealTimes,
             'housing': housing_of(r), 'transport': transport_of(r),
             'advance': adv, 'advanceText': advText,
             'who': who_of(r), 'training': training_of(r), 'piece': piece,
         }
+        o['_key'] = ck or key(name1)   # запись конфига — для tools/build_calc.py; в js/objects.js не пишется
         if 'geo' in c: o['geo'] = c['geo']
         else: warn.append(f"нет координат: {o['short']} — на сфере и карте его не будет")
         lo, hi = (min(main), max(main)) if main else (None, None)
@@ -215,11 +236,11 @@ def build(path):
         o['rateMax'] = fmt(hi) if hi and hi != lo else ''
         o['rateMin'] = lo or 0
         o['rateTop'] = hi or lo or 0
-        # на карточке: «от 3 575 ₽»; если ставка одна и сдельная при 100% — «до 5 142 ₽»
-        o['rateCard'] = (('от ' + o['rate']) if o['rateMax'] else (('до ' if piece and at100 else '') + o['rate'])) + ' ₽' if lo else ''
+        # на карточке: «от 3 575 ₽»; сдельная при 100 % — тоже «от»: 100 % — норма, выработаете больше — получите больше
+        o['rateCard'] = (('от ' + o['rate']) if o['rateMax'] or (piece and at100) else o['rate']) + ' ₽' if lo else ''
         if not lo: lead = ''
         elif hi and hi != lo: lead = f'От {fmt(lo)} до {fmt(hi)} ₽ за смену — ' + ('сдельно, зависит от профессии и выработки.' if piece else 'зависит от профессии.')
-        elif piece and at100: lead = f'До {fmt(lo)} ₽ за смену при 100% выработки — оплата сдельная.'
+        elif piece and at100: lead = f'{fmt(lo)} ₽ за смену при 100 % выработке — оплата сдельная: выработаете больше нормы — получите больше.'
         else: lead = f'{fmt(lo)} ₽ за смену' + (' — сдельно, по выработке.' if piece else ' — фиксированная ставка.')
         lead = c.get('payLead') or lead
         extra = []
@@ -231,6 +252,8 @@ def build(path):
             o['note'] = 'Водителю штабелёра — удостоверение тракториста-машиниста с отметкой «погрузчик».'
         for k in ('rateLines', 'note', 'shift', 'pay', 'shiftFull', 'rateCard', 'transport', 'housing', 'meals', 'mealsFull', 'route'):
             if k in c: o[k] = c[k]
+        if c.get('start'):   # объект ещё не запущен: «Старт ориентировочно к 20 октября…» — первым в «Важно»
+            o['start'] = c['start']; o['note'] = (c['start'] + ' ' + o.get('note', '')).strip()
         objs.append(o)
     # офисы — из листа «Адреса офисов»; координаты — из ссылки на карту
     offices = []
@@ -250,6 +273,7 @@ def build(path):
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(r'~/Downloads/Вакансии ГК Альфа-Стафф.xlsx')
     objs, offices, skipped, warn = build(path)
+    objs = [{k: v for k, v in o.items() if not k.startswith('_')} for o in objs]
     stamp = datetime.date.today().strftime('%d.%m.%Y')
     js = ('/* Сгенерировано tools/build_objects.py из «%s» (%s). Вручную не править —\n'
           '   обновите таблицу и запустите скрипт ещё раз. Подписи и координаты — tools/objects.config.json. */\n'

@@ -14,7 +14,7 @@
   'use strict';
   var AS = window.AS = window.AS || {};
   // объекты, для которых собраны данные (tools/build_clay.py)
-  AS.CLAY_IDS = ['ym-tarny', 'fm-chekhov', 'starodvorskie', 'lemana-kinel', 'sviyazhsk', 'ym-sofyino', 'ozon-sofyino', 'ym-kuvekino', 'returns-domodedovo', 'fm-stupino', 'major', 'lemana-south', 'lemana-north', 'lemana-zelenograd', 'forum-auto', 'splat', 'art-pak', 'lemana-nn', 'ym-tura-ff', 'ym-tura-sc', 'fm-tolbino', 'fm-elektrougli', 'wurth'];
+  AS.CLAY_IDS = ['ym-tarny', 'fm-chekhov', 'starodvorskie', 'lemana-kinel', 'sviyazhsk', 'ym-sofyino', 'ozon-sofyino', 'ym-kuvekino', 'returns-domodedovo', 'fm-stupino', 'major', 'lemana-south', 'lemana-north', 'lemana-zelenograd', 'forum-auto', 'splat', 'art-pak', 'lemana-nn', 'ym-kazan', 'fm-kazan', 'fm-tolbino', 'fm-elektrougli', 'wurth'];
   // тёмная тема — «рельеф из фона» под тёмный сайт, светлая — на будущую светлую версию.
   // relief: земля = --frame без освещения, дома = --frame под светом; host — насколько дом с жильём светлее (доля белого)
   var THEMES = {
@@ -220,7 +220,7 @@
       pending = request;
       request.promise = (async function () {
         try {
-          var dataPromise = cache[id] || (cache[id] = fetch('data/clay/' + id + '.json?v=20261022b')
+          var dataPromise = cache[id] || (cache[id] = fetch('data/clay/' + id + '.json?v=20261019k')
             .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }));
           var data = await dataPromise;
           if (ticket !== revision) return null;

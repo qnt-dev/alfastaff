@@ -9,7 +9,7 @@
   var TAU = Math.PI * 2, D2R = Math.PI / 180;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var ROADKEY = { 'Москва и МО': 'msk', 'Татарстан': 'tat', 'Нижегородская обл.': 'nn', 'Владимир': 'vld', 'Самарская обл.': 'sam' };
+  var ROADKEY = { 'Москва и МО': 'msk', 'Татарстан': 'tat', 'Нижегородская обл.': 'nn', 'Владимир': 'vld', 'Самарская обл.': 'sam', 'Рязанская обл.': 'ryz' };
 
   // цвет из CSS («#c41718», «rgb(…)») → [r, g, b]
   function rgbOf(v, fb) {
@@ -39,7 +39,9 @@
       var clayTheme = (location.search.match(/[?&]clay=(light|dark)/) || [])[1] || root.getAttribute('data-clay') || 'dark';
       clayEl.setAttribute('data-clay-theme', clayTheme);
       root.insertBefore(clayEl, cv);
-      clay = AS.ClayMap(clayEl, { theme: clayTheme });
+      // квартал — WebGL: если браузер его не даёт, у всех объектов плоская карта региона (она рисуется без WebGL)
+      try { clay = AS.ClayMap(clayEl, { theme: clayTheme }); } catch (err) { clay = null; if (window.console && console.warn) console.warn('Альфа-Стафф: 3D-кварталы без WebGL —', err && err.message || err); }
+      if (!clay) { clayEl.remove(); clayEl = null; }
     }
     var O = (AS.OBJECTS || []).filter(function (o) { return o.geo; });
     var OFF = AS.OFFICES || [], HQ = (OFF.filter(function (o) { return o.kind === 'hq'; })[0] || { geo: [55.75, 37.62] }).geo;

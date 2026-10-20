@@ -1,0 +1,8 @@
+/* The two fonts used in the reviewed designs. The calculator still works with
+   the declared system-font fallbacks when Google Fonts is unavailable. */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;650;700;750;800&family=Onest:wght@400;450;500;550;600;650;700;750;800&display=swap");
+
+/* Standalone replacement for the preview host's cursor preference class.
+   Palette, layout and control styles remain in each component's own CSS. */
+#alfa-goal .cursor-interaction { cursor: pointer; }
+#alfa-goal :disabled { cursor: default; }

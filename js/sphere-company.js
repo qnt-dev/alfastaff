@@ -335,7 +335,7 @@
     q('[data-f="count"]').textContent = String(o.jobs.length);
     q('[data-f="meals"]').textContent = o.meals.join(', ');
     q('[data-f="jobs"]').textContent = o.jobs.join(' · ');
-    q('[data-f="hostel"]').textContent = o.hostel;
+    q('[data-f="hostel"]').textContent = o.hostel || 'уточняйте у менеджера';
   };
 
   // Последовательность как у референса: шапка появляется белой и печатает название (~1 с),
