@@ -1,0 +1,553 @@
+<!doctype html>
+<!-- Страница собрана tools/build_pages.py из index.html и tools/pages/objects.main.html — вручную не править. -->
+<html lang="ru" data-page="objects" data-style="company" data-fonts="company">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Объекты и профессии — работа вахтой | Альфа-Стафф</title>
+  <meta name="description" content="Склады маркетплейсов и производства в Москве и регионах: условия, ставки, жильё и питание по каждому объекту. Выберите регион и профессию — покажем подходящие вахты.">
+  <meta name="theme-color" content="#121212">
+  <link rel="icon" href="assets/brandbook/mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/brandbook/apple-touch-icon.png">
+  <meta property="og:title" content="Объекты и профессии — работа вахтой | Альфа-Стафф">
+  <meta property="og:description" content="Склады маркетплейсов и производства в Москве и регионах: условия, ставки, жильё и питание по каждому объекту. Выберите регион и профессию — покажем подходящие вахты.">
+  <meta property="og:image" content="assets/brandbook/social-preview.png">
+  <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
+  <link rel="stylesheet" href="css/style-company.css?v=20261025a">
+  <link rel="stylesheet" href="css/company.css?v=20261013a">
+  <link rel="stylesheet" href="css/calculators/ui-base.css?v=20261020business38">
+<link rel="stylesheet" href="css/calc-views.css?v=20261020opening43">
+<link rel="stylesheet" href="css/calculators/goal.css?v=20261020extension42">
+<link rel="stylesheet" href="css/calculators/money-slider.css?v=20261020glow46">
+<link rel="stylesheet" href="css/calculators/themes.css?v=20261020glow44">
+<link rel="stylesheet" href="css/calculators/employer.css?v=20261020glow46">
+</head>
+<body>
+  <a class="skip" href="#main">К содержанию</a>
+
+  <!-- ============ ФИКСИРОВАННЫЕ ЭЛЕМЕНТЫ ============ -->
+  <!-- ============ ПЛАШКА: МЕНЮ И ЧАТ (как у Xirex) ============ -->
+  <header class="nav" data-nav>
+    <div class="nav__box">
+      <div class="nav__bar">
+        <!-- вся плашка — кнопка «Меню»: ⋮⋮ ——— МЕНЮ ● (импульс от знака к точкам — main.js) -->
+        <button class="nav__trigger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-menu">
+          <span class="nav__ico" aria-hidden="true"><span class="nav__dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
+          <span class="nav__line" aria-hidden="true"><canvas class="nav__trace"></canvas></span>
+          <span class="nav__label" aria-hidden="true"><span>Меню</span></span>
+          <svg class="nav__mark nav__inv" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg><svg class="nav__mark nav__ink" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg>
+        </button>
+      </div>
+
+      <div class="nav__drop">
+        <div class="nav__inner">
+          <nav class="nav__menu" id="nav-menu" aria-label="Меню" hidden>
+            <ul class="nav__list">
+              <li><a class="nav__link" href="objects.html" aria-current="page"><span data-glitch>Объекты и профессии</span></a></li>
+              <li class="nav__has-sub"><a class="nav__link" href="business.html" aria-haspopup="true"><span data-glitch>Бизнесу</span></a>
+                <ul class="nav__sub">
+                  <li><a href="business.html#step-0"><span data-glitch>Аутстаффинг</span></a></li>
+                  <li><a href="business.html#step-1"><span data-glitch>Рекрутинг</span></a></li>
+                  <li><a href="business.html#step-2"><span data-glitch>Лизинг персонала</span></a></li>
+                  <li><a href="business.html#step-3"><span data-glitch>Аутсорсинг</span></a></li>
+                </ul>
+              </li>
+              <li><a class="nav__link" href="index.html#process"><span data-glitch>Как проходит вахта</span></a></li>
+              <li><a class="nav__link" href="#calculator" data-calc-link><span data-glitch>Калькулятор вахты</span></a></li>
+              <li><a class="nav__link" href="index.html#faq"><span data-glitch>Вопросы</span></a></li>
+              <li><a class="nav__link" href="#contact"><span data-glitch>Контакты</span></a></li>
+            </ul>
+            <div class="nav__social">
+              <a href="https://t.me/alfastaff" target="_blank" rel="noopener" aria-label="Telegram — @alfastaff"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.25" /><path d="M7.2 11.7l9-3.6c.4-.2.8.1.7.6l-1.5 7.1c-.1.5-.5.6-.9.4l-2.4-1.8-1.2 1.1c-.1.1-.3.2-.5.2l.2-2.4 4.4-4-5.5 3.4-2.3-.7c-.5-.2-.5-.5 0-.7z" /></svg></a>
+              <a href="https://vk.com/alfa_staff_msk" target="_blank" rel="noopener" aria-label="ВКонтакте — alfa_staff_msk"><svg viewBox="0 0 24 24"><rect x="2.75" y="2.75" width="18.5" height="18.5" rx="5.5" /><path d="M12.6 15.6c-3.6 0-5.7-2.5-5.8-6.6h1.8c.1 3 1.4 4.3 2.5 4.6V9h1.7v2.6c1-.1 2.1-1.3 2.5-2.6h1.7c-.3 1.6-1.4 2.8-2.3 3.3.9.4 2.3 1.5 2.8 3.3h-1.9c-.4-1.2-1.4-2.2-2.8-2.3v2.3h-.2z" class="fill" /></svg></a>
+              <a href="tel:+79647273084" aria-label="Позвонить: +7 964 727-30-84"><svg viewBox="0 0 24 24"><path d="M8.6 3.8l1.6 3.6c.2.5.1 1-.3 1.4l-1.4 1.3c.9 1.9 2.4 3.4 4.3 4.3l1.3-1.4c.4-.4.9-.5 1.4-.3l3.6 1.6c.5.2.8.8.7 1.3l-.4 2.2c-.1.6-.6 1-1.2 1C10.6 18.4 5.6 13.4 5.2 7.1c0-.6.4-1.1 1-1.2l2.2-.4c.5-.1 1 .2 1.2.7z" /></svg></a>
+            </div>
+            <span class="nav__sep" aria-hidden="true"><b></b></span>
+            <div class="nav__contacts">
+              <a href="tel:+79647273084">+7 964 727-30-84 · работа</a>
+              <a href="tel:+79683211020">+7 968 321-10-20 · бизнес</a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- чат с отделом подбора: кнопка в правом нижнем углу, окно раскрывается вверх -->
+  <div class="chatw" data-chatw>
+    <div class="chat chatw__panel" id="nav-chat" role="dialog" aria-label="Чат с отделом подбора" hidden>
+      <div class="chat__head">
+        <svg class="chat__ava" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg>
+        <span class="chat__who"><b>Отдел подбора</b><span class="mono"><i></i>На связи · ответим за 30 минут</span></span>
+      </div>
+      <div class="chat__log" data-chat-log data-lenis-prevent aria-live="polite"></div>
+      <div class="chat__quick" data-chat-quick></div>
+      <form class="chat__form" data-chat-form novalidate>
+        <label class="chat__field"><span class="visually-hidden">Сообщение</span><textarea name="msg" rows="2" placeholder="Ваше сообщение…" maxlength="1000"></textarea></label>
+        <button class="chat__send" type="submit" aria-label="Отправить в Telegram"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
+        <p class="chat__note mono">Откроется Telegram @alfastaff — текст уже вписан</p>
+      </form>
+    </div>
+    <button class="chatw__btn" type="button" aria-label="Чат с отделом подбора — ответим за 30 минут" aria-expanded="false" aria-controls="nav-chat">
+      <svg class="chatw__ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 2.75h9.2c.83 0 1.5.67 1.5 1.5v5.6c0 .83-.67 1.5-1.5 1.5H8.6l-3.1 2.4v-2.4H3.4c-.83 0-1.5-.67-1.5-1.5v-5.6c0-.83.67-1.5 1.5-1.5z" /></svg>
+      <svg class="chatw__x" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" /></svg>
+    </button>
+    <span class="chatw__tag" aria-hidden="true">Ответим за 30 минут</span>
+  </div>
+
+  <div class="dock" aria-hidden="true">
+    <a class="dock__cta" href="#contact" tabindex="-1"><span class="scramble" data-text="Оставить заявку">Оставить заявку</span><svg viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>
+    <a class="dock__top" href="#main" tabindex="-1" aria-label="Наверх"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></svg></a>
+  </div>
+
+  <main id="main">
+    <!-- ============ ОБЪЕКТЫ И ПРОФЕССИИ ============ -->
+    <section class="objects" id="objects" aria-labelledby="objects-title">
+      <header class="sec-head">
+        <div class="kicker kicker--dark reveal">
+          <span class="kicker__ico" aria-hidden="true"><i></i><b></b></span>
+          <span class="kicker__idx">(АС® — 01)</span>
+          <span class="kicker__title">Объекты и профессии</span>
+        </div>
+        <h1 class="sec-title sec-title--echo" id="objects-title" data-echo="Все объекты на одной сфере">Все объекты<br>на одной сфере</h1>
+        <p class="sec-lead reveal">Каждая светящаяся точка — склад или производство, куда мы выводим людей прямо сейчас. Выберите регион и профессию — в списке останутся только подходящие объекты, а сфера повернётся к выбранному.</p>
+      </header>
+
+      <div class="obj-regions" role="tablist" aria-label="Регион" data-obj-regions></div>
+      <!-- профессии — второй строкой фильтров: число — сколько объектов с этой профессией (в выбранном регионе) -->
+      <div class="obj-regions obj-profs" role="tablist" aria-label="Профессия" data-obj-profs></div>
+      <p class="obj-prof-note" data-obj-prof-note aria-live="polite"></p>
+      <div class="objects__grid">
+        <ol class="obj-list" role="listbox" aria-label="Объекты" data-obj-list></ol>
+
+        <div class="objects__stage">
+          <div class="sphere sphere--dark" data-sphere="map">
+            <div class="sphere-wrap">
+              <div class="sphere-background"></div>
+              <div class="sphere-highlight"></div>
+              <canvas class="sphere-canvas" aria-hidden="true"></canvas>
+              <svg class="sphere-leader" aria-hidden="true"><path d="" /></svg>
+              <div class="sphere-card sphere-card--map" aria-hidden="true">
+                <div class="sc-head">
+                  <span class="sc-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l7-5 7 5v12" /><path d="M9 21v-6h6v6" /></svg></span>
+                  <p class="sc-name" data-f="name"></p>
+                </div>
+                <div class="sc-body">
+                  <div class="sc-top"><p class="sc-loc" data-f="location"></p><span class="sc-region" data-f="region"></span></div>
+                  <div class="sc-stats">
+                    <div><p class="sc-label">Ставка/Смена</p><p class="sc-value" data-f="rate"></p></div>
+                    <div><p class="sc-label">Смена</p><p class="sc-value" data-f="shift"></p></div>
+                    <div><p class="sc-label">Вакансий</p><p class="sc-value" data-f="count"></p></div>
+                    <div><p class="sc-label">Питание</p><p class="sc-value" data-f="meals"></p></div>
+                  </div>
+                  <p class="sc-line"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg><b data-f="jobs"></b></p>
+                  <p class="sc-line"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8M5 10v10h14V10" /></svg><span>Хостел: <span data-f="hostel"></span></span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="objects__progress" aria-hidden="true"><span data-obj-progress></span></div>
+        </div>
+
+        <article class="obj-detail" aria-live="polite" data-obj-detail>
+          <div class="obj-detail__head">
+            <span class="mono mono--dim" data-d="index">01 / 23</span>
+            <span class="mono obj-detail__tag" data-d="tag"></span>
+          </div>
+          <h3 class="obj-detail__title" data-d="name"></h3>
+          <dl class="obj-detail__rows">
+            <div><dt class="mono">Объект</dt><dd data-d="address"></dd></div>
+            <div><dt class="mono">Профессии</dt><dd data-d="jobs"></dd></div>
+            <div><dt class="mono">Оплата</dt><dd data-d="pay"></dd></div>
+            <div><dt class="mono">Смены</dt><dd data-d="shift"></dd></div>
+            <div><dt class="mono">Жильё</dt><dd data-d="hostel"></dd></div>
+            <div><dt class="mono">Питание</dt><dd data-d="meals"></dd></div>
+            <div hidden><dt class="mono">Важно</dt><dd data-d="note"></dd></div>
+          </dl>
+          <a class="btn btn--black btn--block" href="#contact" data-obj-apply><span class="scramble" data-text="Откликнуться на объект">Откликнуться на объект</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="contact__left">
+        <div class="kicker kicker--dark reveal">
+          <span class="kicker__ico" aria-hidden="true"><i></i><b></b></span>
+          <span class="kicker__idx">(АС® — 02)</span>
+          <span class="kicker__title">Контакты</span>
+        </div>
+        <h2 class="sec-title sec-title--echo" id="contact-title" data-echo="Давайте поговорим">Давайте<br>поговорим</h2>
+        <p class="sec-lead reveal">Ищете работу или людей на склад — оставьте заявку, и мы перезвоним.</p>
+
+        <div class="contact__lines">
+          <a class="contact__phone" href="tel:+79647273084"><span class="mono mono--dim">По работе</span>+7 964 727-30-84</a>
+          <a class="contact__phone" href="tel:+79683211020"><span class="mono mono--dim">Отдел продаж</span>+7 968 321-10-20</a>
+          <div class="contact__addr">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" /><circle cx="12" cy="10" r="2.6" /></svg>
+            <span><span class="mono">Москва, м. Бауманская</span><span class="mono mono--dim">ул. Бакунинская, 10–12 с2 — <em>головной офис</em></span></span>
+          </div>
+          <div class="socials">
+            <span class="mono mono--dim">Мы в сетях —</span>
+            <a href="https://t.me/alfastaff" target="_blank" rel="noopener" aria-label="Telegram"><svg viewBox="0 0 24 24"><path d="M21.5 4.2L2.9 11.4c-.9.4-.9 1 .1 1.3l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.3-.5-1.9-1.6-1.4z" /></svg></a>
+            <a href="https://vk.com/alfa_staff_msk" target="_blank" rel="noopener" aria-label="ВКонтакте"><svg viewBox="0 0 24 24"><path d="M12.8 17.5c-5.6 0-8.8-3.8-8.9-10.2h2.8c.1 4.7 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.8-4h2.6c-.4 2.5-2.2 4.3-3.6 5.1 1.4.6 3.5 2.3 4.3 5.1h-2.9c-.6-1.9-2.1-3.3-4.2-3.5v3.5h-.3z" /></svg></a>
+          </div>
+        </div>
+      </div>
+
+      <form class="form" data-form novalidate>
+        <div class="form__tabs" role="tablist" aria-label="Тип заявки">
+          <button type="button" role="tab" aria-selected="true" data-tab-btn="job">Ищу работу</button>
+          <button type="button" role="tab" aria-selected="false" data-tab-btn="business">Нужен персонал</button>
+          <span class="form__tab-thumb" aria-hidden="true"></span>
+        </div>
+
+        <fieldset class="form__group" data-for="job">
+          <legend class="mono">Профессия</legend>
+          <div class="pick" data-pick="multi" data-prof-pick>
+            <label><input type="checkbox" name="prof" value="Комплектовщик"><span>Комплектовщик</span></label>
+            <label><input type="checkbox" name="prof" value="Упаковщик"><span>Упаковщик</span></label>
+            <label><input type="checkbox" name="prof" value="Сортировщик"><span>Сортировщик</span></label>
+            <label><input type="checkbox" name="prof" value="ВВШ"><span>Водитель штабелёра</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="form__group" data-for="job">
+          <legend class="mono">Вахта</legend>
+          <div class="pick" data-pick="single">
+            <label><input type="radio" name="shifts" value="15"><span>15 смен</span></label>
+            <label><input type="radio" name="shifts" value="20"><span>20 смен</span></label>
+            <label><input type="radio" name="shifts" value="30" checked><span>30 смен</span></label>
+            <label><input type="radio" name="shifts" value="45"><span>45 смен</span></label>
+            <label><input type="radio" name="shifts" value="60"><span>60 смен</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="form__group" data-for="business" hidden>
+          <legend class="mono">Услуга</legend>
+          <div class="pick" data-pick="multi">
+            <label><input type="checkbox" name="service" value="Аутстаффинг"><span>Аутстаффинг</span></label>
+            <label><input type="checkbox" name="service" value="Рекрутинг"><span>Рекрутинг</span></label>
+            <label><input type="checkbox" name="service" value="Лизинг"><span>Лизинг персонала</span></label>
+            <label><input type="checkbox" name="service" value="Аутсорсинг"><span>Аутсорсинг</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="form__group" data-for="business" hidden>
+          <legend class="mono">Сколько людей нужно</legend>
+          <div class="pick" data-pick="single">
+            <label><input type="radio" name="headcount" value="до 10"><span>До 10</span></label>
+            <label><input type="radio" name="headcount" value="10–50" checked><span>10–50</span></label>
+            <label><input type="radio" name="headcount" value="50–100"><span>50–100</span></label>
+            <label><input type="radio" name="headcount" value="100+"><span>100+</span></label>
+          </div>
+        </fieldset>
+
+        <div class="form__row">
+          <label class="field"><span class="mono">Имя<sup>*</sup></span><input type="text" name="name" autocomplete="name" placeholder="Иван Петров" required></label>
+          <label class="field" data-for="business" hidden><span class="mono">Компания</span><input type="text" name="company" autocomplete="organization" placeholder="ООО «Склад»"></label>
+          <label class="field" data-for="job"><span class="mono">Город</span><input type="text" name="city" autocomplete="address-level2" placeholder="Откуда поедете"></label>
+        </div>
+        <div class="form__row">
+          <label class="field"><span class="mono">Телефон<sup>*</sup></span><input type="tel" name="phone" autocomplete="tel" placeholder="+7 (___) ___-__-__" required></label>
+          <label class="field" data-for="job"><span class="mono">Объект</span><select name="object" data-object-select><option value="">Любой подходящий</option></select></label>
+          <label class="field" data-for="business" hidden><span class="mono">Email</span><input type="email" name="email" autocomplete="email" placeholder="hr@company.ru"></label>
+        </div>
+        <label class="field field--area"><span class="mono" data-area-label>Комментарий</span><textarea name="message" rows="3" placeholder="Когда готовы выехать, есть ли опыт"></textarea></label>
+
+        <button class="btn btn--outline btn--block form__submit" type="submit"><span class="scramble" data-text="Отправить заявку">Отправить заявку</span><svg class="btn__arrow" viewBox="0 0 16 16"><path d="M4.5 11.5l7-7M5.5 4.5h6v6" /></svg></button>
+        <p class="form__legal mono mono--dim"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" /><path d="M8 7v4M8 4.8v.2" /></svg>Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных.</p>
+
+        <div class="form__done" hidden>
+          <svg viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
+          <p class="form__done-title">Заявка принята</p>
+          <p class="mono mono--dim">Перезвоним в рабочее время. Если срочно — +7 964 727-30-84</p>
+          <button type="button" class="btn btn--glass" data-form-reset><span>Отправить ещё одну</span></button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- ============ КАЛЬКУЛЯТОР — окно (js/calc-modal.js); открывается кнопкой в кармашке первого экрана.
+       Основной расчёт — от желаемой суммы к сроку; светлая и тёмная темы ============ -->
+  <div class="cm" data-cm data-calc-view="goal" data-calc-theme="light" hidden>
+    <div class="cm__backdrop" data-cm-close></div>
+    <div class="calc-workspace" role="dialog" aria-modal="true" aria-labelledby="cm-title">
+      <aside class="calc-sidebar" aria-label="Настройки представления калькулятора">
+        <div class="calc-sidebar__head"><span>Калькулятор</span><button type="button" class="cm__close" data-cm-close aria-label="Закрыть калькулятор"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg></button></div>
+
+        <div class="calc-theme-switch" role="group" aria-label="Тема калькулятора">
+          <span class="calc-sidebar__label">Оформление</span>
+          <div><button type="button" data-cv-theme="light" aria-pressed="true">Светлое</button><button type="button" data-cv-theme="dark" aria-pressed="false">Тёмное</button></div>
+        </div>
+        <div class="calc-audience"><span class="calc-sidebar__label">Для кого</span><div class="cm__tabs" role="tablist" aria-label="Кто считает">
+          <button type="button" role="tab" aria-selected="true" data-cm-tab="job">Ищу работу</button>
+          <button type="button" role="tab" aria-selected="false" data-cm-tab="biz">Нужен персонал</button>
+          <span class="cm__tab-thumb" aria-hidden="true"></span>
+        </div></div>
+      </aside>
+    <div class="cm__panel" data-lenis-prevent>
+      <div class="cm__head">
+        <div class="cm__head-t">
+          <span class="mono mono--dim">(АС®&nbsp;— Калькулятор)</span>
+          <h2 class="cm__title" id="cm-title">Калькулятор вахты</h2>
+        </div>
+
+
+      </div>
+
+      <section class="calc-source-views" data-cv aria-label="Расчёт вашей вахты">
+<section id="alfa-goal" aria-label="Калькулятор вахты: от суммы к сроку">
+  <header class="ag-header"><span class="calc-source-brand" role="img" aria-label="Альфа-Стафф"><svg class="calc-source-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm"/></svg><svg class="calc-source-wordmark" viewBox="0 0 665.361725 57.807037" aria-hidden="true"><use href="#brandbook-wordmark"/></svg></span><div class="ag-header-tools"><span class="ag-kicker">Калькулятор вахты</span><button type="button" class="ag-sound-toggle" id="ag-sound-toggle" aria-pressed="true" aria-label="Выключить звук шкалы" title="Выключить звук шкалы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="ag-sound-waves" d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/><path class="ag-sound-off" d="m16 9 6 6m0-6-6 6"/></svg><span>Звук</span></button></div></header>
+  <h2>С какой суммой<br>хотите вернуться?</h2>
+  <div class="ag-context" aria-label="Место и должность">
+    <label>Регион<select id="ag-region" data-ag="region" aria-label="Регион работы"></select></label>
+    <label>Должность<select id="ag-role" data-ag="role" aria-label="Должность"></select></label>
+    <label>Объект<select id="ag-object" data-ag="object" aria-label="Объект работы"></select></label>
+  </div>
+  <p class="ag-notice" id="ag-notice" role="status" hidden></p>
+  <div class="ag-instruments" id="ag-instruments">
+    <section class="ag-instrument ag-goal" aria-label="Желаемая сумма">
+      <div class="ag-money-heading"><span class="ag-endpoint" id="ag-money-unit">тыс. ₽</span><label for="ag-target">Хочу привезти</label></div>
+      <div class="ag-money-scale">
+        <svg class="ag-money-contour" id="ag-money-contour" viewBox="0 0 120 250" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="ag-money-light" gradientUnits="userSpaceOnUse" cx="60" cy="150" r="52"><stop offset="0" stop-color="var(--ag-light-core)"/><stop offset=".3" stop-color="var(--ag-light-edge)"/><stop offset=".65" stop-color="var(--ag-slider-accent)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-slider-accent)" stop-opacity="0"/></radialGradient>
+            <radialGradient id="ag-money-bloom" gradientUnits="userSpaceOnUse" cx="59" cy="150" r="50"><stop offset="0" stop-color="var(--ag-light-bloom)"/><stop offset=".45" stop-color="var(--ag-light-bloom)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-light-bloom)" stop-opacity="0"/></radialGradient>
+            <!-- Explicit filter bounds: the contour is only 10px wide, so
+                 objectBoundingBox percentages cut the blur into a rectangle. -->
+            <filter id="ag-money-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="12 5"/></filter>
+            <filter id="ag-money-tight-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2"/></filter>
+            <filter id="ag-money-edge-aa" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".25"/></filter>
+            <linearGradient id="ag-money-fade" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="250"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".06" stop-color="white"/><stop offset=".94" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+            <mask id="ag-money-fade-mask" maskUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" style="mask-type:alpha"><rect x="-60" y="-80" width="240" height="410" fill="url(#ag-money-fade)"/></mask>
+            <path id="ag-money-line" d="M69 0V250"/>
+            <path id="ag-money-left-shape" d="M69 -80V330H-60V-80Z"/>
+            <clipPath id="ag-money-left-clip" clipPathUnits="userSpaceOnUse"><use href="#ag-money-left-shape"/></clipPath>
+          </defs>
+          <use href="#ag-money-line" class="ag-money-line-base"/>
+          <g class="ag-money-light-field" clip-path="url(#ag-money-left-clip)" mask="url(#ag-money-fade-mask)">
+            <ellipse class="ag-money-line-glow" cx="59" cy="150" rx="50" ry="32" filter="url(#ag-money-blur)"/>
+            <use href="#ag-money-line" class="ag-money-line-near" filter="url(#ag-money-tight-blur)"/>
+          </g>
+          <g id="ag-money-ticks"></g><g id="ag-money-labels"></g>
+          <use href="#ag-money-line" class="ag-money-line-lit" filter="url(#ag-money-edge-aa)" mask="url(#ag-money-fade-mask)"/>
+        </svg>
+        <span class="ag-money-knob" aria-hidden="true"><svg viewBox="0 0 14 22"><path d="M7 2l4 7H3zM7 20l-4-7h8z"/></svg></span>
+        <input id="ag-target-range" data-ag="target-range" type="range" min="0" max="600000" step="1000" value="180000" aria-label="Желаемая сумма в рублях">
+        <div class="ag-money-readout"><input id="ag-target" data-ag="target" inputmode="numeric" type="text" value="180" autocomplete="off" aria-label="Хочу привезти, тысяч рублей" aria-describedby="ag-goal-hint ag-money-unit ag-target-error"><span class="ag-money-value-unit" aria-hidden="true">тыс. ₽</span></div>
+      </div>
+      <div class="ag-money-help"><p id="ag-goal-hint">Желаемая сумма после налога и расходов</p><p id="ag-target-error" class="ag-error" role="alert" hidden>Укажите целое число тысяч больше нуля.</p></div>
+      <div class="ag-scale-limits" id="ag-limits" aria-label="Расчётные пределы дохода"><span id="ag-base-limit"></span><span id="ag-high-limit" hidden></span></div>
+      <span class="ag-link-arrow" aria-hidden="true">→</span>
+    </section>
+    <section class="ag-instrument ag-duration" aria-label="Подходящий срок вахты">
+      <div class="ag-duration-content">
+        <div class="ag-duration-summary"><span class="ag-instrument-label" id="ag-duration-label">Для этого нужно</span><div class="ag-shift-number"><output id="ag-shifts">30</output><span id="ag-shifts-unit">смен</span></div><p class="ag-duration-extension" id="ag-duration-extension"></p></div>
+        <div class="ag-duration-calendar"><p class="ag-days">≈ <output id="ag-days">37</output> <span id="ag-calendar-unit">календарных дней</span></p><p class="ag-duration-note" id="ag-duration-note">Минимальная подходящая вахта</p></div>
+        <div class="ag-schedule" id="ag-schedule" aria-label="График работы"></div>
+      </div>
+      <div class="ag-duration-rail"><span class="ag-endpoint">Смены</span><div class="ag-duration-track" id="ag-duration-track" aria-label="Доступная длительность вахты"></div></div>
+    </section>
+  </div>
+  <div class="ag-empty" id="ag-empty" hidden><b>Подберём другой объект</b><p id="ag-empty-text"></p></div>
+  <div class="ag-result" id="ag-result" aria-live="polite" aria-atomic="true">
+    <div><span class="ag-result-label">После налога и расходов</span><div class="ag-result-number"><output id="ag-home">186 527</output> <span>₽</span></div><span class="ag-result-delta" id="ag-delta">На 6 527 ₽ больше цели</span></div>
+    <div class="ag-result-action"><span id="ag-basis">При 100 % выработке</span><button type="button" id="ag-conditions-open" data-ag="conditions-open">Условия этой вахты <span aria-hidden="true">↗</span></button></div>
+  </div>
+  <section class="ag-feasibility" id="ag-feasibility" aria-label="Достижимость суммы" hidden>
+    <p id="ag-feasibility-text" aria-live="polite"></p>
+    <div class="ag-feasibility-actions"><button type="button" id="ag-try-high" hidden></button><button type="button" id="ag-alternatives-toggle" aria-expanded="false" aria-controls="ag-alternatives" hidden></button></div>
+    <div class="ag-alternatives" id="ag-alternatives" hidden></div>
+  </section>
+  <div class="ag-options" id="ag-options">
+    <div class="ag-high ag-segments" id="ag-high-wrap" role="group" aria-label="Выработка">
+      <button type="button" data-ag-yield="100" aria-pressed="true">100 % выработки</button>
+      <button type="button" data-ag-yield="hi" aria-pressed="false">При 150 % выработке</button>
+    </div>
+    <details id="ag-expenses" data-ag="expenses"><summary><span>Расходы и полный расчёт <span class="ag-click-hint" aria-hidden="true">[кликни]</span></span><span aria-hidden="true">+</span></summary><div class="ag-detail-body"><div class="ag-expense-inputs"><label>Обычный бюджет на еду, ₽ / день<input type="text" inputmode="decimal" id="ag-food" data-ag="food" value="400"></label><label>Дорога туда и обратно, ₽<input type="text" inputmode="decimal" id="ag-road" data-ag="road" value="600"></label></div><p class="ag-small" id="ag-food-note"></p><dl class="ag-breakdown" id="ag-breakdown"></dl><p class="ag-small" id="ag-training"></p></div></details>
+    <details id="ag-conditions" data-ag="conditions"><summary>Объект и условия <span aria-hidden="true">+</span></summary><div class="ag-detail-body"><h3 id="ag-condition-title"></h3><p class="ag-small" id="ag-position"></p><dl class="ag-breakdown" id="ag-condition-list"></dl><p class="ag-small" id="ag-condition-note"></p></div></details>
+  </div>
+  <footer class="ag-foot">Предварительный расчёт · условия подтвердит менеджер</footer>
+</section>
+
+
+
+      </section>
+      <p class="visually-hidden" aria-live="polite" data-cm-live></p>
+
+
+      <section id="alfa-employer" data-cm-pane="biz" aria-label="Калькулятор персонала для компаний" hidden>
+  <header class="ag-header"><span class="calc-source-brand" role="img" aria-label="Альфа-Стафф"><svg class="calc-source-mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm"/></svg><svg class="calc-source-wordmark" viewBox="0 0 665.361725 57.807037" aria-hidden="true"><use href="#brandbook-wordmark"/></svg></span><div class="ag-header-tools"><span class="ag-kicker">Для компаний</span><button type="button" class="ag-sound-toggle" id="ec-sound-toggle" aria-pressed="true" aria-label="Выключить звук шкалы" title="Выключить звук шкалы"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path class="ag-sound-waves" d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/><path class="ag-sound-off" d="m16 9 6 6m0-6-6 6"/></svg><span>Звук</span></button></div></header>
+        <h2>Сколько людей нужно<br>для вашей задачи?</h2>
+        <div class="ag-context ec-context">
+          <label>Регион<select id="ec-region" aria-label="Регион объекта"></select></label>
+          <label>Кто нужен<select id="ec-role" aria-label="Профессия сотрудников"></select></label>
+        </div>
+        <div class="ec-operation" aria-label="Режим работы объекта">
+          <label>Смен в сутки<select id="ec-daily"><option value="1">1 смена</option><option value="2">2 смены</option></select></label>
+          <label>Дней в неделю<select id="ec-opdays"><option value="5">5 дней</option><option value="6">6 дней</option><option value="7" selected>7 дней</option></select></label>
+        </div>
+        <div class="ag-instruments ec-instruments">
+          <section class="ag-instrument ag-goal" aria-label="Потребность на одной смене">
+            <div class="ag-money-heading"><span class="ag-endpoint" id="ec-money-unit">чел.</span><label for="ec-target">На каждой смене</label></div>
+      <div class="ag-money-scale">
+        <svg class="ag-money-contour" id="ec-money-contour" viewBox="0 0 120 250" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="ec-money-light" gradientUnits="userSpaceOnUse" cx="60" cy="150" r="52"><stop offset="0" stop-color="var(--ag-light-core)"/><stop offset=".3" stop-color="var(--ag-light-edge)"/><stop offset=".65" stop-color="var(--ag-slider-accent)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-slider-accent)" stop-opacity="0"/></radialGradient>
+            <radialGradient id="ec-money-bloom" gradientUnits="userSpaceOnUse" cx="59" cy="150" r="50"><stop offset="0" stop-color="var(--ag-light-bloom)"/><stop offset=".45" stop-color="var(--ag-light-bloom)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ag-light-bloom)" stop-opacity="0"/></radialGradient>
+            <!-- Explicit filter bounds: the contour is only 10px wide, so
+                 objectBoundingBox percentages cut the blur into a rectangle. -->
+            <filter id="ec-money-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="12 5"/></filter>
+            <filter id="ec-money-tight-blur" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2"/></filter>
+            <filter id="ec-money-edge-aa" filterUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".25"/></filter>
+            <linearGradient id="ec-money-fade" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="250"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".06" stop-color="white"/><stop offset=".94" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+            <mask id="ec-money-fade-mask" maskUnits="userSpaceOnUse" x="-60" y="-80" width="240" height="410" style="mask-type:alpha"><rect x="-60" y="-80" width="240" height="410" fill="url(#ec-money-fade)"/></mask>
+            <path id="ec-money-line" d="M69 0V250"/>
+            <path id="ec-money-left-shape" d="M69 -80V330H-60V-80Z"/>
+            <clipPath id="ec-money-left-clip" clipPathUnits="userSpaceOnUse"><use href="#ec-money-left-shape"/></clipPath>
+          </defs>
+          <use href="#ec-money-line" class="ag-money-line-base"/>
+          <g class="ag-money-light-field" clip-path="url(#ec-money-left-clip)" mask="url(#ec-money-fade-mask)">
+            <ellipse class="ag-money-line-glow" cx="59" cy="150" rx="50" ry="32" filter="url(#ec-money-blur)"/>
+            <use href="#ec-money-line" class="ag-money-line-near" filter="url(#ec-money-tight-blur)"/>
+          </g>
+          <g id="ec-money-ticks"></g><g id="ec-money-labels"></g>
+          <use href="#ec-money-line" class="ag-money-line-lit" filter="url(#ec-money-edge-aa)" mask="url(#ec-money-fade-mask)"/>
+        </svg>
+        <span class="ag-money-knob" aria-hidden="true"><svg viewBox="0 0 14 22"><path d="M7 2l4 7H3zM7 20l-4-7h8z"/></svg></span>
+        <input id="ec-target-range" type="range" min="1" max="200" step="1" value="20" aria-label="Количество людей на смене">
+        <div class="ag-money-readout"><input id="ec-target" inputmode="numeric" type="text" value="20" autocomplete="off" aria-label="Людей на каждой смене" aria-describedby="ec-goal-hint ec-money-unit ec-target-error"><span class="ag-money-value-unit" aria-hidden="true">чел.</span></div>
+      </div>
+            <div class="ag-money-help"><p id="ec-goal-hint">Одновременно на рабочем месте</p><p id="ec-target-error" class="ag-error" role="alert" hidden>Укажите от 1 до 200 человек.</p></div>
+            <span class="ag-link-arrow" aria-hidden="true">→</span>
+          </section>
+          <section class="ag-instrument ag-duration ec-team" aria-label="Расчётная численность команды">
+            <div><span class="ag-instrument-label">Для этого нужна команда</span><div class="ag-shift-number"><output id="ec-total">44</output><span id="ec-people-unit">человека</span></div></div>
+            <div class="ec-staff-parts"><div><b id="ec-base">40</b><span>для покрытия графика</span></div><div><b>+ <span id="ec-reserve-count">4</span></b><span id="ec-reserve-label">резерв 8 %</span></div></div>
+            <div class="ag-schedule"><div class="ag-segments" role="group" aria-label="График одного сотрудника"><button type="button" data-ec-sched="2/2" aria-pressed="true">2/2</button><button type="button" data-ec-sched="5/2" aria-pressed="false">5/2</button><button type="button" data-ec-sched="6/1" aria-pressed="false">6/1</button><button type="button" data-ec-sched="7/0" aria-pressed="false">7/0</button></div><span>ГРАФИК СОТРУДНИКА</span></div>
+          </section>
+        </div>
+        <div class="ag-result ec-result">
+          <div><span class="ag-result-label" id="ec-coverage">20 человек на каждой смене</span><span class="ag-result-delta" id="ec-summary"></span></div>
+          <div class="ag-result-action"><span>Стоимость под вашу задачу</span><button type="button" id="ec-request">Запросить стоимость <span aria-hidden="true">↗</span></button></div>
+        </div>
+        <details id="ec-calculation"><summary><span>Резерв и полный расчёт <span class="ag-click-hint" aria-hidden="true">[кликни]</span></span><span aria-hidden="true">+</span></summary>
+          <div class="ag-detail-body"><div class="ec-settings"><label>Резерв на замены<select id="ec-reserve"><option value="0">Без резерва</option><option value="5">5 %</option><option value="8" selected>8 %</option><option value="10">10 %</option><option value="15">15 %</option><option value="20">20 %</option><option value="30">30 %</option></select></label></div><p class="ec-small" id="ec-reserve-note"></p><dl class="ag-breakdown" id="ec-breakdown"></dl><p class="ec-small">Один сотрудник — не больше одной смены в сутки. При графике 2/2 считаем две чередующиеся команды. Итог округляем вверх; точный состав и сроки выхода согласуем после уточнения задачи.</p></div>
+        </details>
+        <label class="ec-stay"><input type="checkbox" id="ec-stay">Нужно проживание сотрудников</label>
+        <p class="ag-footer">Подготовим предложение по вашему объекту, графику и составу команды.</p>
+      </section>
+    </div>
+    </div>
+  </div>
+
+  <!-- ============ ПОДВАЛ ============ -->
+  <footer class="footer">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <div class="kicker kicker--dark">
+          <span class="kicker__ico" aria-hidden="true"><i></i><b></b></span>
+          <span class="kicker__idx">(АС® — Финал)</span>
+          <span class="kicker__title">Последний кадр</span>
+        </div>
+        <p class="footer__title">Работаем<br>честно</p>
+        <p class="footer__lead">Подбор персонала вахтовым методом для складов маркетплейсов и производств в Москве и регионах.</p>
+      </div>
+      <div class="footer__cols">
+        <div class="footer__col">
+          <span class="mono">Связь</span>
+          <ul><li><span>001.</span><a href="tel:+79647273084">+7 964 727-30-84</a><em>работа</em></li><li><span>002.</span><a href="tel:+79683211020">+7 968 321-10-20</a><em>бизнес</em></li><li><span>003.</span><a href="https://t.me/alfastaff" target="_blank" rel="noopener">Telegram</a><em>@alfastaff</em></li><li><span>004.</span><a href="https://vk.com/alfa_staff_msk" target="_blank" rel="noopener">ВКонтакте</a><em>alfa_staff_msk</em></li></ul>
+        </div>
+        <div class="footer__col">
+          <span class="mono">География</span>
+          <ul data-region-list><li><span>001.</span>Москва и МО<em data-region-count="Москва и МО">15</em></li><li><span>002.</span>Татарстан<em data-region-count="Татарстан">3</em></li><li><span>003.</span>Нижегородская обл.<em data-region-count="Нижегородская обл.">3</em></li><li><span>004.</span>Самарская обл.<em data-region-count="Самарская обл.">1</em></li><li><span>005.</span>Владимир<em data-region-count="Владимир">1</em></li><li><span>006.</span>Рязанская обл.<em data-region-count="Рязанская обл.">1</em></li></ul>
+        </div>
+      </div>
+    </div>
+
+    <nav class="footer__nav" aria-label="Разделы">
+      <a href="objects.html" aria-current="page"><span data-glitch>Объекты и профессии</span></a><a href="business.html"><span data-glitch>Бизнесу</span></a><a href="index.html#process"><span data-glitch>Соискателям</span></a><a href="#calculator" data-calc-link><span data-glitch>Калькулятор вахты</span></a><a href="index.html#faq"><span data-glitch>Вопросы</span></a><a href="#contact"><span data-glitch>Контакты</span></a>
+    </nav>
+
+    <div class="footer__earth">
+      <p class="footer__trust mono">Нам доверяют</p>
+      <div class="footer__clients" aria-label="Объекты, на которые мы выводим людей">
+        <div class="footer__clients-track"><div class="footer__clients-set"><span>Яндекс.Склад</span><span>ОЗОН</span><span>FM Logistic</span><span>Лемана Про</span><span>СДЭК</span><span>Детский Мир</span><span>Major</span><span>Стародворские колбасы</span><span>ВЮРТ</span><span>Форма-Авто</span><span>Золотое Яблоко</span></div><div class="footer__clients-set" aria-hidden="true"><span>Яндекс.Склад</span><span>ОЗОН</span><span>FM Logistic</span><span>Лемана Про</span><span>СДЭК</span><span>Детский Мир</span><span>Major</span><span>Стародворские колбасы</span><span>ВЮРТ</span><span>Форма-Авто</span><span>Золотое Яблоко</span></div></div>
+      </div>
+      <div class="earth" aria-hidden="true"><canvas class="earth__canvas"></canvas></div>
+      <div class="footer__bottom">
+        <div class="footer__corner">
+          <a class="logo logo--light" href="#main" aria-label="Альфа-Стафф — наверх">
+            <svg class="logo__mark" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-inv" /></svg>
+            <span class="logo__word"><img src="assets/brandbook/wordmark.svg" alt="Альфа-Стафф" width="128" height="11"></span>
+          </a>
+          <span class="mono mono--dim footer__addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" /><circle cx="12" cy="10" r="2.6" /></svg><span>Москва, ул. Бакунинская, 10–12 с2<br><em>работаем по всей России</em></span></span>
+        </div>
+        <div class="footer__corner footer__corner--r">
+          <span class="mono mono--dim">© 2015–2026 Альфа-Стафф</span>
+          <a class="mono mono--dim footer__policy" href="brand.html">Бренд-бук</a>
+          <a class="mono mono--dim footer__policy" href="#" data-policy>Политика обработки персональных данных</a>
+          <a class="mono mono--dim footer__policy" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Карты © OpenStreetMap</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ SVG-СИМВОЛЫ ============ -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="brandbook-wordmark" viewBox="0 0 665.361725 57.807037"><g transform="translate(-92.753998 -332.634064)"><path transform="matrix(1,0,0,-1,640.7139,373.5041)" d="M0 0V23.902C-6.863 22.419-9.846 18.487-9.716 11.417-9.599 5.005-6.242 .99 0 0M15.756-.257C23.183 1.613 26.215 6.098 25.59 13.512 25.085 19.504 21.588 23.185 15.756 23.708ZM6.341 38.028C17.198 38.01 25.841 36.235 33.197 30.287 44.414 21.217 44.44 2.68 33.256-6.37 20.796-16.452-3.203-16.937-16.084-7.366-30.189 3.115-28.616 24.86-13.147 33.202-6.54 36.766 .557 38.181 6.341 38.028" />
+<path transform="matrix(1,0,0,-1,313.0533,373.6565)" d="M0 0C7.01 1.705 10.116 5.989 9.799 13.054 9.531 19.045 6.09 22.926 0 23.92ZM-15.757 24.015C-22.335 22.89-25.72 18.629-25.678 11.995-25.636 5.364-22.327 1.299-15.757 .116ZM7.152-11.469C-3.127-14.595-14.197-14.361-24.353-10.857-25.745-10.377-27.115-9.842-28.45-9.23-37.529-5.065-41.801 2.788-41.519 12.911-41.246 22.688-36.515 29.827-27.862 33.875-14.86 39.957-1.468 40.015 11.571 34.001 20.929 29.684 25.989 21.974 25.716 11.51 25.438 .861 19.842-6.672 10.103-10.454 9.135-10.83 8.152-11.164 7.152-11.469" />
+<path transform="matrix(1,0,0,-1,731.8447,373.4636)" d="M0 0C6.115 .973 9.55 5.034 9.788 11.376 10.04 18.067 6.775 22.33 0 23.836ZM-15.851 24.024C-23.182 22.181-26.329 17.55-25.682 10.314-25.161 4.488-21.476 .587-15.851 .123ZM3.97-12.746C-5.363-14.777-15.107-14.184-24.155-11.123-25.615-10.63-27.065-10.075-28.477-9.437-37.211-5.492-41.513 1.974-41.568 11.768-41.624 21.77-37.08 29.062-28.364 33.446-16.071 39.63-3.198 39.672 9.438 34.784 20.463 30.52 26.271 21.344 25.699 10.916 25.096-.09 17.875-8.964 6.348-12.161 5.565-12.379 4.774-12.571 3.97-12.746" />
+<path transform="matrix(1,0,0,-1,204.636,386.51048)" d="M0 0H-16.326C-16.403 1.614-16.537 3.185-16.542 4.756-16.571 12.987-16.49 21.219-16.601 29.449-16.672 34.733-19.521 37.697-24.078 37.602-28.428 37.512-31.054 34.645-31.102 29.524-31.193 19.831-31.128 10.136-31.128 .159H-53.196V12.311H-47.961C-47.961 17.162-47.993 22.833-47.955 27.587-47.846 41.167-39.437 50.307-26.473 50.973-11.057 51.765-1.227 44.514-.147 30.439 .615 20.504 0 10.464 0 0" />
+<path transform="matrix(1,0,0,-1,232.8974,366.45988)" d="M0 0C0-5.544 2.531-8.078 7.493-8.08 11.514-8.081 14.113-5.663 14.136-1.898 14.161 2.253 11.512 4.224 6.157 4.224-.698 4.224 0 5.134 0 0M-15.88 30.788H-.088V15.898C5.231 15.898 10.12 16.314 14.911 15.809 24.236 14.825 29.961 9.311 30.635 1.406 31.542-9.233 27.741-15.851 18.279-18.728 10.269-21.164 2.066-21.195-5.95-18.34-11.307-16.432-15.403-12.494-15.679-7.057-16.314 5.424-15.88 17.96-15.88 30.788" />
+<path transform="matrix(1,0,0,-1,490.2726,345.53169)" d="M0 0C-3.423-3.045-6.635-5.902-9.794-8.712-19.023-2.19-25.7-1.753-30.258-7.21-34.428-12.204-33.995-21.4-29.385-25.762-24.519-30.365-17.352-29.535-10.095-23.163-6.856-25.992-3.546-28.883-.303-31.716-3.924-40.117-17.311-43.496-27.639-41.761-39.949-39.692-48.667-30.833-49.695-19.671-50.941-6.148-44.948 3.816-32.886 8.28-20.887 12.719-6.522 9.271 0 0" />
+<path transform="matrix(1,0,0,-1,547.5916,342.34608)" d="M0 0C-1.773-3.761-3.473-7.366-5.183-10.993-9.131-9.621-12.729-8.371-17.035-6.874V-43.987H-33.971V-6.883C-38.307-8.397-41.895-9.651-45.853-11.032-47.564-7.416-49.276-3.799-50.975-.209-40.856 8.579-13.588 9.712 0 0" />
+<path transform="matrix(1,0,0,-1,0,720.157)" d="M409.395 348.354H430.38899V360.219H409.395Z" />
+<path transform="matrix(1,0,0,-1,109.802,364.0355)" d="M0 0V6.897C0 11.443 3.685 15.127 8.231 15.127 12.776 15.127 16.461 11.443 16.461 6.897V0ZM32.815-22.352C32.815-21.254 32.787-20.42 32.78-19.566 32.712-10.29 33.075-.979 32.38 8.252 31.583 18.836 24.988 25.946 14.52 27.947-3.561 31.401-17.048 21.259-16.358 3.569-16.166-1.364-16.327-6.312-16.327-11.253-16.327-14.928-16.327-18.603-16.327-22.211H.145V-12.901H16.45V-22.352Z" />
+<path transform="matrix(1,0,0,-1,365.5535,364.10368)" d="M0 0V6.897C0 11.443 3.685 15.127 8.231 15.127 12.776 15.127 16.461 11.443 16.461 6.897V0ZM32.815-22.352C32.815-21.254 32.787-20.42 32.781-19.566 32.712-10.29 33.075-.979 32.38 8.252 31.583 18.836 24.988 25.946 14.52 27.947-3.561 31.401-17.048 21.259-16.358 3.569-16.166-1.364-16.327-6.312-16.327-11.253-16.327-14.928-16.327-18.603-16.327-22.211H.145V-12.901H16.45V-22.352Z" />
+<path transform="matrix(1,0,0,-1,572.6946,364.2667)" d="M0 0V6.897C0 11.443 3.685 15.127 8.231 15.127 12.776 15.127 16.461 11.443 16.461 6.897V0ZM32.815-22.352C32.815-21.254 32.787-20.42 32.781-19.566 32.712-10.29 33.075-.979 32.38 8.252 31.583 18.836 24.988 25.946 14.52 27.947-3.561 31.401-17.048 21.259-16.358 3.569-16.166-1.364-16.327-6.312-16.327-11.253-16.327-14.928-16.327-18.603-16.327-22.211H.145V-12.901H16.45V-22.352Z" />
+</g></symbol>
+      <symbol id="mark" viewBox="0 0 466.818970 463.941971"><g transform="translate(-408.492493 -89.851486)"><path transform="matrix(1,0,0,-1,639.0295,122.922489)" d="M0 0C-110.837-.384-197.985-89.273-199.292-196.735-200.641-307.768-111.403-398.52-.223-398.542 110.726-398.564 197.146-309.524 199.158-203.34 201.281-91.247 111.261-.269 0 0M9.983-430.871H-7.9C-11.45-430.566-14.999-430.238-18.551-429.962-33.946-428.765-49.092-426.095-63.84-421.555-130.899-400.913-179.523-358.808-209.552-295.445-221.018-271.252-227.466-245.604-229.625-218.9-229.912-215.349-230.232-211.801-230.537-208.252V-190.371C-230.397-189.351-230.17-188.334-230.13-187.31-229.538-172.314-227.319-157.536-223.6-143.027-211.353-95.258-186.621-55.077-149.053-23.142-109.147 10.78-62.844 29.091-10.449 31.86 12.472 33.071 35.088 30.992 57.284 25.308 108.47 12.198 150.776-15.001 183.257-56.645 220.399-104.265 236.282-158.56 231.713-218.806 230.471-235.184 227.53-251.272 222.517-266.89 201.472-332.454 159.793-380.148 97.613-409.702 73.289-421.263 47.499-427.797 20.629-429.958 17.079-430.244 13.531-430.566 9.983-430.871" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,639.9603,492.534)" d="M0 0C93.866-.349 170.232 76.231 170.488 169.798 170.747 263.94 94.207 340.438 .557 340.665-93.586 340.894-170.187 264.291-170.27 170.467-170.353 76.514-93.836-.244 0 0M-.931 369.612C110.331 369.343 200.35 278.364 198.227 166.272 196.216 60.087 109.795-28.952-1.154-28.93-112.334-28.908-201.572 61.844-200.223 172.876-198.916 280.339-111.768 369.227-.931 369.612" fill="#ffffff" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C-.548-.831-.823-1.259-1.109-1.679-13.011-19.136-29.412-26.762-50.376-23.664-73.152-20.298-90.633 .237-90.745 23.546-90.802 35.342-87.014 45.937-79.218 54.824-66.337 69.508-50.212 75.416-30.978 71.144-9.041 66.271 6.981 45.829 6.243 22.717 6.113 18.663 6.417 14.509 7.173 10.526 14.177-26.368 49.06-51.107 85.923-45.086 107.312-41.592 123.588-30.168 134.898-11.664 135.619-10.485 135.662-9.676 134.761-8.565 132.092-5.275 129.554-1.878 126.949 1.465 125.112 3.822 123.251 6.159 121.283 8.655 112.632-15.413 89.09-28.003 66.115-23.609 44.931-19.557 28.981-2.57 26.848 19.523 24.732 41.428 37.652 61.818 58.104 69.421 69.713 73.737 81.41 73.649 92.928 69.145 104.423 64.649 112.888 56.636 118.766 45.383 121.868 52.762 124.843 59.775 127.721 66.829 127.92 67.317 127.592 68.308 127.17 68.716 123.861 71.924 120.72 75.381 117.058 78.138 100.916 90.292 82.77 94.697 62.846 91.205 46.981 88.424 33.74 80.819 23.154 68.695 20.496 65.65 18.173 62.313 15.634 59.03 15.132 59.787 14.642 60.524 14.152 61.263 10.178 67.264 5.471 72.619-.203 77.057-16.665 89.931-35.229 94.776-55.854 91.212-72.239 88.381-85.853 80.429-96.447 67.73-109.709 51.831-114.921 33.434-111.905 12.873-109.383-4.324-101.327-18.599-88.049-29.674-71.39-43.569-52.09-48.551-30.762-44.693-14.87-41.818-1.611-34.017 8.89-21.68 9.262-21.243 9.538-20.312 9.328-19.855 6.333-13.341 3.247-6.869 0 0M11.418-147.081C-82.417-147.326-158.935-70.567-158.852 23.386-158.769 117.21-82.168 193.813 11.975 193.584 105.625 193.357 182.165 116.859 181.906 22.716 181.65-70.85 105.284-147.43 11.418-147.081" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C3.247-6.869 6.333-13.341 9.328-19.855 9.538-20.312 9.262-21.243 8.89-21.68-1.611-34.017-14.87-41.818-30.762-44.693-52.09-48.551-71.39-43.569-88.049-29.674-101.327-18.599-109.383-4.324-111.905 12.873-114.921 33.434-109.709 51.831-96.447 67.73-85.853 80.429-72.239 88.381-55.854 91.212-35.229 94.776-16.665 89.931-.203 77.057 5.471 72.619 10.178 67.264 14.152 61.263 14.642 60.524 15.132 59.787 15.634 59.03 18.173 62.313 20.496 65.65 23.154 68.695 33.74 80.819 46.981 88.424 62.846 91.205 82.77 94.697 100.916 90.292 117.058 78.138 120.72 75.381 123.861 71.924 127.17 68.716 127.592 68.308 127.92 67.317 127.721 66.829 124.843 59.775 121.868 52.762 118.766 45.383 112.888 56.636 104.423 64.649 92.928 69.145 81.41 73.649 69.713 73.737 58.104 69.421 37.652 61.818 24.732 41.428 26.848 19.523 28.981-2.57 44.931-19.557 66.115-23.609 89.09-28.003 112.632-15.413 121.283 8.655 123.251 6.159 125.112 3.822 126.949 1.465 129.554-1.878 132.092-5.275 134.761-8.565 135.662-9.676 135.619-10.485 134.898-11.664 123.588-30.168 107.312-41.592 85.923-45.086 49.06-51.107 14.177-26.368 7.173 10.526 6.417 14.509 6.113 18.663 6.243 22.717 6.981 45.829-9.041 66.271-30.978 71.144-50.212 75.416-66.337 69.508-79.218 54.824-87.014 45.937-90.802 35.342-90.745 23.546-90.633 .237-73.152-20.298-50.376-23.664-29.412-26.762-13.011-19.136-1.109-1.679-.823-1.259-.548-.831 0 0" fill="#ffffff" />
+</g></symbol>
+      <symbol id="mark-inv" viewBox="0 0 466.818970 463.941971"><g transform="translate(-408.492493 -89.851486)"><path transform="matrix(1,0,0,-1,639.0295,122.922489)" d="M0 0C-110.837-.384-197.985-89.273-199.292-196.735-200.641-307.768-111.403-398.52-.223-398.542 110.726-398.564 197.146-309.524 199.158-203.34 201.281-91.247 111.261-.269 0 0M9.983-430.871H-7.9C-11.45-430.566-14.999-430.238-18.551-429.962-33.946-428.765-49.092-426.095-63.84-421.555-130.899-400.913-179.523-358.808-209.552-295.445-221.018-271.252-227.466-245.604-229.625-218.9-229.912-215.349-230.232-211.801-230.537-208.252V-190.371C-230.397-189.351-230.17-188.334-230.13-187.31-229.538-172.314-227.319-157.536-223.6-143.027-211.353-95.258-186.621-55.077-149.053-23.142-109.147 10.78-62.844 29.091-10.449 31.86 12.472 33.071 35.088 30.992 57.284 25.308 108.47 12.198 150.776-15.001 183.257-56.645 220.399-104.265 236.282-158.56 231.713-218.806 230.471-235.184 227.53-251.272 222.517-266.89 201.472-332.454 159.793-380.148 97.613-409.702 73.289-421.263 47.499-427.797 20.629-429.958 17.079-430.244 13.531-430.566 9.983-430.871" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,639.9603,492.534)" d="M0 0C93.866-.349 170.232 76.231 170.488 169.798 170.747 263.94 94.207 340.438 .557 340.665-93.586 340.894-170.187 264.291-170.27 170.467-170.353 76.514-93.836-.244 0 0M-.931 369.612C110.331 369.343 200.35 278.364 198.227 166.272 196.216 60.087 109.795-28.952-1.154-28.93-112.334-28.908-201.572 61.844-200.223 172.876-198.916 280.339-111.768 369.227-.931 369.612" fill="#ffffff" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C-.548-.831-.823-1.259-1.109-1.679-13.011-19.136-29.412-26.762-50.376-23.664-73.152-20.298-90.633 .237-90.745 23.546-90.802 35.342-87.014 45.937-79.218 54.824-66.337 69.508-50.212 75.416-30.978 71.144-9.041 66.271 6.981 45.829 6.243 22.717 6.113 18.663 6.417 14.509 7.173 10.526 14.177-26.368 49.06-51.107 85.923-45.086 107.312-41.592 123.588-30.168 134.898-11.664 135.619-10.485 135.662-9.676 134.761-8.565 132.092-5.275 129.554-1.878 126.949 1.465 125.112 3.822 123.251 6.159 121.283 8.655 112.632-15.413 89.09-28.003 66.115-23.609 44.931-19.557 28.981-2.57 26.848 19.523 24.732 41.428 37.652 61.818 58.104 69.421 69.713 73.737 81.41 73.649 92.928 69.145 104.423 64.649 112.888 56.636 118.766 45.383 121.868 52.762 124.843 59.775 127.721 66.829 127.92 67.317 127.592 68.308 127.17 68.716 123.861 71.924 120.72 75.381 117.058 78.138 100.916 90.292 82.77 94.697 62.846 91.205 46.981 88.424 33.74 80.819 23.154 68.695 20.496 65.65 18.173 62.313 15.634 59.03 15.132 59.787 14.642 60.524 14.152 61.263 10.178 67.264 5.471 72.619-.203 77.057-16.665 89.931-35.229 94.776-55.854 91.212-72.239 88.381-85.853 80.429-96.447 67.73-109.709 51.831-114.921 33.434-111.905 12.873-109.383-4.324-101.327-18.599-88.049-29.674-71.39-43.569-52.09-48.551-30.762-44.693-14.87-41.818-1.611-34.017 8.89-21.68 9.262-21.243 9.538-20.312 9.328-19.855 6.333-13.341 3.247-6.869 0 0M11.418-147.081C-82.417-147.326-158.935-70.567-158.852 23.386-158.769 117.21-82.168 193.813 11.975 193.584 105.625 193.357 182.165 116.859 181.906 22.716 181.65-70.85 105.284-147.43 11.418-147.081" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C3.247-6.869 6.333-13.341 9.328-19.855 9.538-20.312 9.262-21.243 8.89-21.68-1.611-34.017-14.87-41.818-30.762-44.693-52.09-48.551-71.39-43.569-88.049-29.674-101.327-18.599-109.383-4.324-111.905 12.873-114.921 33.434-109.709 51.831-96.447 67.73-85.853 80.429-72.239 88.381-55.854 91.212-35.229 94.776-16.665 89.931-.203 77.057 5.471 72.619 10.178 67.264 14.152 61.263 14.642 60.524 15.132 59.787 15.634 59.03 18.173 62.313 20.496 65.65 23.154 68.695 33.74 80.819 46.981 88.424 62.846 91.205 82.77 94.697 100.916 90.292 117.058 78.138 120.72 75.381 123.861 71.924 127.17 68.716 127.592 68.308 127.92 67.317 127.721 66.829 124.843 59.775 121.868 52.762 118.766 45.383 112.888 56.636 104.423 64.649 92.928 69.145 81.41 73.649 69.713 73.737 58.104 69.421 37.652 61.818 24.732 41.428 26.848 19.523 28.981-2.57 44.931-19.557 66.115-23.609 89.09-28.003 112.632-15.413 121.283 8.655 123.251 6.159 125.112 3.822 126.949 1.465 129.554-1.878 132.092-5.275 134.761-8.565 135.662-9.676 135.619-10.485 134.898-11.664 123.588-30.168 107.312-41.592 85.923-45.086 49.06-51.107 14.177-26.368 7.173 10.526 6.417 14.509 6.113 18.663 6.243 22.717 6.981 45.829-9.041 66.271-30.978 71.144-50.212 75.416-66.337 69.508-79.218 54.824-87.014 45.937-90.802 35.342-90.745 23.546-90.633 .237-73.152-20.298-50.376-23.664-29.412-26.762-13.011-19.136-1.109-1.679-.823-1.259-.548-.831 0 0" fill="#ffffff" />
+</g></symbol>
+      <symbol id="mark-outline" viewBox="0 0 466.818970 463.941971"><g transform="translate(-408.492493 -89.851486)"><path transform="matrix(1,0,0,-1,639.0295,122.922489)" d="M0 0C-110.837-.384-197.985-89.273-199.292-196.735-200.641-307.768-111.403-398.52-.223-398.542 110.726-398.564 197.146-309.524 199.158-203.34 201.281-91.247 111.261-.269 0 0M9.983-430.871H-7.9C-11.45-430.566-14.999-430.238-18.551-429.962-33.946-428.765-49.092-426.095-63.84-421.555-130.899-400.913-179.523-358.808-209.552-295.445-221.018-271.252-227.466-245.604-229.625-218.9-229.912-215.349-230.232-211.801-230.537-208.252V-190.371C-230.397-189.351-230.17-188.334-230.13-187.31-229.538-172.314-227.319-157.536-223.6-143.027-211.353-95.258-186.621-55.077-149.053-23.142-109.147 10.78-62.844 29.091-10.449 31.86 12.472 33.071 35.088 30.992 57.284 25.308 108.47 12.198 150.776-15.001 183.257-56.645 220.399-104.265 236.282-158.56 231.713-218.806 230.471-235.184 227.53-251.272 222.517-266.89 201.472-332.454 159.793-380.148 97.613-409.702 73.289-421.263 47.499-427.797 20.629-429.958 17.079-430.244 13.531-430.566 9.983-430.871" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,639.9603,492.534)" d="M0 0C93.866-.349 170.232 76.231 170.488 169.798 170.747 263.94 94.207 340.438 .557 340.665-93.586 340.894-170.187 264.291-170.27 170.467-170.353 76.514-93.836-.244 0 0M-.931 369.612C110.331 369.343 200.35 278.364 198.227 166.272 196.216 60.087 109.795-28.952-1.154-28.93-112.334-28.908-201.572 61.844-200.223 172.876-198.916 280.339-111.768 369.227-.931 369.612" fill="#ffffff" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C-.548-.831-.823-1.259-1.109-1.679-13.011-19.136-29.412-26.762-50.376-23.664-73.152-20.298-90.633 .237-90.745 23.546-90.802 35.342-87.014 45.937-79.218 54.824-66.337 69.508-50.212 75.416-30.978 71.144-9.041 66.271 6.981 45.829 6.243 22.717 6.113 18.663 6.417 14.509 7.173 10.526 14.177-26.368 49.06-51.107 85.923-45.086 107.312-41.592 123.588-30.168 134.898-11.664 135.619-10.485 135.662-9.676 134.761-8.565 132.092-5.275 129.554-1.878 126.949 1.465 125.112 3.822 123.251 6.159 121.283 8.655 112.632-15.413 89.09-28.003 66.115-23.609 44.931-19.557 28.981-2.57 26.848 19.523 24.732 41.428 37.652 61.818 58.104 69.421 69.713 73.737 81.41 73.649 92.928 69.145 104.423 64.649 112.888 56.636 118.766 45.383 121.868 52.762 124.843 59.775 127.721 66.829 127.92 67.317 127.592 68.308 127.17 68.716 123.861 71.924 120.72 75.381 117.058 78.138 100.916 90.292 82.77 94.697 62.846 91.205 46.981 88.424 33.74 80.819 23.154 68.695 20.496 65.65 18.173 62.313 15.634 59.03 15.132 59.787 14.642 60.524 14.152 61.263 10.178 67.264 5.471 72.619-.203 77.057-16.665 89.931-35.229 94.776-55.854 91.212-72.239 88.381-85.853 80.429-96.447 67.73-109.709 51.831-114.921 33.434-111.905 12.873-109.383-4.324-101.327-18.599-88.049-29.674-71.39-43.569-52.09-48.551-30.762-44.693-14.87-41.818-1.611-34.017 8.89-21.68 9.262-21.243 9.538-20.312 9.328-19.855 6.333-13.341 3.247-6.869 0 0M11.418-147.081C-82.417-147.326-158.935-70.567-158.852 23.386-158.769 117.21-82.168 193.813 11.975 193.584 105.625 193.357 182.165 116.859 181.906 22.716 181.65-70.85 105.284-147.43 11.418-147.081" fill="#c41718" />
+<path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C3.247-6.869 6.333-13.341 9.328-19.855 9.538-20.312 9.262-21.243 8.89-21.68-1.611-34.017-14.87-41.818-30.762-44.693-52.09-48.551-71.39-43.569-88.049-29.674-101.327-18.599-109.383-4.324-111.905 12.873-114.921 33.434-109.709 51.831-96.447 67.73-85.853 80.429-72.239 88.381-55.854 91.212-35.229 94.776-16.665 89.931-.203 77.057 5.471 72.619 10.178 67.264 14.152 61.263 14.642 60.524 15.132 59.787 15.634 59.03 18.173 62.313 20.496 65.65 23.154 68.695 33.74 80.819 46.981 88.424 62.846 91.205 82.77 94.697 100.916 90.292 117.058 78.138 120.72 75.381 123.861 71.924 127.17 68.716 127.592 68.308 127.92 67.317 127.721 66.829 124.843 59.775 121.868 52.762 118.766 45.383 112.888 56.636 104.423 64.649 92.928 69.145 81.41 73.649 69.713 73.737 58.104 69.421 37.652 61.818 24.732 41.428 26.848 19.523 28.981-2.57 44.931-19.557 66.115-23.609 89.09-28.003 112.632-15.413 121.283 8.655 123.251 6.159 125.112 3.822 126.949 1.465 129.554-1.878 132.092-5.275 134.761-8.565 135.662-9.676 135.619-10.485 134.898-11.664 123.588-30.168 107.312-41.592 85.923-45.086 49.06-51.107 14.177-26.368 7.173 10.526 6.417 14.509 6.113 18.663 6.243 22.717 6.981 45.829-9.041 66.271-30.978 71.144-50.212 75.416-66.337 69.508-79.218 54.824-87.014 45.937-90.802 35.342-90.745 23.546-90.633 .237-73.152-20.298-50.376-23.664-29.412-26.762-13.011-19.136-1.109-1.679-.823-1.259-.548-.831 0 0" fill="#ffffff" />
+</g></symbol>
+      <!-- Знак для мелких размеров (до 32 px: меню, чат, бейджи, документы, калькулятор). Обод и кольца — точные окружности
+           в 1.35 раза толще, чем в большом знаке: при 20–28 px тонкие кольца большого знака рисуются «лесенкой».
+           Буквы «cc» — как в большом знаке (красный круг с вырезами и белые буквы), круг обрезан по внутреннему кольцу. -->
+      <symbol id="mark-sm" viewBox="-50 -50 100 100"><defs><clipPath id="mark-sm-clip"><circle r="32.2"/></clipPath></defs><circle r="50" fill="#c41718"/><circle r="40.6" fill="#ffffff"/><g clip-path="url(#mark-sm-clip)"><g transform="scale(0.216263) translate(-639.6 -322.3)"><path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C-.548-.831-.823-1.259-1.109-1.679-13.011-19.136-29.412-26.762-50.376-23.664-73.152-20.298-90.633 .237-90.745 23.546-90.802 35.342-87.014 45.937-79.218 54.824-66.337 69.508-50.212 75.416-30.978 71.144-9.041 66.271 6.981 45.829 6.243 22.717 6.113 18.663 6.417 14.509 7.173 10.526 14.177-26.368 49.06-51.107 85.923-45.086 107.312-41.592 123.588-30.168 134.898-11.664 135.619-10.485 135.662-9.676 134.761-8.565 132.092-5.275 129.554-1.878 126.949 1.465 125.112 3.822 123.251 6.159 121.283 8.655 112.632-15.413 89.09-28.003 66.115-23.609 44.931-19.557 28.981-2.57 26.848 19.523 24.732 41.428 37.652 61.818 58.104 69.421 69.713 73.737 81.41 73.649 92.928 69.145 104.423 64.649 112.888 56.636 118.766 45.383 121.868 52.762 124.843 59.775 127.721 66.829 127.92 67.317 127.592 68.308 127.17 68.716 123.861 71.924 120.72 75.381 117.058 78.138 100.916 90.292 82.77 94.697 62.846 91.205 46.981 88.424 33.74 80.819 23.154 68.695 20.496 65.65 18.173 62.313 15.634 59.03 15.132 59.787 14.642 60.524 14.152 61.263 10.178 67.264 5.471 72.619-.203 77.057-16.665 89.931-35.229 94.776-55.854 91.212-72.239 88.381-85.853 80.429-96.447 67.73-109.709 51.831-114.921 33.434-111.905 12.873-109.383-4.324-101.327-18.599-88.049-29.674-71.39-43.569-52.09-48.551-30.762-44.693-14.87-41.818-1.611-34.017 8.89-21.68 9.262-21.243 9.538-20.312 9.328-19.855 6.333-13.341 3.247-6.869 0 0M11.418-147.081C-82.417-147.326-158.935-70.567-158.852 23.386-158.769 117.21-82.168 193.813 11.975 193.584 105.625 193.357 182.165 116.859 181.906 22.716 181.65-70.85 105.284-147.43 11.418-147.081" fill="#c41718"/><path transform="matrix(1,0,0,-1,628.5423,345.4528)" d="M0 0C3.247-6.869 6.333-13.341 9.328-19.855 9.538-20.312 9.262-21.243 8.89-21.68-1.611-34.017-14.87-41.818-30.762-44.693-52.09-48.551-71.39-43.569-88.049-29.674-101.327-18.599-109.383-4.324-111.905 12.873-114.921 33.434-109.709 51.831-96.447 67.73-85.853 80.429-72.239 88.381-55.854 91.212-35.229 94.776-16.665 89.931-.203 77.057 5.471 72.619 10.178 67.264 14.152 61.263 14.642 60.524 15.132 59.787 15.634 59.03 18.173 62.313 20.496 65.65 23.154 68.695 33.74 80.819 46.981 88.424 62.846 91.205 82.77 94.697 100.916 90.292 117.058 78.138 120.72 75.381 123.861 71.924 127.17 68.716 127.592 68.308 127.92 67.317 127.721 66.829 124.843 59.775 121.868 52.762 118.766 45.383 112.888 56.636 104.423 64.649 92.928 69.145 81.41 73.649 69.713 73.737 58.104 69.421 37.652 61.818 24.732 41.428 26.848 19.523 28.981-2.57 44.931-19.557 66.115-23.609 89.09-28.003 112.632-15.413 121.283 8.655 123.251 6.159 125.112 3.822 126.949 1.465 129.554-1.878 132.092-5.275 134.761-8.565 135.662-9.676 135.619-10.485 134.898-11.664 123.588-30.168 107.312-41.592 85.923-45.086 49.06-51.107 14.177-26.368 7.173 10.526 6.417 14.509 6.113 18.663 6.243 22.717 6.981 45.829-9.041 66.271-30.978 71.144-50.212 75.416-66.337 69.508-79.218 54.824-87.014 45.937-90.802 35.342-90.745 23.546-90.633 .237-73.152-20.298-50.376-23.664-29.412-26.762-13.011-19.136-1.109-1.679-.823-1.259-.548-.831 0 0" fill="#ffffff"/></g></g></symbol>
+    </defs>
+  </svg>
+
+  <script src="assets/vendor/lenis.min.js"></script>
+  <script src="assets/vendor/three.min.js"></script>
+  <script src="js/objects.js?v=20261019a"></script>
+  <script src="js/data.js?v=20261019a"></script>
+  <script src="js/sphere-company.js?v=20261019a"></script>
+  <script src="js/morph-company.js?v=20261023a"></script>
+  <script src="js/roads.js?v=20261019a"></script>
+  <script src="js/clay-map.js?v=20261019a"></script>
+  <script src="js/geo-panel.js?v=20261022a"></script>
+  <script src="js/places.js?v=20261024b"></script>
+  <script src="js/maps-menu.js?v=20261025a"></script>
+  <script src="js/main.js?v=20261024a"></script>
+  <script src="js/calc-data.js?v=20261019a"></script>
+  <script src="js/calc-modal.js?v=20261020pages"></script>
+  <script src="js/calculators/engine-adapter.js?v=20261020extension42"></script>
+  <script src="js/calculators/slider-sound.js?v=20261020business38"></script>
+  <script src="js/calculators/money-slider.js?v=20261020glow47"></script>
+  <script src="js/calculators/goal-feasibility.js?v=20261020extension42"></script>
+  <script src="js/calculators/goal.js?v=20261020extension42"></script>
+  <script src="js/calculators/employer.js?v=20261020business38"></script>
+  <script src="js/calc-views.js?v=20261020opening39"></script>
+</body>
+</html>

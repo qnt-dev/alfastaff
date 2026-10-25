@@ -59,9 +59,28 @@
     if (lenis) lenis.scrollTo(target, { offset: offset });
     else window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY + offset, behavior: reduce ? 'auto' : 'smooth' });
   }
+  // «Калькулятор вахты» в меню, подвале и чате и адрес …#calculator открывают окно калькулятора (js/calc-modal.js)
+  function openCalc() { if (AS.CalcModal && AS.CalcModal.open) AS.CalcModal.open(); }
+  window.addEventListener('load', function () { if (location.hash === '#calculator') openCalc(); });
+  // шаг услуги для бизнеса: business.html#step-N — на странице «Бизнесу» листаем к шагу
+  function stepFromHash() {
+    var m = location.hash.match(/^#step-(\d)$/), sec = $('#services');
+    if (m && sec) goStep(sec, +m[1]);
+  }
+  // шаг k: у шагов карточками — открыть карточку и прокрутить к ним, у залипающей секции — к доле её высоты
+  function goStep(sec, k) {
+    if (sec._srow) { sec._srow.show(k); scrollToEl(sec._srow.cards, -Math.round(window.innerHeight * 0.18)); }
+    else scrollToStep(sec, k);
+  }
+  window.addEventListener('load', function () { setTimeout(stepFromHash, 300); });
+  window.addEventListener('hashchange', stepFromHash);
   document.addEventListener('click', function (e) {
+    var c = e.target.closest('a[href="#calculator"]');
+    if (c) { e.preventDefault(); navClose(); openCalc(); return; }
     var a = e.target.closest('a[href^="#"]');
     if (!a) return;
+    var st = a.getAttribute('href').match(/^#step-(\d)$/);
+    if (st && $('#services')) { e.preventDefault(); navClose(); goStep($('#services'), +st[1]); return; }
     var id = a.getAttribute('href');
     if (id.length < 2) return;
     var el = document.getElementById(id.slice(1));
@@ -246,9 +265,9 @@
   var CHAT_TOPICS = [
     { q: 'Хочу на вахту', a: function () { return 'Подберём объект под вас: жильё бесплатно, аванс ' + advRange() + ', оформление в день обращения. Напишите город и возраст — предложим объекты.'; },
       draft: 'Здравствуйте! Хочу на вахту. Мой город: , возраст: ' },
-    { q: 'Какие есть объекты?', a: function () { return 'Сейчас ' + objWord(objCount()) + ': ' + AS.REGIONS.map(function (r) { return objCount(r.key) + ' ' + r.in; }).join(', ') + '. Склады маркетплейсов и производства — все на <a href="#objects">карте объектов</a>.'; },
+    { q: 'Какие есть объекты?', a: function () { return 'Сейчас ' + objWord(objCount()) + ': ' + AS.REGIONS.map(function (r) { return objCount(r.key) + ' ' + r.in; }).join(', ') + '. Склады маркетплейсов и производства — все на <a href="objects.html">странице объектов</a>.'; },
       draft: 'Здравствуйте! Какие объекты сейчас набирают людей?' },
-    { q: 'Когда аванс?', a: function () { return 'Аванс ' + advRange() + ' — после первых 7 отработанных смен или каждую неделю, зависит от объекта. Остальное — в конце вахты. Сколько выйдет, покажет <a href="#calc">калькулятор</a>.'; },
+    { q: 'Когда аванс?', a: function () { return 'Аванс ' + advRange() + ' — после первых 7 отработанных смен или каждую неделю, зависит от объекта. Остальное — в конце вахты. Сколько выйдет, покажет <a href="#calculator">калькулятор</a>.'; },
       draft: 'Здравствуйте! Вопрос по выплатам: ' },
     { q: 'Нужен персонал', a: function () { return 'Аутстаффинг, рекрутинг, лизинг персонала и аутсорсинг для складов и производств. Отдел продаж: <a href="tel:' + AS.CONTACTS.salesTel + '">' + AS.CONTACTS.salesPhone + '</a>.'; },
       draft: 'Здравствуйте! Нужен персонал. Объект: , сколько человек: , с какой даты: ' }
@@ -351,8 +370,8 @@
     navSpy(); navTone();
     clearTimeout(navToneT); navToneT = setTimeout(navTone, 180);
     var footerTop = $('.footer').getBoundingClientRect().top;
-    var cr = $('#contact').getBoundingClientRect(), vh = window.innerHeight;
-    var contactInView = cr.top < vh * 0.7 && cr.bottom > vh * 0.3;
+    var contact = $('#contact'), cr = contact ? contact.getBoundingClientRect() : null, vh = window.innerHeight;
+    var contactInView = !!cr && cr.top < vh * 0.7 && cr.bottom > vh * 0.3;
     var on = y > vh * 0.85 && footerTop > vh * 0.6 && !contactInView;
     dock.classList.toggle('is-on', on);
     dock.setAttribute('aria-hidden', on ? 'false' : 'true');
@@ -502,9 +521,10 @@
       if (wi < arr.length - 1) { el.appendChild(document.createTextNode(' ')); k++; }
     });
   }
+  // первый экран есть только на главной (на страницах «Объекты и профессии» и «Бизнесу» его нет)
   var line1 = $('.hero__title .hero__line-text'), line2 = $('.hero__sub .hero__line-text');
-  splitChars(line1, 0.1);
-  splitChars(line2, 0.42);
+  if (line1) splitChars(line1, 0.1);
+  if (line2) splitChars(line2, 0.42);
   // заголовок подгоняется под ширину листа: обе строки целиком
   function fitTitle() {
     var title = $('.hero__title'), box = $('.hero__content');
@@ -521,7 +541,7 @@
   if (AS.TextFill) $$('.hero__fill').forEach(function (c) { safely('заливка заголовка', function () { AS.TextFill(c); }); });
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {
     heroRule();
-    requestAnimationFrame(function () { hero.classList.add('is-ready'); });
+    if (hero) requestAnimationFrame(function () { hero.classList.add('is-ready'); });
     $$('.hero .reveal').forEach(function (el, i) { setTimeout(function () { el.classList.add('is-in'); }, 500 + i * 120); });
   });
   window.addEventListener('resize', heroRule);
@@ -550,8 +570,17 @@
     heroPauseBtn.title = heroPaused ? 'Продолжить' : 'Пауза';
     if (heroSphereApi) heroSphereApi.setPaused(heroPaused, heroGeo ? heroGeo.current() : null);
   });
+  // «Как добраться» в шапке карты объекта — меню карт (js/maps-menu.js). Пока меню открыто, сфера не перебирает объекты —
+  // иначе карта сменится, а ссылки в меню останутся от прежнего объекта
+  var mapsBtn = $('[data-geo-maps]'), mapsWasPaused = false, mapsMenu = null;
+  if (mapsBtn && AS.MapsMenu && heroGeo) mapsMenu = AS.MapsMenu(mapsBtn, {
+    object: function () { return heroGeo.object ? heroGeo.object() : null; },
+    onOpen: function () { mapsWasPaused = heroPaused; clearTimeout(heroIndexResume); if (!heroPaused && heroSphereApi) heroSphereApi.setPaused(true, heroGeo.current()); },
+    onClose: function () { if (!mapsWasPaused && !heroPaused && heroSphereApi) heroSphereApi.setPaused(false); }
+  });
   function markHeroIndex(i) {
     if (heroGeo) heroGeo.show(i);
+    if (mapsMenu) mapsMenu.sync();   // у объекта без точного адреса кнопка «Как добраться» неактивна
     if (!heroIndexList) return;
     $$('li', heroIndexList).forEach(function (li, k) { li.classList.toggle('is-on', k === i); });
   }
@@ -575,7 +604,9 @@
       onShow: markHeroIndex,
       // карточка на сфере ведёт к этому же складу на карте объектов
       onCardClick: function (i) {
-        var grid = $('.objects__grid'), gh = grid.getBoundingClientRect().height;
+        var grid = $('.objects__grid');
+        if (!grid) { location.href = 'objects.html#obj=' + encodeURIComponent(AS.OBJECTS[i].id); return; }
+        var gh = grid.getBoundingClientRect().height;
         scrollToEl(grid, -Math.max(20, (window.innerHeight - gh) / 2));
         setTimeout(function () { if (mapApi) mapApi.select(i, true); }, 500);
       },
@@ -842,8 +873,68 @@
     render(0);
   })();
 
+  /* ---------- шаги карточками: «Как проходит вахта» и «Услуги для бизнеса» ----------
+     Карточка — вкладка шага: нажатие (или стрелки) открывает подробности; с мышью и пока шаги не трогали, они сменяются
+     сами каждые 9 с (полоска на карточке), курсор над секцией — пауза. Анимация шага — фигура из точек (AS.Morph). */
+  $$('[data-srow]').forEach(function (root) {
+    var cards = $$('[data-srow-card]', root), panes = $$('[data-srow-pane]', root);
+    var n = cards.length, cur = -1, t0 = performance.now(), DUR = 9000, inView = false, hover = false, pausedAt = 0;
+    // сами шаги сменяются, только пока человек их не трогал и только с мышью: на телефоне смена под пальцем мешает читать
+    var auto = !reduce && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var canvas = root.querySelector('[data-srow-morph]'), morph = null;
+    if (canvas && AS.Morph) {
+      try {
+        morph = new AS.Morph(canvas, root.dataset.srow.split(','), {
+          count: window.innerWidth <= 900 ? 700 : 1300,
+          region: function () { var h = canvas.clientHeight; return [h * 0.14, h * 0.86]; }
+        });
+      } catch (err) { morph = null; }
+    }
+    function type(el) {
+      var text = el.dataset.type || ''; clearTimeout(el._t);
+      if (reduce) { el.textContent = text; return; }
+      var i = 0;
+      (function tick() { el.textContent = text.slice(0, i++); if (i <= text.length) el._t = setTimeout(tick, 18 + Math.random() * 24); })();
+    }
+    function show(k, focus) {
+      k = (k + n) % n;
+      if (k === cur) return;
+      cur = k; t0 = performance.now();
+      cards.forEach(function (c, i) { c.setAttribute('aria-selected', String(i === k)); c.tabIndex = i === k ? 0 : -1; var b = c.querySelector('.srow__prog i'); if (b) b.style.transform = 'scaleX(0)'; });
+      panes.forEach(function (p, i) { p.hidden = i !== k; p.classList.toggle('is-in', i === k); });
+      var out = panes[k].querySelector('.output__text'); if (out) setTimeout(function () { type(out); }, 350);
+      if (morph) morph.set(k);
+      if (focus) cards[k].focus();
+    }
+    cards.forEach(function (c, i) {
+      c.addEventListener('click', function () { auto = false; show(i); reveal(); });
+      c.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (d) { e.preventDefault(); auto = false; show(cur + d, true); }
+      });
+    });
+    // выбранный шаг — в поле зрения: на телефоне подробности ниже карточек, «Дальше» — внизу подробностей
+    function reveal() { var p = panes[cur]; if (p.getBoundingClientRect().top > window.innerHeight * 0.8) p.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }); }
+    root.querySelectorAll('[data-srow-next]').forEach(function (b) { b.addEventListener('click', function () { auto = false; show(cur + 1); cards[cur].scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); }); });
+    root.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') hover = true; });
+    root.addEventListener('pointerleave', function () { hover = false; });
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { inView = es[0].isIntersecting; }, { threshold: 0.35 }).observe(root);
+    (function tick(now) {
+      requestAnimationFrame(tick);
+      if (!auto) { var b0 = cards[cur] && cards[cur].querySelector('.srow__prog'); if (b0) b0.style.visibility = 'hidden'; return; }
+      if (!inView || hover || document.hidden) { if (!pausedAt) pausedAt = now; return; }
+      if (pausedAt) { t0 += now - pausedAt; pausedAt = 0; }
+      var p = (now - t0) / DUR, bar = cards[cur] && cards[cur].querySelector('.srow__prog i');
+      if (bar) bar.style.transform = 'scaleX(' + Math.min(1, p).toFixed(3) + ')';
+      if (p >= 1) show(cur + 1);
+    })(performance.now());
+    // для ссылок business.html#step-N и подменю «Бизнесу»: открыть шаг и показать карточки
+    root._srow = { show: function (k) { auto = false; show(k); }, cards: root.querySelector('.srow__cards') };
+    show(0);
+  });
+
   /* ---------- сплит-секции ---------- */
-  var MORPHS = { services: ['outstaff', 'recruit', 'lease', 'outsource'], process: ['pick', 'trip', 'stay', 'pay'], faq: ['question'], principles: ['mark'] };
+  var MORPHS = { faq: ['question'], principles: ['mark'] };   // у шагов карточками фигуры — в data-srow
   var splits = $$('[data-split]').map(function (sec) {
     var key = sec.dataset.split, canvas = $('canvas.morph', sec);
     // сцена — между меткой секции и заголовком панели
@@ -898,23 +989,45 @@
     var list = $('[data-obj-list]'), detail = $('[data-obj-detail]'), prog = $('[data-obj-progress]');
     if (!list) return null;
     var O = AS.OBJECTS, current = -1, timer = 0, startT = 0, DUR = 8000, paused = false, inView = false, sphere = null;
-    // вкладки регионов: список и автопоказ — внутри выбранного региона, сфера показывает все объекты
-    var tabsEl = $('[data-obj-regions]'), region = '';
-    function inRegion(i) { return !region || O[i].region === region; }
-    if (tabsEl) {
-      var tabs = [{ key: '', label: 'Все', n: O.length }].concat(AS.REGIONS.map(function (r) { return { key: r.key, label: r.label, n: O.filter(function (o) { return o.region === r.key; }).length }; }));
-      tabsEl.innerHTML = tabs.map(function (t) { return '<button type="button" role="tab" data-r="' + t.key + '" aria-selected="' + (t.key === '' ? 'true' : 'false') + '">' + t.label + '<sup>' + t.n + '</sup></button>'; }).join('');
-      $$('button', tabsEl).forEach(function (b) {
-        b.addEventListener('click', function () { setRegion(b.dataset.r); current = -1; select(firstInRegion(), true); });
-      });
+    // фильтры: регион и профессия (страница «Объекты и профессии»). Список и автопоказ — только подходящие объекты,
+    // сфера показывает все. Число на вкладке — сколько объектов подойдёт, если её выбрать (с учётом второго фильтра)
+    var tabsEl = $('[data-obj-regions]'), profsEl = $('[data-obj-profs]'), noteEl = $('[data-obj-prof-note]'), region = '', prof = '';
+    var PROFS = (AS.PROFESSIONS || []).filter(function (p) { return AS.countObjectsFor(p.key); });
+    function hasProf(o, key) { return !key || (o.jobKeys || []).indexOf(key) >= 0; }
+    function fits(o, r, k) { return (!r || o.region === r) && hasProf(o, k); }
+    function inRegion(i) { return fits(O[i], region, prof); }
+    function count(r, k) { return O.filter(function (o) { return fits(o, r, k); }).length; }
+    function tab(key, label, n, on, attr) {
+      return '<button type="button" role="tab" ' + attr + '="' + key + '" aria-selected="' + on + '"' + (n ? '' : ' disabled') + '>' + label + '<sup>' + n + '</sup></button>';
+    }
+    function drawTabs() {
+      if (tabsEl) tabsEl.innerHTML = [{ key: '', label: 'Все' }].concat(AS.REGIONS.map(function (r) { return { key: r.key, label: r.label }; }))
+        .map(function (t) { return tab(t.key, t.label, count(t.key, prof), t.key === region, 'data-r'); }).join('');
+      if (profsEl) profsEl.innerHTML = [{ key: '', short: 'Любая профессия' }].concat(PROFS)
+        .map(function (p) { return tab(p.key, p.short || p.title, count(region, p.key), p.key === prof, 'data-p'); }).join('');
+      if (noteEl) {
+        var P = PROFS.filter(function (p) { return p.key === prof; })[0], n = count(region, prof), R = AS.REGIONS.filter(function (r) { return r.key === region; })[0];
+        noteEl.innerHTML = P
+          ? '<b>' + P.title + '</b> — ' + P.text + ' <span>' + n + ' ' + AS.plural(n, 'объект', 'объекта', 'объектов') + ' ' + (R ? R.in : 'во всех регионах') + '.</span>'
+          : '<b>Выберите профессию</b> — в списке останутся объекты, где она есть, и появится описание работы.';
+      }
     }
     function firstInRegion() { return O.findIndex(function (o, k) { return inRegion(k); }); }
-    function setRegion(key) {
-      region = key;
-      if (tabsEl) $$('button', tabsEl).forEach(function (x) { x.setAttribute('aria-selected', x.dataset.r === key ? 'true' : 'false'); });
-      $$('li', list).forEach(function (li, k) { li.hidden = !inRegion(k); });
+    function setFilter(r, k) {
+      region = r; prof = k;
+      if (prof && !count(region, prof)) prof = '';   // в новом регионе такой профессии нет — показываем все
+      drawTabs();
+      $$('li', list).forEach(function (li, k2) { li.hidden = !inRegion(k2); });
       fitList();
     }
+    function setRegion(key) { setFilter(key, prof); }
+    // выбор фильтра: выбранный объект остаётся, если подходит; иначе — первый подходящий
+    function pick(r, k) {
+      setFilter(r, k);
+      if (current < 0 || !inRegion(current)) { current = -1; select(firstInRegion(), true); } else fillNow(O[current], current);
+    }
+    if (tabsEl) tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-r]'); if (b && !b.disabled) pick(b.dataset.r, prof); });
+    if (profsEl) profsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-p]'); if (b && !b.disabled) pick(region, b.dataset.p); });
     // список без прокрутки: если объектов больше, чем помещается по высоте сферы, шрифт и отступы уменьшаются
     function fitList() {
       if (isMobile()) { list.style.removeProperty('--fit'); return; }
@@ -939,8 +1052,10 @@
     var items = $$('li', list);
     window.addEventListener('resize', function () { fitList(); });
     if (document.fonts) document.fonts.ready.then(fitList);
-    // по умолчанию — первый регион (Москва и МО): весь список из 20+ объектов не помещается рядом со сферой
-    if (tabsEl && AS.REGIONS.length > 1) setRegion(AS.REGIONS[0].key);
+    // по умолчанию — первый регион (Москва и МО): весь список из 20+ объектов не помещается рядом со сферой;
+    // по ссылке objects.html#obj=<id> (карточка на сфере главной) — регион этого объекта
+    var linked = (location.hash.match(/^#obj=([\w-]+)/) || [])[1], linkedI = linked ? O.findIndex(function (o) { return o.id === linked; }) : -1;
+    if (tabsEl && AS.REGIONS.length > 1) setRegion(linkedI >= 0 ? O[linkedI].region : AS.REGIONS[0].key); else drawTabs();
     var mapEl = $('[data-sphere="map"]');
     if (mapEl && AS.Sphere) {
       sphere = safely('сфера карты объектов', function () { return new AS.Sphere(mapEl, {
@@ -1008,7 +1123,15 @@
       inView = es[0].isIntersecting;
       if (inView && current < 0) select(Math.max(0, firstInRegion()));
     }, { threshold: 0.25 }).observe($('.objects__grid'));
-    $('[data-obj-apply]').addEventListener('click', function () { setFormObject(O[current] ? O[current].id : ''); setTab('job'); });
+    if (linkedI >= 0) {
+      select(linkedI, true);
+      setTimeout(function () { var g = $('.objects__grid'); scrollToEl(g, -Math.max(20, (window.innerHeight - g.getBoundingClientRect().height) / 2)); }, 700);
+    }
+    // «Откликнуться»: в заявке — этот объект и выбранная профессия
+    $('[data-obj-apply]').addEventListener('click', function () {
+      setFormObject(O[current] ? O[current].id : ''); setTab('job');
+      $$('input[name="prof"]').forEach(function (c) { c.checked = !!prof && c.value === prof; });
+    });
     return { select: select };
   })();
 

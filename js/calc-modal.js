@@ -265,6 +265,7 @@
     return modelState();
   }
   AS.CalcModal = {
+    open: function () { open(); },   // «Калькулятор вахты» в меню и подвале (main.js)
     state: modelState,
     parseAmount: parseNum,
     set: modelSet,

@@ -365,6 +365,6 @@
       opts.onPick(k);
       var pz = document.querySelector('[data-geo-pause]'); if (pz && !pz.classList.contains('is-paused')) pz.click();
     }, 900);
-    return { show: show, resize: resize, current: function () { return cur; } };
+    return { show: show, resize: resize, current: function () { return cur; }, object: function () { return O[cur] || null; } };
   };
 })();

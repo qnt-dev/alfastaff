@@ -194,9 +194,8 @@ html[data-fonts="playfair"] .footer__title { letter-spacing: -0.026em; }
    МЕНЮ, ДОК
    ===================================================================== */
 svg { shape-rendering: geometricPrecision; }
-/* Сглаженные края. На экранах с плотностью 1 браузер сглаживает край круга в 1 пиксель,
-   и маленькие круги выглядят «лесенкой». Мягкое перо шириной ~1.5px делает край ровным. */
-.logo__mark, .sign__mark, .doc__mark, .split__badge-mark, .nav__mark, .chat__ava { filter: blur(.6px); }
+/* Знак без размытия: край круга чёткий. В мелких размерах (до 32 px) — #mark-sm в index.html: кольца толще,
+   поэтому круг и при 20 px не идёт «лесенкой». */
 .btn--black { box-shadow: 0 0 1.6px .5px rgba(23, 23, 23, .65); }
 .kicker__ico b { box-shadow: 0 0 1px var(--accent); }
 
@@ -251,7 +250,7 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .nav__trigger:hover .nav__mark { transform: rotate(-12deg); }
 /* импульс: 0–0,5 с знак, 0,2–0,55 с слово, 0,45–1,15 с луч по черте (холст, main.js), 1,15–1,65 с точки */
 .nav.is-pulse .nav__mark { animation: nav-mark-pulse .5s ease-out; }
-@keyframes nav-mark-pulse { 40% { transform: scale(1.14); filter: blur(.6px) drop-shadow(0 0 calc(0.375 * var(--n)) var(--accent)); } }
+@keyframes nav-mark-pulse { 40% { transform: scale(1.14); filter: drop-shadow(0 0 calc(0.375 * var(--n)) var(--accent)); } }
 .nav.is-pulse .nav__label > span { animation: nav-label-sweep .35s linear .2s; }
 @keyframes nav-label-sweep { from { background-position: 20% 0; } to { background-position: 80% 0; } }
 .nav.is-pulse .nav__dots i { animation: nav-dots-flash .5s ease-out 1.15s; }
@@ -528,9 +527,8 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 
 /* ---------- география объектов справа от сферы (js/geo-panel.js) ---------- */
 .hero-geo { width: 20.625rem; color: #fff; }
-.hero-geo__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; color: var(--w-2); }
-.hero-geo__head > span:first-child { display: inline-flex; align-items: center; gap: 0.5rem; }
-.hero-geo__head i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.5rem var(--accent); }
+.hero-geo__head { position: relative; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.02em; text-transform: uppercase; color: var(--w-2); }
+.geo-maps__btn > i { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.5rem var(--accent); }
 .hero-geo__idx { color: #fff; min-width: 3.25rem; text-align: center; }
 .hero-geo__canvas { display: block; width: 100%; }
 /* 3D-квартал объекта (js/clay-map.js) — слой под холстом панели: кадр нижней карты + поля, в которые выступают здания (ставит geo-panel.js) */
@@ -548,6 +546,58 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .hero-geo__pause.is-paused { background: var(--accent); }
 .hero-geo__pause.is-paused .i-pause { display: none; }
 .hero-geo__pause.is-paused .i-play { display: inline; }
+/* «Как добраться» — заголовок панели и кнопка меню карт (js/maps-menu.js); стрелка — такой же квадрат, как кнопки справа */
+.geo-maps { display: inline-flex; min-width: 0; }
+.geo-maps__btn { display: inline-flex; align-items: center; gap: 0.5rem; color: #fff; letter-spacing: inherit; text-transform: inherit; white-space: nowrap; }
+.geo-maps__go { width: 1.5rem; height: 1.5rem; border-radius: 0.4375rem; display: grid; place-items: center; background: rgba(255, 255, 255, .07); transition: background-color .2s; }
+.geo-maps__go svg { width: 0.75rem; height: 0.75rem; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s var(--ease); }
+.geo-maps__btn:hover .geo-maps__go, .geo-maps__btn[aria-expanded="true"] .geo-maps__go { background: var(--accent); }
+.geo-maps__btn:hover .geo-maps__go svg { transform: translate(1px, -1px); }
+.geo-maps__btn:disabled { opacity: .4; cursor: default; }
+.geo-maps__btn:disabled .geo-maps__go { background: rgba(255, 255, 255, .05); }
+.geo-maps__btn:disabled > i { box-shadow: none; }
+/* шрифт — как у страницы: меню стоит внутри шапки панели (моно, заглавные) и не должно наследовать её стиль */
+.mapsm { position: absolute; z-index: 20; right: 0; bottom: calc(100% + 0.5rem); width: min(22rem, calc(100vw - 2rem)); padding: 0.875rem; border-radius: 1rem; background: #1c1c1e; color: #fff;
+  font-family: var(--f-text); font-size: 1rem; font-weight: 400; line-height: 1.6; letter-spacing: -0.02em; text-transform: none; white-space: normal; text-align: left;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .08); opacity: 0; transform: translateY(0.375rem); transition: opacity .2s, transform .25s var(--ease); }
+.mapsm.is-open { opacity: 1; transform: none; }
+.mapsm__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.125rem 0.5rem; align-items: start; }
+.mapsm__head .mono { font-size: 0.625rem; }
+.mapsm__head b { grid-column: 1; font-family: var(--f-display); font-size: 1rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.03em; }
+.mapsm__x { grid-column: 2; grid-row: 1 / span 2; width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; display: grid; place-items: center; background: rgba(255, 255, 255, .07); transition: background-color .2s; }
+.mapsm__x:hover { background: rgba(255, 255, 255, .14); }
+.mapsm__x svg { width: 0.75rem; height: 0.75rem; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; }
+.mapsm__seg { margin-top: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; padding: 0.1875rem; border-radius: 0.625rem; background: rgba(255, 255, 255, .06); }
+.mapsm__seg button { height: 1.875rem; border-radius: 0.5rem; font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; color: var(--w-2); transition: background-color .2s, color .2s; }
+.mapsm__seg button[aria-pressed="false"]:hover:not(:disabled) { color: #fff; }   /* только у невыбранной: у выбранной белый фон */
+.mapsm__seg button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+.mapsm__seg button:disabled { opacity: .35; cursor: default; }
+.mapsm__addr { margin-top: 0.625rem; font-size: 0.75rem; line-height: 1.4; color: var(--w-2); }
+.mapsm__list { margin: 0.625rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.375rem; }
+.mapsm__list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.375rem; padding: 0.375rem 0.375rem 0.375rem 0.5rem; border-radius: 0.625rem; background: rgba(255, 255, 255, .05); }
+.mapsm__svc { display: flex; align-items: center; gap: 0.5rem; min-width: 0; font-size: 0.8125rem; font-weight: 600; line-height: 1.15; }
+/* значок сервиса 28 px: Яндекс — круг, 2ГИС — своя плитка, Google — буква на белой плитке */
+.mapsm__ico { width: 1.75rem; height: 1.75rem; flex: none; }
+.mapsm__ico--google { padding: 0.3125rem; border-radius: 0.5rem; background: #fff; box-sizing: border-box; }
+.mapsm__svc em { display: block; font-style: normal; font-family: var(--f-mono); font-size: 0.5625rem; font-weight: 600; text-transform: uppercase; color: var(--accent-3, #ff8b5f); }
+.mapsm__list a { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.625rem; border-radius: 0.5rem; background: rgba(255, 255, 255, .08); color: #fff;
+  font-family: var(--f-mono); font-size: 0.625rem; font-weight: 700; text-transform: uppercase; transition: background-color .2s; }
+.mapsm__list a.is-route { background: rgba(196, 23, 24, .38); }
+.mapsm__list a:hover, .mapsm__list a:focus-visible { background: var(--accent); }
+.mapsm__list a svg { width: 0.625rem; height: 0.625rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mapsm__note { margin-top: 0.625rem; font-size: 0.6875rem; line-height: 1.45; color: var(--w-3); }
+/* узкий экран: меню — шторкой снизу, кнопки крупнее */
+@media (max-width: 900px) {
+  .mapsm { position: fixed; left: 0.5rem; right: 0.5rem; bottom: 0.5rem; width: auto; padding: 1.125rem; border-radius: 1.25rem; }
+  .mapsm__list a { height: 2.5rem; padding: 0 0.875rem; font-size: 0.6875rem; }
+  .mapsm__seg button { height: 2.5rem; }
+}
+/* в панели карты объекта меню открывается вниз — под шапкой, поверх карты, по ширине панели */
+@media (min-width: 901px) {
+  .hero-geo .mapsm { top: calc(100% + 0.5rem); bottom: auto; right: 0; width: max(100%, 20rem); transform: translateY(-0.375rem); }
+  .hero-geo .mapsm.is-open { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .mapsm { transition: none; } }
 
 
 /* боковая вставка с соцсетями: тёмная рама «заходит» в лист */
@@ -902,6 +952,79 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 
 .split--flip .split__sheet { grid-template-columns: minmax(0, 1fr) minmax(0, 50%); }
 .split--flip .split__media { order: 2; }
+
+/* Шаги карточками («Как проходит вахта» на главной, «Услуги для бизнеса» на странице «Бизнесу») — вместо залипающих
+   сплит-секций: сверху иллюстрация, под ней 4 карточки, ниже — подробности выбранного шага. Страница прокручивается
+   обычно; шаги сменяются сами (только с мышью и пока их не трогали) или по нажатию. Содержимое шага — классы step__*. */
+.srow { padding: 0 var(--gut); }
+.srow__sheet { background: var(--sheet); color: var(--ink); border-radius: var(--r-sheet); padding: var(--gut); display: grid; gap: var(--gut); }
+
+/* тёмная полоса: слева заголовок и кнопка, справа — анимация шага из точек */
+.srow__band { position: relative; min-height: clamp(21rem, 44vh, 28rem); border-radius: calc(var(--r-sheet) - 0.375rem); overflow: hidden; background: var(--frame); color: #fff;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.srow__band::after { content: ''; position: absolute; inset: 0; background: var(--grain); opacity: .5; mix-blend-mode: overlay; pointer-events: none; z-index: 2; }
+.srow__intro { position: relative; z-index: 3; display: flex; flex-direction: column; gap: 1.25rem; padding: clamp(1.75rem, 3.6vw, 3.25rem) clamp(1.625rem, 5vw, 5rem); }
+.srow__intro .kicker { margin-bottom: auto; }
+/* секция — первая на странице («Бизнесу»): подпись раздела ниже плашки меню */
+main > .srow:first-child .srow__intro { padding-top: clamp(5.5rem, 7vw, 6.75rem); }
+.srow__intro .split__lead { margin-top: 0; }
+.srow__intro .btn { align-self: flex-start; min-width: 18.75rem; justify-content: space-between; }
+.srow__canvas { position: absolute; z-index: 1; top: 0; right: 0; width: 58%; height: 100%; display: block; }
+
+/* шаги карточками: номер, название, коротко; у выбранного — полоска до следующего шага */
+.srow__cards { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gut); }
+.srow__card { position: relative; width: 100%; height: 100%; display: grid; align-content: start; gap: 0.5rem; padding: 1.125rem 1.25rem 1.5rem; border-radius: var(--r-tile);
+  background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; overflow: hidden; transition: background-color .35s, color .35s; }
+.srow__card:hover { background: #ebeae5; }
+.srow__card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.srow__n { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.02em; }
+.srow__n em { font-style: normal; opacity: .45; font-weight: 500; margin-right: 0.375rem; }
+.srow__n svg { width: 1rem; height: 1rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .45; transition: transform .35s var(--ease), opacity .35s; }
+.srow__card:hover .srow__n svg { transform: translateX(0.1875rem); opacity: .8; }
+.srow__card-t { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.125rem, 1.45vw, 1.375rem); line-height: 1.1; letter-spacing: -0.04em; }
+.srow__card-x { font-size: 0.8125rem; line-height: 1.45; color: var(--ink-2); }
+.srow__card[aria-selected="true"] { background: var(--frame); color: #fff; cursor: default; }
+.srow__card[aria-selected="true"] .srow__card-x { color: var(--w-2); }
+.srow__card[aria-selected="true"] .srow__n svg { opacity: 0; }
+.srow__prog { position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0.75rem; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, .14); overflow: hidden; opacity: 0; transition: opacity .3s; }
+.srow__card[aria-selected="true"] .srow__prog { opacity: 1; }
+.srow__prog i { display: block; height: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(0); }
+
+/* подробности выбранного шага: текст и «Что входит» слева, плитки, итог и «Дальше» справа */
+.srow__pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4.5rem); padding: clamp(1.5rem, 2.6vw, 2.25rem) clamp(1.25rem, 3.6vw, 3.75rem) clamp(1.5rem, 2.6vw, 2.25rem); }
+/* все подробности — в одной ячейке, скрытые только невидимы: высота секции — по самому длинному шагу, страница ниже не прыгает */
+.srow__pane { grid-area: 3 / 1; }
+.srow__pane[hidden] { display: grid !important; visibility: hidden; pointer-events: none; }   /* общее [hidden] { display: none !important } — здесь шаг только невидим */
+.srow__pane > * { min-width: 0; }
+.srow__pane.is-in > * { animation: srowIn .6s var(--ease) both; }
+.srow__pane.is-in > :nth-child(2) { animation-delay: .08s; }
+@keyframes srowIn { from { opacity: 0; transform: translateY(0.75rem); } }
+/* номер и название шага уже на карточке — здесь заголовок спокойнее, без повтора номера */
+.srow__pane .step__label { display: none; }
+.srow__pane .step__title { margin-top: 0; font-size: clamp(1.625rem, 2.3vw, 2.375rem); }
+.srow__pane .step__list { margin-top: 1.375rem; }
+.srow__pane .tiles { margin-top: 0; }
+.srow__pane .output { margin-top: 1.125rem; }
+.srow__next { margin-top: 1.125rem; display: flex; justify-content: flex-end; }
+.srow__next button { display: inline-flex; align-items: center; gap: 0.625rem; padding: 0.75rem 1.125rem; border-radius: 999px; background: var(--paper); font-family: var(--f-mono); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: -0.02em; transition: background-color .3s, color .3s; }
+.srow__next button:hover { background: var(--ink); color: #fff; }
+.srow__next svg { width: 0.875rem; height: 0.875rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-width: 900px) {
+  .srow__band { grid-template-columns: 1fr; min-height: 0; }
+  .srow__canvas { position: relative; width: 100%; height: 15rem; }
+  .srow__intro .btn { min-width: 0; width: 100%; }
+  .srow__cards { grid-template-columns: 1fr 1fr; }
+  .srow__card { padding: 0.875rem 0.875rem 1.25rem; }
+  .srow__card-x { display: none; }
+  .srow__prog { left: 0.875rem; right: 0.875rem; bottom: 0.5rem; }
+  .srow__pane { grid-template-columns: 1fr; padding: 1.25rem 0.875rem 1.5rem; gap: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .srow__pane.is-in > * { animation: none; }
+  .srow__prog { display: none; }
+}
+
 .split--flip .split__steps { order: 1; }
 .split--flip .step { left: clamp(1.875rem, 6%, 5rem); right: clamp(2.5rem, 8.5%, 6.875rem); }
 .split--flip .split__pager { right: auto; left: 1.125rem; }
@@ -957,6 +1080,20 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .obj-regions button:hover { color: #fff; box-shadow: inset 0 0 0 1px var(--w-3); }
 .obj-regions button[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: none; }
 .obj-regions button[aria-selected="true"] sup { color: var(--accent); }
+/* страница «Объекты и профессии»: профессии — второй строкой фильтров, под ними — что это за работа */
+.obj-regions.obj-profs { margin-top: 0.625rem; }
+.obj-regions button:disabled { opacity: .35; cursor: default; box-shadow: inset 0 0 0 1px var(--w-4, rgba(255, 255, 255, .12)); color: var(--w-3); }
+.obj-prof-note { max-width: var(--page); margin: 1rem auto 0; padding: 0 1.25rem; font-size: 0.9375rem; line-height: 1.55; color: var(--w-2); }
+.obj-prof-note b { color: #fff; font-weight: 600; }
+.obj-prof-note span { color: var(--w-3); white-space: nowrap; }
+/* телефон: регионы и профессии — по одной строке, листаются вбок (иначе семь профессий занимают полэкрана) */
+@media (max-width: 900px) {
+  .obj-regions { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    -webkit-mask: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 2rem), transparent); mask: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 2rem), transparent); }
+  .obj-regions::-webkit-scrollbar { display: none; }
+  .obj-regions button { flex: none; white-space: nowrap; }
+  .obj-prof-note { font-size: 0.875rem; }
+}
 .objects__grid { max-width: var(--page); margin: 1.25rem auto 0; display: grid; grid-template-columns: minmax(0, 27fr) minmax(0, 43fr) minmax(0, 30fr); gap: var(--gut); align-items: stretch; }
 
 /* список объектов — без прокрутки, по центру высоты сферы; длинный список (вкладка «Все») ужимается скриптом через --fit */
