@@ -16,7 +16,3 @@ tools/.clay-cache/
 # Local design references and retired calculator variants are not published.
 archives/
 references/
-
-# открытые данные страницы «Контроль звонков» — на сайт только зашифрованный js/calls-data.enc.js (tools/encrypt_calls.py)
-js/calls-data.js
-*.calls-data.json

@@ -1,8 +1,7 @@
-"""Отдельные страницы сайта из каркаса главной: objects.html («Объекты и профессии»), business.html («Бизнесу»)
-и calls.html («Контроль звонков» — демо для заказчика, в меню не выводится, поисковикам закрыта).
+"""Отдельные страницы сайта из каркаса главной: objects.html («Объекты и профессии») и business.html («Бизнесу»).
 
 Запуск:  python tools/build_pages.py              — все страницы
-         python tools/build_pages.py calls.html   — только указанные
+         python tools/build_pages.py objects.html — только указанные
 Источник каркаса — index.html: шапка с меню, чат, подвал, окно калькулятора, SVG-символы и скрипты берутся оттуда как есть,
 поэтому правки меню, подвала и калькулятора на главной переходят на страницы при следующей сборке (запускать после
 любого изменения index.html). Содержимое страницы — tools/pages/<страница>.main.html; строка «<!-- include: id -->»
@@ -24,11 +23,6 @@ PAGES = {
         title='Персонал для складов и производств — Альфа-Стафф для бизнеса',
         desc='Аутстаффинг, рекрутинг, лизинг персонала и аутсорсинг для складов и производств. '
              'Оформление по закону РФ, документы и выплаты — на нас.'),
-    'calls.html': dict(
-        main='calls.main.html', key='calls', robots='noindex, nofollow',
-        head='<link rel="stylesheet" href="css/calls.css?v=20261025e">',
-        title='Контроль звонков — демо аналитики | Альфа-Стафф',
-        desc='Записи звонков из Битрикс24 превращаются в текст, проверяются по чек-листу и складываются в отчёт по менеджерам.'),
 }
 
 def section(src, sid):
@@ -83,7 +77,7 @@ def build(name, cfg, index):
 
 def main():
     index = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read().replace('\r\n', '\n')
-    names = sys.argv[1:] or list(PAGES)   # python tools/build_pages.py calls.html — только одна страница
+    names = sys.argv[1:] or list(PAGES)   # python tools/build_pages.py objects.html — только одна страница
     unknown = [n for n in names if n not in PAGES]
     if unknown: sys.exit('нет таких страниц: %s' % ', '.join(unknown))
     for name in names: build(name, PAGES[name], index)
