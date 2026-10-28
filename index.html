@@ -12,7 +12,7 @@
   <meta property="og:description" content="Склады и производства в Москве и регионах. Жильё бесплатно, аванс после первых 7 смен, оформление в день обращения.">
   <meta property="og:image" content="assets/brandbook/social-preview.png">
   <link rel="stylesheet" href="css/fonts.css?v=20261005branding-only">
-  <link rel="stylesheet" href="css/style-company.css?v=20261025a">
+  <link rel="stylesheet" href="css/style-company.css?v=20261025b">
   <link rel="stylesheet" href="css/company.css?v=20261013a">
   <link rel="stylesheet" href="css/calculators/ui-base.css?v=20261020business38">
 <link rel="stylesheet" href="css/calc-views.css?v=20261020opening43">
@@ -26,15 +26,15 @@
 
   <!-- ============ ФИКСИРОВАННЫЕ ЭЛЕМЕНТЫ ============ -->
   <!-- ============ ПЛАШКА: МЕНЮ И ЧАТ (как у Xirex) ============ -->
-  <header class="nav" data-nav>
+  <header class="nav nav--duo" data-nav>
     <div class="nav__box">
       <div class="nav__bar">
-        <!-- вся плашка — кнопка «Меню»: ⋮⋮ ——— МЕНЮ ● (импульс от знака к точкам — main.js) -->
+        <!-- две кнопки: знак — на главную (на главной — наверх), ⋮⋮ МЕНЮ · страница — меню; название страницы ставит tools/build_pages.py -->
+        <a class="nav__home" href="index.html" aria-label="Альфа-Стафф — на главную"><svg class="nav__mark nav__inv" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg><svg class="nav__mark nav__ink" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg></a>
         <button class="nav__trigger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav-menu">
           <span class="nav__ico" aria-hidden="true"><span class="nav__dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span>
-          <span class="nav__line" aria-hidden="true"><canvas class="nav__trace"></canvas></span>
           <span class="nav__label" aria-hidden="true"><span>Меню</span></span>
-          <svg class="nav__mark nav__inv" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg><svg class="nav__mark nav__ink" viewBox="0 0 64 64" aria-hidden="true"><use href="#mark-sm" /></svg>
+          <span class="nav__page" aria-hidden="true" data-nav-page>Главная</span>
         </button>
       </div>
 
@@ -42,6 +42,7 @@
         <div class="nav__inner">
           <nav class="nav__menu" id="nav-menu" aria-label="Меню" hidden>
             <ul class="nav__list">
+              <li><a class="nav__link" href="index.html" aria-current="page"><span data-glitch>Главная</span></a></li>
               <li><a class="nav__link" href="objects.html"><span data-glitch>Объекты и профессии</span></a></li>
               <li class="nav__has-sub"><a class="nav__link" href="business.html" aria-haspopup="true"><span data-glitch>Бизнесу</span></a>
                 <ul class="nav__sub">
@@ -912,7 +913,7 @@
     </div>
 
     <nav class="footer__nav" aria-label="Разделы">
-      <a href="objects.html"><span data-glitch>Объекты и профессии</span></a><a href="business.html"><span data-glitch>Бизнесу</span></a><a href="#process"><span data-glitch>Соискателям</span></a><a href="#calculator" data-calc-link><span data-glitch>Калькулятор вахты</span></a><a href="#faq"><span data-glitch>Вопросы</span></a><a href="#contact"><span data-glitch>Контакты</span></a>
+      <a href="index.html" aria-current="page"><span data-glitch>Главная</span></a><a href="objects.html"><span data-glitch>Объекты и профессии</span></a><a href="business.html"><span data-glitch>Бизнесу</span></a><a href="#process"><span data-glitch>Соискателям</span></a><a href="#calculator" data-calc-link><span data-glitch>Калькулятор вахты</span></a><a href="#faq"><span data-glitch>Вопросы</span></a><a href="#contact"><span data-glitch>Контакты</span></a>
     </nav>
 
     <div class="footer__earth">
@@ -987,7 +988,7 @@
   <script src="js/geo-panel.js?v=20261022a"></script>
   <script src="js/places.js?v=20261024b"></script>
   <script src="js/maps-menu.js?v=20261025a"></script>
-  <script src="js/main.js?v=20261024a"></script>
+  <script src="js/main.js?v=20261025a"></script>
   <script src="js/calc-data.js?v=20261019a"></script>
   <script src="js/calc-modal.js?v=20261020pages"></script>
   <script src="js/calculators/engine-adapter.js?v=20261020extension42"></script>

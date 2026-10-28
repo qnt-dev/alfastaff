@@ -14,12 +14,12 @@ import io, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 PAGES = {
     'objects.html': dict(
-        main='objects.main.html', key='objects',
+        main='objects.main.html', key='objects', nav='Объекты',
         title='Объекты и профессии — работа вахтой | Альфа-Стафф',
         desc='Склады маркетплейсов и производства в Москве и регионах: условия, ставки, жильё и питание по каждому объекту. '
              'Выберите регион и профессию — покажем подходящие вахты.'),
     'business.html': dict(
-        main='business.main.html', key='business',
+        main='business.main.html', key='business', nav='Бизнесу',
         title='Персонал для складов и производств — Альфа-Стафф для бизнеса',
         desc='Аутстаффинг, рекрутинг, лизинг персонала и аутсорсинг для складов и производств. '
              'Оформление по закону РФ, документы и выплаты — на нас.'),
@@ -65,11 +65,15 @@ def build(name, cfg, index):
         return m.group(1) + 'index.html#' + k + '"'
     html = re.sub(r'(<a\b[^>]*?\bhref=")#([\w-]+)"', link, html)
     html = re.sub(r'(<a\b[^>]*?\bhref=")index\.html#top"', r'\1#main"', html)
+    # плашка меню: справа на кнопке «Меню» — название этой страницы; «Главная» здесь не текущая
+    html = html.replace('data-nav-page>Главная<', 'data-nav-page>%s<' % cfg['nav'], 1)
+    html = html.replace('href="index.html" aria-current="page"', 'href="index.html"')
     # ссылки на эту же страницу в меню и подвале: business.html#step-2 → #step-2 (без перезагрузки), пункт меню — текущий
     html = html.replace('href="%s#' % name, 'href="#')
     html = re.sub(r'(<a\b[^>]*?\bhref="%s")' % re.escape(name), r'\1 aria-current="page"', html)
     # проверки: всё подставлено, id не повторяются
     if '<!-- include:' in html: sys.exit('%s: не подставлена секция' % name)
+    if 'data-nav-page>Главная<' in html: sys.exit('%s: в плашке не подставлено название страницы' % name)
     dup = sorted({i for i in re.findall(r'\bid="([^"]+)"', html) if re.findall(r'\bid="%s"' % re.escape(i), html).__len__() > 1})
     if dup: sys.exit('%s: повторяются id %s' % (name, dup))
     io.open(os.path.join(ROOT, name), 'w', encoding='utf-8', newline='\n').write(html)

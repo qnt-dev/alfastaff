@@ -77,6 +77,12 @@
   document.addEventListener('click', function (e) {
     var c = e.target.closest('a[href="#calculator"]');
     if (c) { e.preventDefault(); navClose(); openCalc(); return; }
+    // знак в плашке и «Главная» на самой главной — плавно наверх, без перезагрузки
+    if (e.target.closest('a[href="index.html"]') && !document.documentElement.dataset.page) {
+      e.preventDefault(); navClose();
+      if (lenis) lenis.scrollTo(0); else window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      return;
+    }
     var a = e.target.closest('a[href^="#"]');
     if (!a) return;
     var st = a.getAttribute('href').match(/^#step-(\d)$/);
@@ -103,7 +109,7 @@
      Мышь: наведение на сетку раскрывает меню, уход с плашки — закрывает.
      Касание и клавиатура: нажатие на сетку открывает и закрывает.
      Наведение на кнопку чата — оранжевая плашка «Ответим за 30 минут», нажатие — чат. */
-  var nav = $('[data-nav]'), navGrid = $('.nav__trigger', nav);   // вся плашка — кнопка «Меню»
+  var nav = $('[data-nav]'), navGrid = $('.nav__trigger', nav);   // кнопка «Меню» (знак слева — ссылка на главную)
   var navMenu = $('#nav-menu'), dock = $('.dock');
   // чат — отдельный виджет в правом нижнем углу (кнопка + окно над ней)
   var chatw = $('[data-chatw]'), chatBtn = $('.chatw__btn', chatw), navChat = $('#nav-chat');
@@ -142,60 +148,13 @@
     navIntentT = setTimeout(function () { navHoverT = performance.now(); navSet('menu', true); }, 140);
   });
   navGrid.addEventListener('pointerleave', function () { clearTimeout(navIntentT); });
-  // импульс от знака к точкам: дважды после загрузки, потом изредка (раз в 11 с), только когда меню закрыто и страница на виду
+  // импульс: знак вспыхивает, свет проходит по слову «Меню», загораются точки (CSS .is-pulse). Дважды после загрузки,
+  // потом раз в 11 с, только когда меню закрыто и страница на виду
   var navPulseT = 0, navPulseOn = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function navPulse() {
     if (!navPulseOn || navState || document.hidden || nav.classList.contains('is-tucked')) return;
     nav.classList.remove('is-pulse'); void nav.offsetWidth; nav.classList.add('is-pulse');
-    clearTimeout(navPulseT); navPulseT = setTimeout(function () { nav.classList.remove('is-pulse'); }, 1700);
-    clearTimeout(navBeatT); navBeatT = setTimeout(navBeat, 450);   // луч стартует, когда свет прошёл по слову
-  }
-  // «удар сердца» по черте — как на кардиомониторе: форма не ездит, её рисует луч. Светящийся кончик идёт от слова
-  // к точкам (плавный разгон и торможение), посередине черты вычерчивает комплекс ЭКГ; нарисованное за лучом гаснет
-  // («люминофор»). Луч доходит до точек к 1,15 с — тогда же точки вспыхивают (CSS)
-  var navTrace = $('.nav__trace', nav), navBeatT = 0, navBeatRAF = 0;
-  function navWave(u) {   // u — положение вдоль комплекса (справа налево по времени): зубцы P, Q, R, S, T
-    var g = function (c, w, a) { var d = (u - c) / w; return a * Math.exp(-d * d); };
-    return g(-1.9, 0.38, 0.16) + g(-0.62, 0.11, -0.14) + g(-0.36, 0.12, 1) + g(-0.1, 0.11, -0.42) + g(1.05, 0.5, 0.26);
-  }
-  function navBeat() {
-    if (!navTrace || navState) return;
-    var W = navTrace.clientWidth, H = navTrace.clientHeight; if (!W || !H) return;
-    var dpr = Math.min(2, window.devicePixelRatio || 1), ctx = navTrace.getContext('2d');
-    navTrace.width = Math.round(W * dpr); navTrace.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var acc = getComputedStyle(nav).getPropertyValue('--accent').trim() || '#ff5a1f';
-    var mid = H / 2, amp = H * 0.44, cx = W * 0.5, unit = H * 0.72;   // комплекс — посередине черты, его ширина не зависит от длины черты
-    var TRAVEL = 700, TAU = 170, END = TRAVEL + 5 * TAU, t0 = performance.now();
-    var ease = function (p) { return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; };
-    var unease = function (e) { return e < .5 ? Math.sqrt(e / 2) : 1 - Math.sqrt(2 * (1 - e)) / 2; };   // когда луч был в этой точке
-    var y = function (x) { return mid - amp * navWave((cx - x) / unit); };
-    cancelAnimationFrame(navBeatRAF);
-    (function frame() {
-      var t = performance.now() - t0;   // время — из одного источника с t0
-      ctx.clearRect(0, 0, W, H);
-      if (t >= END || navState) return;
-      var p = Math.min(1, t / TRAVEL), head = W * (1 - ease(p));
-      // след: отрезки от точки, где луч был раньше всего (справа), до кончика; яркость гаснет с «возрастом»
-      for (var pass = 0; pass < 2; pass++) {
-        ctx.lineWidth = pass ? 1.5 : 4; ctx.lineCap = 'round'; ctx.strokeStyle = acc;
-        for (var x = W; x > head; x -= 1) {
-          var x2 = Math.max(head, x - 1), age = t - unease(1 - x / W) * TRAVEL, a = Math.exp(-age / TAU);
-          if (a < .02) continue;
-          ctx.globalAlpha = pass ? a : a * 0.18;
-          ctx.beginPath(); ctx.moveTo(x, y(x)); ctx.lineTo(x2, y(x2)); ctx.stroke();
-        }
-      }
-      // кончик луча: белое ядро и оранжевое свечение; появляется и гаснет на краях черты
-      if (p < 1) {
-        var hy = y(head), env = Math.min(1, p / 0.08, (1 - p) / 0.12), r = H * 0.55;
-        var gr = ctx.createRadialGradient(head, hy, 0, head, hy, r);
-        gr.addColorStop(0, acc); gr.addColorStop(1, 'transparent');
-        ctx.globalAlpha = 0.55 * env; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(head, hy, r, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = env; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(head, hy, 1.3, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      navBeatRAF = requestAnimationFrame(frame);
-    })();
+    clearTimeout(navPulseT); navPulseT = setTimeout(function () { nav.classList.remove('is-pulse'); }, 1000);
   }
   if (navPulseOn) {
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () {

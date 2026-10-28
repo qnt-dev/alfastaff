@@ -256,6 +256,22 @@ html .nav.is-docked.is-open .nav__box { margin: 0 calc(-1 * var(--dock)) 0 calc(
 .nav.is-pulse .nav__dots i { animation: nav-dots-flash .5s ease-out 1.15s; }
 @keyframes nav-dots-flash { 25% { background: var(--accent); box-shadow: 0 0 calc(0.25 * var(--n)) var(--accent); } }
 @media (prefers-reduced-motion: reduce) { .nav.is-pulse * { animation: none !important; } }
+/* ---------- плашка «две кнопки» (сайт): [◉] — на главную, [⋮⋮ МЕНЮ · страница] — меню ----------
+   Черты нет: импульс — знак вспыхивает, следом свет проходит по слову и загораются точки. Разметка с чертой
+   (⋮⋮ ——— МЕНЮ ●, стили выше) осталась только на временной странице предложения offer-7k2m.html. */
+.nav--duo { --nav-btn: rgba(255, 255, 255, .07); --nav-btn-hover: rgba(255, 255, 255, .15); }
+.nav--duo:not(.is-dark):not(.is-open):not(.is-docked) { --nav-btn: rgba(15, 15, 15, .055); --nav-btn-hover: rgba(15, 15, 15, .11); }
+.nav--duo .nav__bar { gap: calc(0.25 * var(--n)); padding: calc(0.25 * var(--n)); }
+.nav__home, .nav--duo .nav__trigger { height: 100%; border-radius: calc(var(--ui) * 7); background: var(--nav-btn); transition: background-color .25s; }
+.nav__home:hover, .nav--duo .nav__trigger:hover, .nav--duo.is-menu .nav__trigger { background: var(--nav-btn-hover); }
+.nav__home:focus-visible, .nav--duo .nav__trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.nav__home { flex: none; width: calc(2 * var(--n)); display: grid; place-items: center; color: var(--nav-fg); }
+.nav__home:hover .nav__mark { transform: rotate(-12deg); }
+.nav--duo .nav__trigger { gap: calc(0.25 * var(--n)); padding: 0 calc(0.75 * var(--n)) 0 calc(0.125 * var(--n)); }
+.nav--duo .nav__ico, .nav--duo .nav__trigger:hover .nav__ico, .nav--duo.is-menu .nav__ico,
+.nav--duo:not(.is-dark):not(.is-open):not(.is-docked) .nav__trigger:hover .nav__ico { background: none; }
+.nav__page { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-text); font-size: calc(0.75 * var(--n)); font-weight: 500; letter-spacing: -0.01em; opacity: .55; }
+.nav--duo.is-pulse .nav__dots i { animation-delay: .4s; }   /* без черты точки загораются сразу за словом */
 /* оранжевая плашка «Ответим за 30 минут» выезжает вправо, с перемычкой от кнопки */
 
 .nav__drop { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease); }
